@@ -11,36 +11,28 @@ Standalone Next.js admin app for MomentBook moderation and editorial operations.
 
 ## Environment Variables
 
-Three tiers of env files, following Next.js conventions:
-
-| File | Git | Contents | Next.js auto-load |
-|---|---|---|---|
-| `.env.development` | Committed | Non-sensitive vars for local dev | `next dev` |
-| `.env.production` | Committed | Non-sensitive vars for production | `next build`, `next start`, Vercel Production |
-| `.env.local` | gitignored | **Secrets** (`ADMIN_SESSION_SECRET`, `WEB_REVALIDATION_SECRET`) | Overrides `.env.*` |
+| File | Git | Contents |
+|---|---|---|
+| `.env` | gitignored | All variables for local development |
+| `.env.example` | Committed | Template with descriptions and dev/prod examples |
+| Vercel Dashboard | — | All production values (no `.env.production` file) |
 
 ### Local Development
 
 ```bash
 yarn install --immutable
-cp .env.example .env.local
-# Fill in ADMIN_SESSION_SECRET and WEB_REVALIDATION_SECRET in .env.local
+cp .env.example .env
+# Fill in values from the comments in .env.example
 yarn dev
 ```
 
 Local admin runs on port `3200`. The public web app remains on port `3100`.
 
-Non-sensitive vars (site URL, API base, image origin, etc.) are pre-configured in `.env.development` (committed). Only secrets need to be added to `.env.local`.
+### Vercel Deployment
 
-## Vercel Deployment
+All environment variables must be set in **Vercel Project Settings > Environment Variables** (Production). No `.env.production` file is committed — all production values live in Vercel Dashboard.
 
-Deploy from the repository root. Vercel auto-detects the Next.js framework.
-
-### Vercel auto-loads `.env.production`
-
-`.env.production` is committed to git and contains all **non-sensitive** production values. Vercel automatically loads it for Production deployments (main branch). No manual env var setup needed in Vercel Dashboard for these.
-
-**Secrets** (`ADMIN_SESSION_SECRET`, `WEB_REVALIDATION_SECRET`) must be set in **Vercel Project Settings > Environment Variables** (Production) — they override the committed files.
+This keeps the repo safe for public visibility.
 
 ### Hobby Plan Suitability
 
@@ -53,16 +45,21 @@ Deploy from the repository root. Vercel auto-detects the Next.js framework.
 | Function Duration | 300s max | All endpoints complete in seconds | Fine |
 | Deployments / Day | 100 | Admin project, low change frequency | Fine |
 
-### Vercel Dashboard Secrets
+### Vercel Dashboard Environment Variables
 
-Set these **only** in Vercel Project Settings > Environment Variables (Production). All other vars are in `.env.production` (committed, auto-loaded):
+Set **all** variables from `.env.example` in Vercel Project Settings > Environment Variables (Production). No env files are committed to the public repo.
 
-| Variable | Description |
+| Variable | Notes |
 |---|---|
-| `ADMIN_SESSION_SECRET` | Random 64-char hex string |
-| `WEB_REVALIDATION_SECRET` | Shared revalidation HMAC secret |
-
-> `NEXT_PUBLIC_APP_IS_LOCAL` is set to `false` in `.env.production` to disable localhost connection fallbacks and enforce HTTPS origin validation.
+| `NEXT_PUBLIC_ADMIN_SITE_URL` | Must be HTTPS URL (production origin) |
+| `NEXT_PUBLIC_API_BASE_URL` | Nest API production URL |
+| `NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN` | CloudFront CDN origin |
+| `NEXT_PUBLIC_APP_ENV` | Set to `production` |
+| `NEXT_PUBLIC_APP_IS_LOCAL` | Set to `false` (disables localhost fallbacks, enforces HTTPS) |
+| `WEB_REVALIDATION_URL` | Production web revalidation webhook URL |
+| `ADMIN_ALLOWED_EMAIL` | Allowed admin email for login |
+| `ADMIN_SESSION_SECRET` | Random 64-char hex string (secret) |
+| `WEB_REVALIDATION_SECRET` | Shared revalidation HMAC secret (secret) |
 
 ### Post-Deployment Checklist
 
