@@ -86,7 +86,7 @@ export interface UserProfileDataDto {
    * 인증 제공자
    * @example "google"
    */
-  provider: "google" | "apple" | "toss" | "email" | "anonymous" | null;
+  provider: "google" | "apple" | "email" | "anonymous" | null;
   /**
    * 사용자 이름
    * @example "홍길동"
@@ -693,7 +693,7 @@ export interface GoogleLoginResponseDataDto {
    * 인증 제공자 타입
    * @example "google"
    */
-  provider: "google" | "apple" | "toss" | "email" | "anonymous";
+  provider: "google" | "apple" | "email";
   /**
    * JWT 액세스 토큰 (하위 호환성)
    * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.accessToken"
@@ -811,7 +811,7 @@ export interface AppleLoginResponseDataDto {
    * 인증 제공자 타입
    * @example "apple"
    */
-  provider: "google" | "apple" | "toss" | "email" | "anonymous";
+  provider: "google" | "apple" | "email";
   /**
    * JWT 액세스 토큰 (하위 호환성)
    * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.accessToken"
@@ -847,179 +847,6 @@ export interface AppleLoginSuccessResponseDto {
   /** @example "Apple 로그인이 성공적으로 완료되었습니다." */
   message: string;
   data: AppleLoginResponseDataDto;
-}
-
-export interface TossAuthDto {
-  /**
-   * Apps-in-Toss mini app authorization code returned by appLogin()
-   * @example "8y2t0abc123def456ghi789jkl0mno1p"
-   */
-  authorizationCode?: string;
-  /**
-   * Apps-in-Toss referrer. DEFAULT and SANDBOX are both accepted case-insensitively.
-   * @example "DEFAULT"
-   */
-  referrer?: string;
-  /**
-   * Partner app/web OAuth authorization code returned by Toss redirect
-   * @example "toss-partner-auth-code"
-   */
-  code?: string;
-  /**
-   * Redirect URI used when requesting the partner app/web Toss authorization code
-   * @example "momentbook://oauth/toss"
-   */
-  redirectUri?: string;
-}
-
-export interface TossUserResponseDto {
-  /**
-   * 사용자 고유 ID
-   * @example "680657032be53a7892fe5aff"
-   */
-  _id: string;
-  /**
-   * 사용자 이름
-   * @example "Toss 사용자"
-   */
-  name: string;
-  /**
-   * 사용자 이메일
-   * @example "user@example.com"
-   */
-  email?: object | null;
-  /**
-   * 프로필 사진 URL (Toss는 현재 항상 null)
-   * @example null
-   */
-  picture?: object | null;
-  /**
-   * 게스트 사용자 여부
-   * @example false
-   */
-  isGuest: boolean;
-}
-
-export interface TossLoginResponseDataDto {
-  user: TossUserResponseDto;
-  /**
-   * 인증 제공자 타입
-   * @example "toss"
-   */
-  provider: "google" | "apple" | "toss" | "email" | "anonymous";
-  /**
-   * JWT 액세스 토큰 (하위 호환성)
-   * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.accessToken"
-   */
-  token: string;
-  /**
-   * JWT 액세스 토큰 (짧은 만료시간, 2시간)
-   * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.accessToken"
-   */
-  accessToken: string;
-  /**
-   * JWT 리프레시 토큰 (긴 만료시간, 30일)
-   * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refreshToken"
-   */
-  refreshToken: string;
-  /**
-   * 액세스 토큰 만료시간 (초)
-   * @example 7200
-   */
-  expiresIn: number;
-  /** 필수 동의 상태 정보 */
-  consents: ConsentStatusDto;
-}
-
-export interface TossLoginSuccessResponseDto {
-  /** @example "success" */
-  status: string;
-  /** @example "Toss 로그인이 성공적으로 완료되었습니다." */
-  message: string;
-  data: TossLoginResponseDataDto;
-}
-
-export interface GuestAuthDto {
-  /**
-   * 디바이스 고유 식별자 (UUID)
-   * @example "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-   */
-  deviceId: string;
-}
-
-export interface GuestUserResponseDto {
-  /**
-   * 사용자 ID (게스트 ID와 동일)
-   * @example "836273c6-1311-40c2-a7e8-30400124f43c"
-   */
-  userId: string;
-  /**
-   * 게스트 고유 식별자
-   * @example "836273c6-1311-40c2-a7e8-30400124f43c"
-   */
-  guestId: string;
-  /**
-   * 디바이스 고유 식별자
-   * @example "test-device-12345"
-   */
-  deviceId: string;
-  /**
-   * 사용자 이름
-   * @example "게스트"
-   */
-  name: string;
-  /**
-   * 이메일
-   * @example null
-   */
-  email?: object | null;
-  /**
-   * 프로필 사진
-   * @example null
-   */
-  picture?: object | null;
-  /**
-   * 게스트 여부
-   * @example true
-   */
-  isGuest: boolean;
-}
-
-export interface GuestLoginResponseDataDto {
-  user: GuestUserResponseDto;
-  /**
-   * 인증 제공자 타입
-   * @example "anonymous"
-   */
-  provider: "google" | "apple" | "toss" | "email" | "anonymous";
-  /**
-   * JWT 액세스 토큰 (하위 호환성)
-   * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.accessToken"
-   */
-  token: string;
-  /**
-   * JWT 액세스 토큰 (짧은 만료시간, 2시간)
-   * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.accessToken"
-   */
-  accessToken: string;
-  /**
-   * JWT 리프레시 토큰 (긴 만료시간, 30일)
-   * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refreshToken"
-   */
-  refreshToken: string;
-  /**
-   * 액세스 토큰 만료시간 (초)
-   * @example 7200
-   */
-  expiresIn: number;
-  /** 필수 동의 상태 정보 (게스트는 항상 모든 동의 완료 상태) */
-  consents: ConsentStatusDto;
-}
-
-export interface GuestLoginSuccessResponseDto {
-  /** @example "success" */
-  status: string;
-  data: GuestLoginResponseDataDto;
 }
 
 export interface RefreshTokenDto {
@@ -1082,27 +909,6 @@ export interface LogoutResponseDto {
   status: string;
   data: LogoutResponseDataDto;
   /** @example "로그아웃이 성공적으로 완료되었습니다." */
-  message: string;
-}
-
-export interface LogoutAllResponseDataDto {
-  /**
-   * All active refresh-token sessions for the authenticated user have been invalidated.
-   * @example "모든 디바이스에서 로그아웃되었습니다."
-   */
-  message: string;
-  /**
-   * Number of invalidated active refresh-token sessions, or 1 when Redis token-version invalidation was applied without MongoDB active-token matches.
-   * @example 3
-   */
-  invalidatedTokens: number;
-}
-
-export interface LogoutAllResponseDto {
-  /** @example "success" */
-  status: string;
-  data: LogoutAllResponseDataDto;
-  /** @example "3개의 디바이스에서 로그아웃이 완료되었습니다." */
   message: string;
 }
 
@@ -1202,7 +1008,7 @@ export interface EmailSignupResponseDataDto {
    * 인증 제공자 타입
    * @example "email"
    */
-  provider: "google" | "apple" | "toss" | "email" | "anonymous";
+  provider: "google" | "apple" | "email";
   /**
    * JWT 액세스 토큰 (하위 호환성)
    * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.accessToken"
@@ -1249,7 +1055,7 @@ export interface EmailLoginResponseDataDto {
    * 인증 제공자 타입
    * @example "email"
    */
-  provider: "google" | "apple" | "toss" | "email" | "anonymous";
+  provider: "google" | "apple" | "email";
   /**
    * JWT 액세스 토큰 (하위 호환성)
    * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.accessToken"
@@ -1349,48 +1155,6 @@ export interface EmailCheckResponseDto {
   /** @example "success" */
   status: string;
   data: EmailCheckResponseDataDto;
-}
-
-export interface PublicUserItemDto {
-  /**
-   * User ID
-   * @example "507f1f77bcf86cd799439011"
-   */
-  userId: string;
-  /**
-   * User display name
-   * @example "John Doe"
-   */
-  name: string;
-  /**
-   * User avatar URL
-   * @example "https://cdn.momentbook.app/avatars/user123.jpg"
-   */
-  picture?: string;
-  /**
-   * Number of published journeys
-   * @example 5
-   */
-  publishedJourneyCount: number;
-}
-
-export interface PublicUsersDataDto {
-  /** List of public users */
-  users: PublicUserItemDto[];
-  /** Total number of users */
-  total: number;
-  /** Current page number */
-  page: number;
-  /** Total number of pages */
-  pages: number;
-  /** Items per page limit */
-  limit: number;
-}
-
-export interface PublicUsersResponseDto {
-  /** @example "success" */
-  status: string;
-  data: PublicUsersDataDto;
 }
 
 export interface PublicUserProfileDto {
@@ -1945,6 +1709,71 @@ export interface PublishedJourneyTimeRangeDto {
   endLocal: LocalDateTimeContextDto;
 }
 
+export interface PublishJourneyInfoDataDto {
+  /** Compatibility flag indicating that an active published record exists. This does not guarantee public exposure before review approval. */
+  published: boolean;
+  isPublishing: boolean;
+  /** Whether the journey is currently exposed on public surfaces: published record, public visibility, and APPROVED review. */
+  publiclyVisible?: boolean;
+  publicId?: string;
+  publishedUrl?: string;
+  publishedAt?: string;
+  lastPublishError?: string;
+  lastPublishErrorCode?: string;
+  publishOperationId?: string;
+  publishPhase?:
+    | "UPLOADING"
+    | "FINALIZING"
+    | "REVIEW_PENDING"
+    | "REVIEW_REJECTED"
+    | "PUBLIC"
+    | "FAILED"
+    | "EXPIRED"
+    | "CANCELLED";
+  publishProgress?: number;
+  publishExpiresAt?: string;
+  review?: PublishedJourneyReviewDto;
+  visibility?: "public" | "hidden";
+  contentStatus?:
+    | "available"
+    | "reported_hidden"
+    | "review_pending"
+    | "review_rejected";
+  createdAt?: string;
+  updatedAt?: string;
+  /**
+   * Deprecated compatibility field. Always false because location enrichment APIs were removed.
+   * @deprecated
+   */
+  isLocationEnriched?: boolean;
+}
+
+export interface UnpublishPrecheckPublishedByDto {
+  /** Published journey owner user ID */
+  userId: string;
+  /** Published journey owner display name */
+  name?: string;
+  /** Published journey owner profile image */
+  picture?: string;
+  /** Masked published journey owner email. Raw owner email is never returned. */
+  emailMasked?: object | null;
+  /** Published journey owner auth provider */
+  provider?: "google" | "apple" | "email" | "anonymous" | null;
+}
+
+export interface UnpublishPrecheckCurrentAccountDto {
+  /** Current authenticated user ID */
+  userId: string;
+  /** Current account display name */
+  name?: string;
+  /** Current account profile image */
+  picture?: string;
+  /** Current authenticated account email. This can be raw because it belongs to the requester. */
+  email?: object | null;
+  /** Current account auth provider */
+  provider?: "google" | "apple" | "email" | "anonymous" | null;
+}
+
 export interface RecapTimeRange {
   startAt: number;
   endAt: number;
@@ -2211,6 +2040,25 @@ export interface CreatePublishIntentResponseDto {
   };
 }
 
+export interface CompletePublishIntentResponseDto {
+  /** @example "success" */
+  status: string;
+  data: {
+    publishOperationId?: string;
+    publicId?: string;
+    published?: boolean;
+    publishPhase?:
+      | "UPLOADING"
+      | "FINALIZING"
+      | "REVIEW_PENDING"
+      | "REVIEW_REJECTED"
+      | "PUBLIC"
+      | "FAILED"
+      | "EXPIRED"
+      | "CANCELLED";
+  };
+}
+
 export interface CancelPublishIntentResponseDto {
   /** @example "success" */
   status: string;
@@ -2260,12 +2108,6 @@ export interface JourneyImageDto {
 }
 
 export interface PublishJourneyRequestDto {
-  /**
-   * DEPRECATED: No longer supported. Lambda-backed variant generation has been removed.
-   * @deprecated
-   * @default false
-   */
-  deferUntilAssetsReady?: boolean;
   /**
    * Journey ID (client-side)
    * @example "journey_abc123"
@@ -2336,34 +2178,7 @@ export interface PublishJourneyInfoResponseDto {
    */
   status: string;
   /** Publish info for the journey */
-  data: {
-    published?: boolean;
-    isPublishing?: boolean;
-    publicId?: string;
-    publishedUrl?: string;
-    publishedAt?: string;
-    lastPublishError?: string;
-    lastPublishErrorCode?: string;
-    publishOperationId?: string;
-    publishPhase?:
-      | "UPLOADING"
-      | "FINALIZING"
-      | "REVIEW_PENDING"
-      | "REVIEW_REJECTED"
-      | "PUBLIC"
-      | "FAILED"
-      | "EXPIRED"
-      | "CANCELLED";
-    publishProgress?: number;
-    publishExpiresAt?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    /**
-     * Deprecated compatibility field. Always false because location enrichment APIs were removed.
-     * @deprecated
-     */
-    isLocationEnriched?: boolean;
-  };
+  data: PublishJourneyInfoDataDto;
 }
 
 export interface PublishedJourneyImageDto {
@@ -2695,57 +2510,18 @@ export interface PublishedPhotoResponseDto {
   data: PublishedPhotoDto;
 }
 
-export interface JourneyAccountSummaryDto {
-  /**
-   * Account user ID
-   * @example "507f1f77bcf86cd799439011"
-   */
-  userId: string;
-  /**
-   * Account display name fallback
-   * @example "John Doe"
-   */
-  name?: string | null;
-  /**
-   * Account profile image
-   * @example "https://cdn.momentbook.app/avatars/user123.jpg"
-   */
-  picture?: string | null;
-  /**
-   * Raw email when it belongs to the currently authenticated account. Published-owner summaries omit this field for privacy.
-   * @example "user@example.com"
-   */
-  email?: object | null;
-  /**
-   * Masked email hint for owner-mismatch UX. Null when email is unavailable.
-   * @example "u***@example.com"
-   */
-  emailMasked?: object | null;
-  /** Authentication provider */
-  provider?: "google" | "apple" | "toss" | "email" | "anonymous" | null;
-}
-
-export interface UnpublishOwnershipPrecheckDataDto {
-  /**
-   * Published journey public ID
-   * @example "abc123xyz789"
-   */
-  publicId: string;
-  /**
-   * Whether the current authenticated account owns this journey
-   * @example false
-   */
-  isOwner: boolean;
-  /** Published-account summary for owner mismatch UX. Email is masked instead of exposed raw. */
-  publishedBy: JourneyAccountSummaryDto;
+export interface UnpublishPrecheckDataDto {
+  /** Published journey owner account summary */
+  publishedBy: UnpublishPrecheckPublishedByDto;
   /** Current authenticated account summary */
-  currentAccount: JourneyAccountSummaryDto;
+  currentAccount: UnpublishPrecheckCurrentAccountDto;
 }
 
-export interface UnpublishOwnershipPrecheckResponseDto {
+export interface UnpublishPrecheckResponseDto {
   /** @example "success" */
   status: string;
-  data: UnpublishOwnershipPrecheckDataDto;
+  /** Account comparison data for unpublish confirmation UI */
+  data: UnpublishPrecheckDataDto;
 }
 
 export interface UnpublishJourneyResponseDto {
@@ -3195,6 +2971,153 @@ export interface UpdateNotificationSettingsDto {
    * @example true
    */
   notificationEnabled: boolean;
+}
+
+export interface ChatCounterpartDto {
+  /** @example "6807b9d1f1d9f4f056baf123" */
+  userId: string;
+  /** @example "Alex Traveler" */
+  name: string;
+  /** @example "https://cdn.momentbook.com/users/profile.webp" */
+  picture?: string;
+  /** @example "Slow travel, film camera, seaside cities." */
+  biography?: string;
+}
+
+export interface ChatRoomSummaryDto {
+  /** @example "pX4Jk8Q2LmN7" */
+  roomId: string;
+  /** @example "direct" */
+  type: string;
+  counterpart: ChatCounterpartDto;
+  /**
+   * Latest retained message preview. Omitted when the last message has expired.
+   * @example "Nice photos. Which city was this?"
+   */
+  lastMessagePreview?: string;
+  /**
+   * Sender of the latest retained message. Omitted when the last message has expired.
+   * @example "6807ba35b9bc1dc4023d9abc"
+   */
+  lastMessageSenderId?: string;
+  /**
+   * Timestamp of the latest retained message, or null when no retained message remains.
+   * @example "2026-04-22T13:21:01.123Z"
+   */
+  lastMessageAt?: object;
+  /**
+   * Number of retained/readable messages in this room.
+   * @example 3
+   */
+  messageCount: number;
+  /** @example "2026-04-22T13:20:10.123Z" */
+  createdAt: string;
+  /** @example "2026-04-22T13:21:01.123Z" */
+  updatedAt: string;
+}
+
+export interface CreateDirectChatRoomDataDto {
+  room: ChatRoomSummaryDto;
+}
+
+export interface CreateDirectChatRoomResponseDto {
+  /** @example "success" */
+  status: string;
+  /** @example "Direct chat room is ready." */
+  message: string;
+  data: CreateDirectChatRoomDataDto;
+}
+
+export interface ChatRoomsListDataDto {
+  rooms: ChatRoomSummaryDto[];
+  /** @example 1 */
+  total: number;
+  /** @example 1 */
+  page: number;
+  /** @example 1 */
+  pages: number;
+  /** @example 20 */
+  limit: number;
+  /** @example false */
+  hasMore: boolean;
+}
+
+export interface ListChatRoomsResponseDto {
+  /** @example "success" */
+  status: string;
+  /** @example "Chat rooms retrieved successfully." */
+  message: string;
+  data: ChatRoomsListDataDto;
+}
+
+export interface ChatMessagesListDataDto {
+  room: ChatRoomSummaryDto;
+  messages: ChatMessageDto[];
+  /** @example 3 */
+  total: number;
+  /** @example 1 */
+  page: number;
+  /** @example 1 */
+  pages: number;
+  /** @example 50 */
+  limit: number;
+  /** @example false */
+  hasMore: boolean;
+}
+
+export interface ListChatMessagesResponseDto {
+  /** @example "success" */
+  status: string;
+  /** @example "Chat messages retrieved successfully." */
+  message: string;
+  data: ChatMessagesListDataDto;
+}
+
+export interface ChatMessageDto {
+  /** @example "6807ba35b9bc1dc4023d9abc" */
+  messageId: string;
+  /** @example "pX4Jk8Q2LmN7" */
+  roomId: string;
+  /** @example "6807b9d1f1d9f4f056baf123" */
+  senderId: string;
+  /** @example "text" */
+  type: string;
+  /** @example "Nice photos. Which city was this?" */
+  text: string;
+  /** @example "2026-04-22T13:21:01.123Z" */
+  createdAt: string;
+  /** @example "2026-04-22T13:21:01.123Z" */
+  updatedAt: string;
+}
+
+export interface CreateChatMessageDataDto {
+  room: ChatRoomSummaryDto;
+  message: ChatMessageDto;
+}
+
+export interface CreateChatMessageResponseDto {
+  /** @example "success" */
+  status: string;
+  /** @example "Message sent successfully." */
+  message: string;
+  data: CreateChatMessageDataDto;
+}
+
+export interface CreateDirectChatRoomDto {
+  /**
+   * Target active user ObjectId for a direct chat room
+   * @example "6807b9d1f1d9f4f056baf123"
+   */
+  targetUserId: string;
+}
+
+export interface CreateChatMessageDto {
+  /**
+   * Chat message body
+   * @maxLength 1000
+   * @example "Nice photos. Which city was this?"
+   */
+  text: string;
 }
 
 export interface CreateReportDto {
@@ -4279,153 +4202,6 @@ export interface AdminDeleteArticleResponseDto {
   data: AdminDeleteArticleDataDto;
 }
 
-export interface ChatCounterpartDto {
-  /** @example "6807b9d1f1d9f4f056baf123" */
-  userId: string;
-  /** @example "Alex Traveler" */
-  name: string;
-  /** @example "https://cdn.momentbook.com/users/profile.webp" */
-  picture?: string;
-  /** @example "Slow travel, film camera, seaside cities." */
-  biography?: string;
-}
-
-export interface ChatRoomSummaryDto {
-  /** @example "pX4Jk8Q2LmN7" */
-  roomId: string;
-  /** @example "direct" */
-  type: string;
-  counterpart: ChatCounterpartDto;
-  /**
-   * Latest retained message preview. Omitted when the last message has expired.
-   * @example "Nice photos. Which city was this?"
-   */
-  lastMessagePreview?: string;
-  /**
-   * Sender of the latest retained message. Omitted when the last message has expired.
-   * @example "6807ba35b9bc1dc4023d9abc"
-   */
-  lastMessageSenderId?: string;
-  /**
-   * Timestamp of the latest retained message, or null when no retained message remains.
-   * @example "2026-04-22T13:21:01.123Z"
-   */
-  lastMessageAt?: object;
-  /**
-   * Number of retained/readable messages in this room.
-   * @example 3
-   */
-  messageCount: number;
-  /** @example "2026-04-22T13:20:10.123Z" */
-  createdAt: string;
-  /** @example "2026-04-22T13:21:01.123Z" */
-  updatedAt: string;
-}
-
-export interface CreateDirectChatRoomDataDto {
-  room: ChatRoomSummaryDto;
-}
-
-export interface CreateDirectChatRoomResponseDto {
-  /** @example "success" */
-  status: string;
-  /** @example "Direct chat room is ready." */
-  message: string;
-  data: CreateDirectChatRoomDataDto;
-}
-
-export interface ChatRoomsListDataDto {
-  rooms: ChatRoomSummaryDto[];
-  /** @example 1 */
-  total: number;
-  /** @example 1 */
-  page: number;
-  /** @example 1 */
-  pages: number;
-  /** @example 20 */
-  limit: number;
-  /** @example false */
-  hasMore: boolean;
-}
-
-export interface ListChatRoomsResponseDto {
-  /** @example "success" */
-  status: string;
-  /** @example "Chat rooms retrieved successfully." */
-  message: string;
-  data: ChatRoomsListDataDto;
-}
-
-export interface ChatMessagesListDataDto {
-  room: ChatRoomSummaryDto;
-  messages: ChatMessageDto[];
-  /** @example 3 */
-  total: number;
-  /** @example 1 */
-  page: number;
-  /** @example 1 */
-  pages: number;
-  /** @example 50 */
-  limit: number;
-  /** @example false */
-  hasMore: boolean;
-}
-
-export interface ListChatMessagesResponseDto {
-  /** @example "success" */
-  status: string;
-  /** @example "Chat messages retrieved successfully." */
-  message: string;
-  data: ChatMessagesListDataDto;
-}
-
-export interface ChatMessageDto {
-  /** @example "6807ba35b9bc1dc4023d9abc" */
-  messageId: string;
-  /** @example "pX4Jk8Q2LmN7" */
-  roomId: string;
-  /** @example "6807b9d1f1d9f4f056baf123" */
-  senderId: string;
-  /** @example "text" */
-  type: string;
-  /** @example "Nice photos. Which city was this?" */
-  text: string;
-  /** @example "2026-04-22T13:21:01.123Z" */
-  createdAt: string;
-  /** @example "2026-04-22T13:21:01.123Z" */
-  updatedAt: string;
-}
-
-export interface CreateChatMessageDataDto {
-  room: ChatRoomSummaryDto;
-  message: ChatMessageDto;
-}
-
-export interface CreateChatMessageResponseDto {
-  /** @example "success" */
-  status: string;
-  /** @example "Message sent successfully." */
-  message: string;
-  data: CreateChatMessageDataDto;
-}
-
-export interface CreateDirectChatRoomDto {
-  /**
-   * Target active user ObjectId for a direct chat room
-   * @example "6807b9d1f1d9f4f056baf123"
-   */
-  targetUserId: string;
-}
-
-export interface CreateChatMessageDto {
-  /**
-   * Chat message body
-   * @maxLength 1000
-   * @example "Nice photos. Which city was this?"
-   */
-  text: string;
-}
-
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -4672,7 +4448,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title MomentBook API
- * @version 2.3.21
+ * @version 2.3.30
  * @contact
  *
  * MomentBook API 문서 - 생각을 공유하고 관리하는 플랫폼
@@ -5124,48 +4900,6 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerSignInWithToss
-     * @summary Toss 로그인 (앱인토스 미니앱 / 파트너 앱·웹)
-     * @request POST:/v2/auth/toss
-     */
-    authControllerSignInWithToss: (
-      data: TossAuthDto,
-      params: RequestParams = {},
-    ) =>
-      this.request<TossLoginSuccessResponseDto, any>({
-        path: `/v2/auth/toss`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags auth
-     * @name AuthControllerContinueAsGuest
-     * @summary 게스트로 계속하기
-     * @request POST:/v2/auth/guest
-     */
-    authControllerContinueAsGuest: (
-      data: GuestAuthDto,
-      params: RequestParams = {},
-    ) =>
-      this.request<GuestLoginSuccessResponseDto, any>({
-        path: `/v2/auth/guest`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags auth
      * @name AuthControllerRefreshToken
      * @summary Access Token 갱신
      * @request POST:/v2/auth/refresh
@@ -5197,24 +4931,6 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags auth
-     * @name AuthControllerLogoutAll
-     * @summary 모든 디바이스에서 로그아웃
-     * @request POST:/v2/auth/logout-all
-     * @secure
-     */
-    authControllerLogoutAll: (params: RequestParams = {}) =>
-      this.request<LogoutAllResponseDto, any>({
-        path: `/v2/auth/logout-all`,
-        method: "POST",
-        secure: true,
         format: "json",
         ...params,
       }),
@@ -5395,41 +5111,6 @@ export class Api<
       }),
 
     /**
-     * @description Public endpoint to retrieve a paginated list of users who have publicly visible approved journeys. When an optional Bearer token is present, users in a block relationship with the authenticated viewer are suppressed from the result set.
-     *
-     * @tags users
-     * @name PublicUsersControllerGetPublicUsers
-     * @summary Get list of public users
-     * @request GET:/v2/users/public
-     * @secure
-     */
-    publicUsersControllerGetPublicUsers: (
-      query?: {
-        /**
-         * Page number (default: 1)
-         * @example 1
-         */
-        page?: number;
-        /**
-         * Number of items per page (default: 20)
-         * @example 20
-         */
-        limit?: number;
-        /** Sort order (default: recent) */
-        sort?: "recent" | "oldest" | "mostJourneys";
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<PublicUsersResponseDto, any>({
-        path: `/v2/users/public`,
-        method: "GET",
-        query: query,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
      * @description Public endpoint to retrieve user profile data for users who have publicly visible approved journeys. When an optional Bearer token is present and the target user is hidden from the authenticated viewer by block policy, this endpoint returns 404.
      *
      * @tags users
@@ -5561,6 +5242,27 @@ export class Api<
       }),
 
     /**
+     * @description Transitions the intent from UPLOADING to published and enters the review queue after verifying every expected presigned-upload object exists with the intended size and content type. Call this endpoint after all presigned uploads have completed successfully.
+     *
+     * @tags journeys
+     * @name PublishJourneyControllerCompletePublishIntent
+     * @summary Complete a background publish intent after all assets are uploaded
+     * @request POST:/v2/journeys/publish/intents/{publishOperationId}/complete
+     * @secure
+     */
+    publishJourneyControllerCompletePublishIntent: (
+      publishOperationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<CompletePublishIntentResponseDto, void>({
+        path: `/v2/journeys/publish/intents/${publishOperationId}/complete`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
      * No description
      *
      * @tags journeys
@@ -5582,7 +5284,7 @@ export class Api<
       }),
 
     /**
-     * @description Store published journey content with images. Client provides title, description, thumbnail, and optional source language in metadata. If title is not provided, a default title will be generated based on journey date. Localized title/description/hashtags and localized cluster impressions are materialized later when admin review moves the journey into APPROVED. **Photo Upload:** - Client may send the full published photo set for the journey - recapDraft may reference only a subset of images[], but every recapDraft photo must exist in images[] **Publish Stage Contract:** - recapStage must be FINALIZED - Successful publish records start with review.status=PENDING and become publicly visible on approved public surfaces after admin approval - After publish commit, the server sends a best-effort review-submitted push notification to the owner - If `SLACK_REVIEW_WEBHOOK_URL` is configured, the server also sends a best-effort review-queue webhook after publish commit
+     * @description Store published journey content with images. Client provides title, description, thumbnail, and optional source language in metadata. If title is not provided, a default title will be generated based on journey date. Localized title/description/hashtags and localized cluster impressions are materialized later when admin review moves the journey into APPROVED. **Photo Upload:** - Client may send the full published photo set for the journey - recapDraft may reference only a subset of images[], but every recapDraft photo must exist in images[] **Publish Stage Contract:** - recapStage must be FINALIZED - Successful publish records start with review.status=PENDING and become publicly visible on approved public surfaces after admin approval - A same-owner rejected publish can be replaced by submitting a new finalized snapshot; pending and approved records remain idempotent/blocked as existing publishes - After publish commit, the server sends a best-effort review-submitted push notification and admin-chat message to the owner - If `SLACK_REVIEW_WEBHOOK_URL` is configured, the server also sends a best-effort review-queue webhook after publish commit
      *
      * @tags journeys
      * @name PublishJourneyControllerPublishJourney
@@ -5752,35 +5454,6 @@ export class Api<
       }),
 
     /**
-     * @description Public endpoint to retrieve published journey data for rendering. Returns full payload only when the journey is publicly visible and review-approved. Full payload includes a stable images[] registry plus timeline block photoIds/photos for media reconstruction. Hidden or pending/rejected journeys return a status-focused payload with contentStatus, notice, and review. When an optional Bearer token is present and the author is hidden from the authenticated viewer by block policy, this endpoint returns 404.
-     *
-     * @tags journeys
-     * @name PublishJourneyControllerGetPublishedJourney
-     * @summary Get published journey by public ID
-     * @request GET:/v2/journeys/public/{publicId}
-     * @secure
-     */
-    publishJourneyControllerGetPublishedJourney: (
-      publicId: string,
-      query?: {
-        /**
-         * Optional explicit response language override for localized title/description/impressions. If omitted, X-App-Language or Accept-Language headers may be used. Accepts language code or locale: ko, en, ja, zh, es, pt, fr, th, vi, ko-KR, pt-BR, etc.
-         * @example "ko"
-         */
-        lang?: string;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<PublishedJourneyDetailResponseDto, void>({
-        path: `/v2/journeys/public/${publicId}`,
-        method: "GET",
-        query: query,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
      * @description Public endpoint to retrieve viewer payload with server-side policy branching by viewer=web|app. Both app and web return full payload only after review approval, including stable timeline media references via images[] and timeline[].photos; pending/rejected journeys return a status-focused response with contentStatus and notice. When an optional Bearer token is present and the author is hidden from the authenticated viewer by block policy, this endpoint returns 404.
      *
      * @tags journeys
@@ -5841,19 +5514,19 @@ export class Api<
       }),
 
     /**
-     * @description JWT-only endpoint for owner mismatch UX before unpublishing. Returns masked published-account hints plus the current authenticated account summary without exposing raw owner email on public journey endpoints.
+     * @description Returns account comparison data for unpublish confirmation UI. This endpoint has no delete or cleanup side effects. Raw published owner email is not returned.
      *
      * @tags journeys
-     * @name PublishJourneyControllerGetUnpublishOwnershipPrecheck
-     * @summary Get unpublish ownership precheck payload
+     * @name PublishJourneyControllerGetUnpublishPrecheck
+     * @summary Precheck unpublish ownership account
      * @request GET:/v2/journeys/publish/{publicId}/unpublish-precheck
      * @secure
      */
-    publishJourneyControllerGetUnpublishOwnershipPrecheck: (
+    publishJourneyControllerGetUnpublishPrecheck: (
       publicId: string,
       params: RequestParams = {},
     ) =>
-      this.request<UnpublishOwnershipPrecheckResponseDto, void>({
+      this.request<UnpublishPrecheckResponseDto, void>({
         path: `/v2/journeys/publish/${publicId}/unpublish-precheck`,
         method: "GET",
         secure: true,
@@ -5948,7 +5621,7 @@ export class Api<
       }),
 
     /**
-     * @description Admin-only moderation endpoint to move a published journey between canonical review states. New publishes start as PENDING and become publicly visible on approved public surfaces only after APPROVED. APPROVED transitions first materialize localized title/description/hashtags and localized cluster impressions; if localization fails, the review update is not committed. Review decisions also trigger best-effort owner push notifications when the state meaningfully changes.
+     * @description Admin-only moderation endpoint to move a published journey between canonical review states. New publishes start as PENDING and become publicly visible on approved public surfaces only after APPROVED. APPROVED transitions first materialize localized title/description/hashtags and localized cluster impressions; if localization fails, the review update is not committed. Review decisions also trigger best-effort owner push notifications and admin-chat messages when the state meaningfully changes.
      *
      * @tags journeys-admin
      * @name PublishJourneyAdminControllerUpdatePublishedJourneyReview
@@ -6217,6 +5890,122 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Creates a 1:1 direct room with the target user or returns the existing room.
+     *
+     * @tags chat
+     * @name ChatControllerCreateOrGetDirectRoom
+     * @summary Create or get a direct chat room
+     * @request POST:/v2/chat/rooms/direct
+     * @secure
+     */
+    chatControllerCreateOrGetDirectRoom: (
+      data: CreateDirectChatRoomDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<CreateDirectChatRoomResponseDto, void>({
+        path: `/v2/chat/rooms/direct`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Returns the authenticated non-guest user direct chat rooms ordered by latest activity.
+     *
+     * @tags chat
+     * @name ChatControllerListRooms
+     * @summary List direct chat rooms
+     * @request GET:/v2/chat/rooms
+     * @secure
+     */
+    chatControllerListRooms: (
+      query?: {
+        /**
+         * @default 1
+         * @example 1
+         */
+        page?: number;
+        /**
+         * @max 50
+         * @default 20
+         * @example 20
+         */
+        limit?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ListChatRoomsResponseDto, void>({
+        path: `/v2/chat/rooms`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Returns paginated retained direct chat messages for a room. Messages are ordered newest first.
+     *
+     * @tags chat
+     * @name ChatControllerGetRoomMessages
+     * @summary List room messages
+     * @request GET:/v2/chat/rooms/{roomId}/messages
+     * @secure
+     */
+    chatControllerGetRoomMessages: (
+      roomId: string,
+      query?: {
+        /**
+         * @default 1
+         * @example 1
+         */
+        page?: number;
+        /**
+         * @max 100
+         * @default 50
+         * @example 50
+         */
+        limit?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ListChatMessagesResponseDto, void>({
+        path: `/v2/chat/rooms/${roomId}/messages`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Sends a direct chat message via HTTP fallback while keeping MongoDB as the canonical source of truth.
+     *
+     * @tags chat
+     * @name ChatControllerSendMessage
+     * @summary Send a direct chat message
+     * @request POST:/v2/chat/rooms/{roomId}/messages
+     * @secure
+     */
+    chatControllerSendMessage: (
+      roomId: string,
+      data: CreateChatMessageDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<CreateChatMessageResponseDto, void>({
+        path: `/v2/chat/rooms/${roomId}/messages`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 
@@ -6684,122 +6473,6 @@ export class Api<
         path: `/v2/admin/articles/${articleId}`,
         method: "DELETE",
         secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Creates a 1:1 direct room with the target user or returns the existing room.
-     *
-     * @tags chat
-     * @name ChatControllerCreateOrGetDirectRoom
-     * @summary Create or get a direct chat room
-     * @request POST:/v2/chat/rooms/direct
-     * @secure
-     */
-    chatControllerCreateOrGetDirectRoom: (
-      data: CreateDirectChatRoomDto,
-      params: RequestParams = {},
-    ) =>
-      this.request<CreateDirectChatRoomResponseDto, void>({
-        path: `/v2/chat/rooms/direct`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Returns the authenticated non-guest user direct chat rooms ordered by latest activity.
-     *
-     * @tags chat
-     * @name ChatControllerListRooms
-     * @summary List direct chat rooms
-     * @request GET:/v2/chat/rooms
-     * @secure
-     */
-    chatControllerListRooms: (
-      query?: {
-        /**
-         * @default 1
-         * @example 1
-         */
-        page?: number;
-        /**
-         * @max 50
-         * @default 20
-         * @example 20
-         */
-        limit?: number;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<ListChatRoomsResponseDto, void>({
-        path: `/v2/chat/rooms`,
-        method: "GET",
-        query: query,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Returns paginated retained direct chat messages for a room. Messages are ordered newest first.
-     *
-     * @tags chat
-     * @name ChatControllerGetRoomMessages
-     * @summary List room messages
-     * @request GET:/v2/chat/rooms/{roomId}/messages
-     * @secure
-     */
-    chatControllerGetRoomMessages: (
-      roomId: string,
-      query?: {
-        /**
-         * @default 1
-         * @example 1
-         */
-        page?: number;
-        /**
-         * @max 100
-         * @default 50
-         * @example 50
-         */
-        limit?: number;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<ListChatMessagesResponseDto, void>({
-        path: `/v2/chat/rooms/${roomId}/messages`,
-        method: "GET",
-        query: query,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Sends a direct chat message via HTTP fallback while keeping MongoDB as the canonical source of truth.
-     *
-     * @tags chat
-     * @name ChatControllerSendMessage
-     * @summary Send a direct chat message
-     * @request POST:/v2/chat/rooms/{roomId}/messages
-     * @secure
-     */
-    chatControllerSendMessage: (
-      roomId: string,
-      data: CreateChatMessageDto,
-      params: RequestParams = {},
-    ) =>
-      this.request<CreateChatMessageResponseDto, void>({
-        path: `/v2/chat/rooms/${roomId}/messages`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),
