@@ -1,0 +1,42 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "yarn build",
+  "installCommand": "yarn install --immutable",
+  "headers": [
+    {
+      "source": "/:path*",
+      "headers": [
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "on"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "app/admin/session/route.ts": {
+      "memory": 512,
+      "maxDuration": 30
+    },
+    "app/admin/session/refresh/route.ts": {
+      "memory": 512,
+      "maxDuration": 30
+    },
+    "app/admin/session/invalidate/route.ts": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  }
+}
