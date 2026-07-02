@@ -22,7 +22,7 @@ export const ENV = {
     API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL as string,
     PUBLIC_IMAGE_ORIGIN: process.env.NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN as string,
     ADMIN_ALLOWED_EMAIL: process.env.ADMIN_ALLOWED_EMAIL as string,
-    ADMIN_SESSION_SECRET: requireEnv("ADMIN_SESSION_SECRET", process.env.ADMIN_SESSION_SECRET),
+    ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET as string,
     WEB_REVALIDATION_SECRET: process.env.WEB_REVALIDATION_SECRET as string,
     WEB_REVALIDATION_URL: process.env.WEB_REVALIDATION_URL as string,
 } as const;

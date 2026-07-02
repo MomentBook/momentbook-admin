@@ -130,6 +130,16 @@ function buildConnectSrc(): string[] {
   return values;
 }
 
+function buildImgSrc(): string[] {
+  const values = ["'self'", "data:", "blob:", "https:"];
+
+  if (process.env.NODE_ENV !== "production") {
+    values.push("http://localhost:3001", "http://127.0.0.1:3001");
+  }
+
+  return values;
+}
+
 if (
   shouldRequireHttpsOrigins() &&
   !readOrigin(process.env.NEXT_PUBLIC_ADMIN_SITE_URL)
@@ -140,6 +150,7 @@ if (
 }
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   images: {
     remotePatterns: buildRemotePatterns(),
   },
@@ -147,7 +158,7 @@ const nextConfig: NextConfig = {
     const csp = [
       "default-src 'self'",
       `connect-src ${buildConnectSrc().join(" ")}`,
-      "img-src 'self' data: blob: https: http://localhost:3001 http://127.0.0.1:3001",
+      `img-src ${buildImgSrc().join(" ")}`,
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
       "script-src 'self' 'unsafe-inline'",
