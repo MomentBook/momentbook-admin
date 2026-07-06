@@ -14,7 +14,7 @@ import {
   parseStatus,
   readQueryParam,
   resolveBanner,
-} from "../../workspace-data";
+} from "@/app/_workspace/workspace-data";
 
 export const metadata: Metadata = {
   title: "Review Detail",

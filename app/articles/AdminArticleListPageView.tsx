@@ -9,7 +9,7 @@ import {
 import { getEditorialCategoryLabel } from "@/lib/editorial/copy";
 import { editorialArticleCategories } from "@/lib/editorial/types";
 import { languageList } from "@/lib/i18n/config";
-import type { AdminDashboardBanner } from "../workspace-data";
+import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { AdminArticleShell } from "./AdminArticleShell";
 import styles from "./article-admin.module.scss";
 

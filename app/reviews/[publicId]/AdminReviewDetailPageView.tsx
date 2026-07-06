@@ -4,7 +4,7 @@ import { FullscreenImageDialog } from "@/components/FullscreenImageDialog";
 import {
   logoutAdminAction,
   updatePublishedJourneyReviewAction,
-} from "@/app/admin/actions";
+} from "@/app/_workspace/actions";
 import { buildAdminWorkspaceHref } from "@/lib/admin/paths";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
 import { shouldBypassNextImageOptimization } from "@/lib/next-image-optimization";
@@ -18,8 +18,8 @@ import {
   type AdminReviewStatus,
 } from "@/lib/admin/reviews";
 import type { AdminSession } from "@/lib/admin/session";
-import type { AdminDashboardBanner } from "@/app/admin/workspace-data";
-import workspaceStyles from "@/app/admin/workspace.module.scss";
+import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
+import workspaceStyles from "@/app/_workspace/workspace.module.scss";
 import styles from "./review-detail.module.scss";
 
 type ReviewMutationSummary = {

@@ -42,14 +42,14 @@ describe("admin session routes", () => {
     mocks.getStoredAdminSession.mockResolvedValue(null);
 
     const { GET } = await import(
-      "@/app/admin/session/refresh/route"
+      "@/app/session/refresh/route"
     );
     const response = await GET(
-      new Request("https://localhost:3100/admin/session/refresh?next=/admin"),
+      new Request("https://localhost:3100/session/refresh?next=/"),
     );
 
     expect(response.headers.get("location")).toBe(
-      "https://admin.momentbook.app/admin/login?error=session_expired",
+      "https://admin.momentbook.app/login?error=session_expired",
     );
     expect(response.headers.get("location")).not.toContain("localhost:3100");
   });
@@ -60,16 +60,16 @@ describe("admin session routes", () => {
     mocks.clearAdminSession.mockResolvedValue(undefined);
 
     const { GET } = await import(
-      "@/app/admin/session/invalidate/route"
+      "@/app/session/invalidate/route"
     );
     const response = await GET(
       new Request(
-        "https://localhost:3100/admin/session/invalidate?next=/admin",
+        "https://localhost:3100/session/invalidate?next=/",
       ),
     );
 
     expect(response.headers.get("location")).toBe(
-      "https://admin.momentbook.app/admin/login?error=session_expired",
+      "https://admin.momentbook.app/login?error=session_expired",
     );
     expect(response.headers.get("location")).not.toContain("localhost:3100");
   });

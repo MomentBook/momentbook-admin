@@ -1,4 +1,4 @@
-import type { AdminDashboardBanner } from "../workspace-data";
+import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 
 type ResolveArticleBannerOptions = {
   error: string | null;

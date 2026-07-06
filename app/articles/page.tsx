@@ -15,7 +15,7 @@ import {
   parsePage,
   readQueryParam,
   withAdminWorkspaceSession,
-} from "../workspace-data";
+} from "@/app/_workspace/workspace-data";
 import { resolveArticleBanner } from "./article-banner";
 import { AdminArticleListPageView } from "./AdminArticleListPageView";
 

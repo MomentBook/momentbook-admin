@@ -1380,7 +1380,6 @@ async function requestPublishedJourneys(
                 : {
                     next: { revalidate: PUBLIC_JOURNEY_REVALIDATE_SECONDS },
                 };
-
         const response = await fetchPublicApi(
             `/v2/journeys/public?${params.toString()}`,
             {

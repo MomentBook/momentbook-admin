@@ -1,10 +1,10 @@
-export const ADMIN_ROOT_PATH = "/admin";
-export const ADMIN_LOGIN_PATH = "/admin/login";
-export const ADMIN_REVIEWS_PATH = "/admin/reviews";
-export const ADMIN_ARTICLES_PATH = "/admin/articles";
-export const ADMIN_SESSION_PATH = "/admin/session";
-export const ADMIN_SESSION_REFRESH_PATH = "/admin/session/refresh";
-export const ADMIN_SESSION_INVALIDATE_PATH = "/admin/session/invalidate";
+export const ADMIN_ROOT_PATH = "/";
+export const ADMIN_LOGIN_PATH = "/login";
+export const ADMIN_REVIEWS_PATH = "/reviews";
+export const ADMIN_ARTICLES_PATH = "/articles";
+export const ADMIN_SESSION_PATH = "/session";
+export const ADMIN_SESSION_REFRESH_PATH = "/session/refresh";
+export const ADMIN_SESSION_INVALIDATE_PATH = "/session/invalidate";
 export const ADMIN_DEFAULT_WORKSPACE_TAB = "overview";
 
 export type AdminWorkspaceTab = "overview" | "reviews" | "articles";
@@ -73,12 +73,22 @@ export function sanitizeAdminPath(
     return null;
   }
 
+  // Reject protocol-relative URLs to prevent open redirect attacks.
+  if (value.startsWith("//")) {
+    return null;
+  }
+
+  // Reject absolute URLs (e.g. https://evil.com) which would bypass the
+  // dummy base resolution in buildUrl.
+  try {
+    new URL(value);
+    return null;
+  } catch {
+    // Not an absolute URL — safe to resolve against the dummy base.
+  }
+
   try {
     const url = buildUrl(value);
-    if (!url.pathname.startsWith(ADMIN_ROOT_PATH)) {
-      return null;
-    }
-
     return `${url.pathname}${url.search}`;
   } catch {
     return null;

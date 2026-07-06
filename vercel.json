@@ -24,19 +24,5 @@
         }
       ]
     }
-  ],
-  "functions": {
-    "app/admin/session/route.ts": {
-      "memory": 512,
-      "maxDuration": 30
-    },
-    "app/admin/session/refresh/route.ts": {
-      "memory": 512,
-      "maxDuration": 30
-    },
-    "app/admin/session/invalidate/route.ts": {
-      "memory": 512,
-      "maxDuration": 30
-    }
-  }
+  ]
 }

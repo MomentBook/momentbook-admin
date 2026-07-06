@@ -63,7 +63,7 @@ vi.mock("@/lib/sitemap/editorial-guides", () => ({
 }));
 
 async function loadArticleActionsModule() {
-  return import("@/app/admin/articles/actions");
+  return import("@/app/articles/actions");
 }
 
 afterEach(() => {
@@ -111,7 +111,7 @@ describe("createEditorialArticleAction", () => {
     formData.set("body", "# Fresh guide");
 
     await expect(createEditorialArticleAction(formData)).rejects.toThrow(
-      "REDIRECT:/admin/articles/article-123?mutation=article_created&articleSlug=fresh-guide",
+      "REDIRECT:/articles/article-123?mutation=article_created&articleSlug=fresh-guide",
     );
 
     expect(requestWebRevalidation).toHaveBeenCalledWith({
@@ -172,7 +172,7 @@ describe("updateEditorialArticleAction", () => {
     formData.set("body", "# Fresh guide updated");
 
     await expect(updateEditorialArticleAction(formData)).rejects.toThrow(
-      "REDIRECT:/admin/articles/article-123?mutation=article_updated&articleSlug=fresh-guide",
+      "REDIRECT:/articles/article-123?mutation=article_updated&articleSlug=fresh-guide",
     );
 
     expect(updateAdminArticle).toHaveBeenCalledWith({
