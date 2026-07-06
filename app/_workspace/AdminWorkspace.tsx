@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LocalizedDate } from "@/components/LocalizedTime";
-import { AdminSidebar } from "@/app/admin/components/AdminSidebar";
+import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import {
   buildAdminArticleWorkspaceHref,
   buildAdminReviewDetailHref,

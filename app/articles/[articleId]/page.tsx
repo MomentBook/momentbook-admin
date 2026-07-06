@@ -15,7 +15,7 @@ import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import {
   readQueryParam,
   withAdminWorkspaceSession,
-} from "../../workspace-data";
+} from "@/app/_workspace/workspace-data";
 import { resolveArticleBanner } from "../article-banner";
 import {
   deleteEditorialArticleAction,

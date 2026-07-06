@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { AdminSidebar } from "@/app/admin/components/AdminSidebar";
+import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import type { AdminSession } from "@/lib/admin/session";
 import {
   buildAdminArticleWorkspaceHref,
   buildAdminWorkspaceHref,
 } from "@/lib/admin/paths";
-import workspaceStyles from "../workspace.module.scss";
+import workspaceStyles from "@/app/_workspace/workspace.module.scss";
 import styles from "./article-admin.module.scss";
 
 type AdminArticleShellProps = {

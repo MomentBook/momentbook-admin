@@ -222,6 +222,12 @@ const listPublishedGuideVariantsCached = unstable_cache(
   },
 );
 
+export async function listPublishedGuideVariants(): Promise<
+  PublishedGuideVariantEntry[]
+> {
+  return listPublishedGuideVariantsCached();
+}
+
 export async function listPublishedGuideCards(
   language: Language,
   options?: {
@@ -236,12 +242,6 @@ export async function listPublishedGuideCards(
   );
 
   return items.filter((item) => item.language === language);
-}
-
-export async function listPublishedGuideVariants(): Promise<
-  PublishedGuideVariantEntry[]
-> {
-  return listPublishedGuideVariantsCached();
 }
 
 export const getPublishedGuideDetailResult = cache(async function getPublishedGuideDetailResult(

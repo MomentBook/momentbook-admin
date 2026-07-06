@@ -16,7 +16,7 @@ import {
 import { ENV } from "@/src/configs/env.server";
 
 const ADMIN_SESSION_COOKIE_NAME = "momentbook_admin_session";
-const ADMIN_SESSION_COOKIE_PATH = "/admin";
+const ADMIN_SESSION_COOKIE_PATH = "/";
 const ACCESS_TOKEN_REFRESH_WINDOW_MS = 60_000;
 
 function isSessionCookieSecure(): boolean {

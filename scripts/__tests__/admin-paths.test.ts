@@ -10,9 +10,9 @@ describe("admin session paths", () => {
   it("builds a refresh path with a sanitized admin return target", () => {
     expect(
       buildAdminSessionRefreshHref({
-        next: "/admin?tab=reviews&page=2",
+        next: "/?tab=reviews&page=2",
       }),
-    ).toBe("/admin/session/refresh?next=%2Fadmin%3Ftab%3Dreviews%26page%3D2");
+    ).toBe("/session/refresh?next=%2F%3Ftab%3Dreviews%26page%3D2");
   });
 
   it("drops non-admin refresh targets", () => {
@@ -20,17 +20,17 @@ describe("admin session paths", () => {
       buildAdminSessionRefreshHref({
         next: "https://example.com/phish",
       }),
-    ).toBe("/admin/session/refresh");
+    ).toBe("/session/refresh");
   });
 
   it("builds an invalidate path with a whitelisted error code", () => {
     expect(
       buildAdminSessionInvalidateHref({
-        next: "/admin/reviews/public-1",
+        next: "/reviews/public-1",
         error: "admin_access_denied",
       }),
     ).toBe(
-      "/admin/session/invalidate?next=%2Fadmin%2Freviews%2Fpublic-1&error=admin_access_denied",
+      "/session/invalidate?next=%2Freviews%2Fpublic-1&error=admin_access_denied",
     );
   });
 
@@ -42,7 +42,7 @@ describe("admin session paths", () => {
         lang: " ko ",
         category: "festival",
       }),
-    ).toBe("/admin/articles?lang=ko&category=festival");
+    ).toBe("/articles?lang=ko&category=festival");
   });
 
   it("builds an article detail link with the current article workspace return target", () => {
@@ -55,7 +55,7 @@ describe("admin session paths", () => {
         category: "festival",
       }),
     ).toBe(
-      "/admin/articles/article-1?returnTo=%2Fadmin%2Farticles%3Fpage%3D3%26status%3Dpublished%26lang%3Dko%26category%3Dfestival",
+      "/articles/article-1?returnTo=%2Farticles%3Fpage%3D3%26status%3Dpublished%26lang%3Dko%26category%3Dfestival",
     );
   });
 });

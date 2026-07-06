@@ -6,7 +6,7 @@ import {
 } from "@/lib/admin/paths";
 import { resolveSupportedLanguage } from "@/lib/i18n/config";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
-import { loadAdminWorkspaceShell, readQueryParam } from "../../workspace-data";
+import { loadAdminWorkspaceShell, readQueryParam } from "@/app/_workspace/workspace-data";
 import { resolveArticleBanner } from "../article-banner";
 import { createEditorialArticleAction } from "../actions";
 import { EditorialArticleEditorPageView } from "../EditorialArticleEditorPageView";

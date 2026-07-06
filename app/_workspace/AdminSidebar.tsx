@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { logoutAdminAction } from "@/app/admin/actions";
+import { logoutAdminAction } from "@/app/_workspace/actions";
 import type { AdminWorkspaceTab } from "@/lib/admin/paths";
 import type { AdminSession } from "@/lib/admin/session";
-import styles from "@/app/admin/workspace.module.scss";
+import styles from "@/app/_workspace/workspace.module.scss";
 
 export type AdminSidebarNavigationItem = {
   tab: AdminWorkspaceTab;

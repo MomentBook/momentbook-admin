@@ -57,7 +57,7 @@ vi.mock("@/lib/sitemap/public-content", () => ({
 }));
 
 async function loadActionsModule() {
-  return import("@/app/admin/actions");
+  return import("@/app/_workspace/actions");
 }
 
 afterEach(() => {
@@ -95,12 +95,12 @@ describe("updatePublishedJourneyReviewAction", () => {
 
     const { updatePublishedJourneyReviewAction } = await loadActionsModule();
     const formData = new FormData();
-    formData.set("returnTo", "/admin/reviews/public-123");
+    formData.set("returnTo", "/reviews/public-123");
     formData.set("targetPublicId", "public-123");
     formData.set("reviewStatus", "APPROVED");
 
     await expect(updatePublishedJourneyReviewAction(formData)).rejects.toThrow(
-      "REDIRECT:/admin/reviews/public-123?targetPublicId=public-123&mutation=review_updated&reviewStatus=APPROVED",
+      "REDIRECT:/reviews/public-123?targetPublicId=public-123&mutation=review_updated&reviewStatus=APPROVED",
     );
     expect(updatePublishedJourneyReviewStatus).toHaveBeenCalledWith({
       accessToken: "admin-access-token",
@@ -152,12 +152,12 @@ describe("updatePublishedJourneyReviewAction", () => {
 
     const { updatePublishedJourneyReviewAction } = await loadActionsModule();
     const formData = new FormData();
-    formData.set("returnTo", "/admin/reviews/public-123");
+    formData.set("returnTo", "/reviews/public-123");
     formData.set("targetPublicId", "public-123");
     formData.set("reviewStatus", "APPROVED");
 
     await expect(updatePublishedJourneyReviewAction(formData)).rejects.toThrow(
-      "REDIRECT:/admin/reviews/public-123?targetPublicId=public-123&mutation=review_updated&reviewStatus=APPROVED&revalidation=failed",
+      "REDIRECT:/reviews/public-123?targetPublicId=public-123&mutation=review_updated&reviewStatus=APPROVED&revalidation=failed",
     );
   });
 });

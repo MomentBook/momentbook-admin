@@ -4,7 +4,7 @@ import type { AdminSession } from "@/lib/admin/session";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
 import { getEditorialCategoryLabel } from "@/lib/editorial/copy";
 import type { EditorialArticleRecord } from "@/lib/editorial/types";
-import type { AdminDashboardBanner } from "../workspace-data";
+import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { AdminArticleShell } from "./AdminArticleShell";
 import { EditorialArticleEditorForm } from "./EditorialArticleEditorForm";
 import styles from "./article-admin.module.scss";
