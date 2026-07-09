@@ -87,14 +87,7 @@ export default async function AdminLoginPage({
       <Card maxWidth="32rem" padding={4}>
         <VStack gap={4}>
           <VStack gap={1}>
-            <Text type="label" size="2xs" color="secondary">
-              MomentBook Admin
-            </Text>
-            <Heading level={1}>MomentBook</Heading>
-          </VStack>
-
-          <VStack gap={1}>
-            <Heading level={2}>Sign in</Heading>
+            <Heading level={1}>Sign in to MomentBook</Heading>
             <Text type="body" color="secondary">
               Use the admin account to continue.
             </Text>

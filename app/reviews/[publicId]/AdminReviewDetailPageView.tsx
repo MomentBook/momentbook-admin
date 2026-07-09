@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
 import { VStack } from "@astryxdesign/core/VStack";
@@ -10,12 +9,10 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
-import { FullscreenImageDialog } from "@/components/FullscreenImageDialog";
 import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import { updatePublishedJourneyReviewAction } from "@/app/_workspace/actions";
 import { buildAdminWorkspaceHref } from "@/lib/admin/paths";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
-import { shouldBypassNextImageOptimization } from "@/lib/next-image-optimization";
 import {
   getAdminReviewStatusLabel,
   type AdminReviewDetail,
@@ -27,7 +24,7 @@ import {
 } from "@/lib/admin/reviews";
 import type { AdminSession } from "@/lib/admin/session";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
-import styles from "./review-detail.module.scss";
+import { LightboxPhotoTile } from "./LightboxPhotoTile";
 
 type ReviewMutationSummary = {
   publicId: string;
@@ -43,6 +40,19 @@ type AdminReviewDetailPageViewProps = {
   session: AdminSession;
   targetPublicId: string | null;
 };
+
+const detailLayoutStyle = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1.7fr) minmax(18rem, 24rem)",
+  gap: "var(--spacing-3, 0.75rem)",
+  alignItems: "start",
+} as const;
+
+const photoGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(13rem, 1fr))",
+  gap: "0.75rem",
+} as const;
 
 function resolveBadgeVariant(status: AdminReviewStatus): "warning" | "success" | "error" {
   if (status === "APPROVED") return "success";
@@ -155,33 +165,16 @@ function PhotoTile({
 }) {
   const alt = buildPhotoAltText(sectionTitle, photoIndex, total);
   const label = photo.locationName || "Journey photo";
+  const triggerLabel = `Open ${sectionTitle} photo ${photoIndex} of ${total}`;
+  const sizes = "(max-width: 900px) 100vw, (max-width: 1320px) 50vw, 22rem";
 
   return (
-    <FullscreenImageDialog
-      src={photo.fullUrl}
+    <LightboxPhotoTile
+      photo={photo}
+      label={label}
       alt={alt}
-      triggerAriaLabel={`Open ${sectionTitle} photo ${photoIndex} of ${total}`}
-      dialogAriaLabel={`${sectionTitle} photo viewer`}
-      closeAriaLabel="Close photo viewer"
-      triggerClassName={styles.photoButton}
-      imageSizes="(max-width: 900px) 100vw, (max-width: 1320px) 50vw, 22rem"
-      trigger={
-        <article className={styles.photoCard}>
-          <div className={styles.photoImageWrap}>
-            <Image
-              src={photo.thumbnailUrl}
-              alt={alt}
-              fill
-              className={styles.photoImage}
-              sizes="(max-width: 900px) 100vw, (max-width: 1320px) 50vw, 22rem"
-              unoptimized={shouldBypassNextImageOptimization(photo.thumbnailUrl)}
-            />
-          </div>
-          <div className={styles.photoMeta}>
-            <span className={styles.photoLabel}>{label}</span>
-          </div>
-        </article>
-      }
+      sizes={sizes}
+      triggerLabel={triggerLabel}
     />
   );
 }
@@ -213,7 +206,7 @@ function EvidenceSectionCard({
       </HStack>
 
       {section.photos.length > 0 ? (
-        <div className={styles.photoGrid}>
+        <div style={photoGridStyle}>
           {section.photos.map((photo, photoIndex) => (
             <PhotoTile
               key={photo.key}
@@ -412,8 +405,8 @@ export function AdminReviewDetailPageView({
             pendingCount={queue.summary.pendingCount}
           />
 
-          <div className={styles.layout}>
-            <div className={styles.mainColumn}>
+          <div style={detailLayoutStyle}>
+            <VStack gap={4}>
               <JourneySummary detail={detail} backHref={backHref} />
               {detail.evidence.sections.length > 0 ? (
                 detail.evidence.sections.map((section, index) => (
@@ -427,16 +420,16 @@ export function AdminReviewDetailPageView({
               ) : (
                 <EmptyEvidenceCard detail={detail} />
               )}
-            </div>
+            </VStack>
 
-            <aside className={styles.sideColumn}>
+            <VStack gap={3}>
               <ReviewUpdatePanel
                 detail={detail}
                 reviewMutation={reviewMutation}
                 returnTo={returnTo}
                 targetPublicId={targetPublicId}
               />
-            </aside>
+            </VStack>
           </div>
         </LayoutContent>
       }
