@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import styles from "./login.module.scss";
+import { Card } from "@astryxdesign/core/Card";
+import { Center } from "@astryxdesign/core/Center";
+import { VStack } from "@astryxdesign/core/VStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { Banner } from "@astryxdesign/core/Banner";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import {
   ADMIN_ROOT_PATH,
@@ -28,45 +33,24 @@ function readQueryParam(
 function resolveLoginNotice(
   error: string | null,
   loggedOut: boolean,
-): { tone: "default" | "error" | "success"; message: string } | null {
+): { status: "error" | "success"; message: string } | null {
   if (loggedOut) {
-    return {
-      tone: "success",
-      message: "Signed out.",
-    };
+    return { status: "success", message: "Signed out." };
   }
 
   switch (error) {
     case "missing_fields":
-      return {
-        tone: "error",
-        message: "Enter email and password.",
-      };
+      return { status: "error", message: "Enter email and password." };
     case "invalid_credentials":
-      return {
-        tone: "error",
-        message: "Invalid password.",
-      };
+      return { status: "error", message: "Invalid password." };
     case "admin_only":
-      return {
-        tone: "error",
-        message: `Only ${ADMIN_ALLOWED_EMAIL} can sign in.`,
-      };
+      return { status: "error", message: `Only ${ADMIN_ALLOWED_EMAIL} can sign in.` };
     case "admin_access_denied":
-      return {
-        tone: "error",
-        message: "This account no longer has admin access.",
-      };
+      return { status: "error", message: "This account no longer has admin access." };
     case "session_expired":
-      return {
-        tone: "default",
-        message: "Session expired. Sign in again.",
-      };
+      return { status: "error", message: "Session expired. Sign in again." };
     case "service_unavailable":
-      return {
-        tone: "error",
-        message: "Service unavailable.",
-      };
+      return { status: "error", message: "Service unavailable." };
     default:
       return null;
   }
@@ -99,38 +83,36 @@ export default async function AdminLoginPage({
   );
 
   return (
-    <main className={styles.page}>
-      <section className={styles.card}>
-        <div className={styles.brand}>
-          <span className={styles.eyebrow}>MomentBook Admin</span>
-          <div className={styles.logoRow}>
-            <span className={styles.logoMark}>M</span>
-            <span className={styles.brandName}>MomentBook</span>
-          </div>
-        </div>
+    <Center height="100vh">
+      <Card maxWidth="32rem" padding={4}>
+        <VStack gap={4}>
+          <VStack gap={1}>
+            <Text type="label" size="2xs" color="secondary">
+              MomentBook Admin
+            </Text>
+            <Heading level={1}>MomentBook</Heading>
+          </VStack>
 
-        <div className={styles.heading}>
-          <h1 className={styles.title}>Sign in</h1>
-          <p className={styles.body}>Use the admin account to continue.</p>
-        </div>
+          <VStack gap={1}>
+            <Heading level={2}>Sign in</Heading>
+            <Text type="body" color="secondary">
+              Use the admin account to continue.
+            </Text>
+          </VStack>
 
-        {notice ? (
-          <p
-            className={[
-              styles.notice,
-              notice.tone === "error"
-                ? styles.noticeError
-                : notice.tone === "success"
-                  ? styles.noticeSuccess
-                  : "",
-            ].join(" ")}
-          >
-            {notice.message}
-          </p>
-        ) : null}
+          {notice ? (
+            <Banner
+              status={notice.status}
+              title={notice.message}
+            />
+          ) : null}
 
-        <AdminLoginForm nextPath={nextPath} allowedEmail={ADMIN_ALLOWED_EMAIL} />
-      </section>
-    </main>
+          <AdminLoginForm
+            nextPath={nextPath}
+            allowedEmail={ADMIN_ALLOWED_EMAIL}
+          />
+        </VStack>
+      </Card>
+    </Center>
   );
 }

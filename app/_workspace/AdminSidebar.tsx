@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { SideNav, SideNavItem, SideNavHeading } from "@astryxdesign/core/SideNav";
+import { VStack } from "@astryxdesign/core/VStack";
+import { Text } from "@astryxdesign/core/Text";
+import { Button } from "@astryxdesign/core/Button";
+import { Badge } from "@astryxdesign/core/Badge";
 import { logoutAdminAction } from "@/app/_workspace/actions";
 import type { AdminWorkspaceTab } from "@/lib/admin/paths";
 import type { AdminSession } from "@/lib/admin/session";
-import styles from "@/app/_workspace/workspace.module.scss";
 
 export type AdminSidebarNavigationItem = {
   tab: AdminWorkspaceTab;
@@ -28,44 +31,48 @@ export function AdminSidebar({
   eyebrow = "MomentBook Admin",
 }: AdminSidebarProps) {
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.brandBlock}>
-        <span className={styles.brandEyebrow}>{eyebrow}</span>
-        <h1 className={styles.brandTitle}>{title}</h1>
-      </div>
+    <SideNav
+      header={
+        <SideNavHeading
+          heading={String(title)}
+          superheading={eyebrow}
+        />
+      }
+      footer={
+        <VStack gap={2} padding={1}>
+          <VStack gap={0.5}>
+            <Text type="label" size="2xs" color="secondary">
+              Account
+            </Text>
+            <Text type="body" size="sm">
+              {session.email || session.name || "Admin"}
+            </Text>
+          </VStack>
 
-      <nav className={styles.nav} aria-label="Workspace sections">
-        {navigationItems.map((item) => (
-          <Link
-            key={item.tab}
-            href={item.href}
-            className={
-              activeTab === item.tab ? styles.navItemActive : styles.navItem
-            }
-            aria-current={activeTab === item.tab ? "page" : undefined}
-          >
-            <div className={styles.navCopy}>
-              <span className={styles.navLabel}>{item.label}</span>
-            </div>
-            {item.badge ? (
-              <span className={styles.navBadge}>{item.badge}</span>
-            ) : null}
-          </Link>
-        ))}
-      </nav>
-
-      <div className={styles.sidebarCard}>
-        <span className={styles.sidebarLabel}>Account</span>
-        <strong className={styles.sidebarValue}>
-          {session.email || session.name || "Admin"}
-        </strong>
-      </div>
-
-      <form action={logoutAdminAction}>
-        <button type="submit" className={styles.signOutButton}>
-          Sign out
-        </button>
-      </form>
-    </aside>
+          <form action={logoutAdminAction}>
+            <Button
+              type="submit"
+              variant="ghost"
+              label="Sign out"
+              size="sm"
+            />
+          </form>
+        </VStack>
+      }
+    >
+      {navigationItems.map((item) => (
+        <SideNavItem
+          key={item.tab}
+          href={item.href}
+          label={item.label}
+          isSelected={activeTab === item.tab}
+          endContent={
+            item.badge ? (
+              <Badge label={item.badge} variant="neutral" />
+            ) : undefined
+          }
+        />
+      ))}
+    </SideNav>
   );
 }
