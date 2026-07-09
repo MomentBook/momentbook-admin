@@ -1,4 +1,12 @@
 import Link from "next/link";
+import { Card } from "@astryxdesign/core/Card";
+import { VStack } from "@astryxdesign/core/VStack";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { MetadataList, MetadataListItem } from "@astryxdesign/core/MetadataList";
 import type { AdminReviewQueueData } from "@/lib/admin/reviews";
 import type { AdminSession } from "@/lib/admin/session";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
@@ -7,21 +15,12 @@ import type { EditorialArticleRecord } from "@/lib/editorial/types";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { AdminArticleShell } from "./AdminArticleShell";
 import { EditorialArticleEditorForm } from "./EditorialArticleEditorForm";
-import styles from "./article-admin.module.scss";
 
 function formatAdminDate(value: string | null | undefined): string {
-  if (!value) {
-    return "Not available";
-  }
-
+  if (!value) return "Not available";
   const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-  }).format(timestamp);
+  if (!Number.isFinite(timestamp)) return value;
+  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(timestamp);
 }
 
 type EditorialArticleEditorPageViewProps = {
@@ -52,94 +51,72 @@ export function EditorialArticleEditorPageView({
   title,
 }: EditorialArticleEditorPageViewProps) {
   const translationGroupId =
-    article?.translationGroupId ??
-    suggestedTranslationGroupId ??
-    "Assigned on create";
+    article?.translationGroupId ?? suggestedTranslationGroupId ?? "Assigned on create";
   const workspaceHref = returnTo || buildAdminArticleWorkspaceHref();
   const headerTitle = title ?? (article ? "Edit article" : "Create article");
   const submitLabel = article ? "Save article" : "Create article";
   const formId = article ? `article-editor-${article.id}` : "article-editor-new";
-  const bannerClassName =
-    banner?.tone === "error"
-      ? styles.bannerError
-      : banner?.tone === "success"
-        ? styles.bannerSuccess
-        : styles.banner;
 
   return (
-    <AdminArticleShell
-      pendingReviews={queue.summary.pendingCount}
-      session={session}
-    >
-      <div className={styles.pageStack}>
-        <section className={styles.headerCard}>
-          <div className={styles.headerTop}>
-            <div className={styles.headerCopy}>
-              <Link href={workspaceHref} className={styles.backLink}>
-                Back to articles
+    <AdminArticleShell pendingReviews={queue.summary.pendingCount} session={session}>
+      <VStack gap={4}>
+        {/* Header */}
+        <Card padding={3}>
+          <HStack gap={2} vAlign="center" hAlign="between">
+            <VStack gap={1}>
+              <Link href={workspaceHref}>
+                <Text type="body" size="sm" color="accent">Back to articles</Text>
               </Link>
-              <span className={styles.eyebrow}>Editorial admin</span>
-              <h1 className={styles.title}>{headerTitle}</h1>
-              <p className={styles.description}>
-                Markdown body is the canonical content source. The server derives
-                the summary, cover image, and reading time after save.
-              </p>
-              <p className={styles.sessionLine}>
-                Session: {session.email || session.name || "Admin"} · Pending reviews: {queue.summary.pendingCount}
-              </p>
-            </div>
+              <Text type="label" size="2xs" color="secondary">Editorial admin</Text>
+              <Heading level={1}>{headerTitle}</Heading>
+              <Text type="body" color="secondary">
+                Markdown body is the canonical content source.
+              </Text>
+            </VStack>
 
-            <div className={styles.headerActions}>
-              <button form={formId} type="submit" className={styles.button}>
-                {submitLabel}
-              </button>
-            </div>
-          </div>
-        </section>
+            <button form={formId} type="submit" style={{ border: "none", background: "none", padding: 0 }}>
+              <Button variant="primary" size="sm" label={submitLabel} />
+            </button>
+          </HStack>
+        </Card>
 
+        {/* Banner */}
         {banner ? (
-          <p className={bannerClassName} role="status" aria-live="polite">
-            {banner.message}
-          </p>
+          <Banner
+            status={
+              banner.tone === "error" ? "error"
+              : banner.tone === "success" ? "success"
+              : "info"
+            }
+            title={banner.message}
+          />
         ) : null}
 
-        <section className={styles.summaryStrip}>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Language</span>
-            <span className={styles.summaryValue}>
+        {/* Metadata summary */}
+        <Card padding={3}>
+          <MetadataList columns="multi" label={{ position: "start", width: 120 }}>
+            <MetadataListItem label="Language">
               {article?.language ?? suggestedLanguage ?? "Choose on create"}
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Slug</span>
-            <span className={styles.summaryValue}>
+            </MetadataListItem>
+            <MetadataListItem label="Slug">
               {article?.slug ?? "Optional on create"}
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Translation group</span>
-            <span className={styles.summaryValue}>{translationGroupId}</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Category</span>
-            <span className={styles.summaryValue}>
+            </MetadataListItem>
+            <MetadataListItem label="Translation group">
+              {translationGroupId}
+            </MetadataListItem>
+            <MetadataListItem label="Category">
               {article ? getEditorialCategoryLabel("en", article.category) : "Set in form"}
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Published</span>
-            <span className={styles.summaryValue}>
+            </MetadataListItem>
+            <MetadataListItem label="Published">
               {formatAdminDate(article?.publishedAt)}
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Updated</span>
-            <span className={styles.summaryValue}>
+            </MetadataListItem>
+            <MetadataListItem label="Updated">
               {formatAdminDate(article?.updatedAt)}
-            </span>
-          </div>
-        </section>
+            </MetadataListItem>
+          </MetadataList>
+        </Card>
 
+        {/* Editor form */}
         <EditorialArticleEditorForm
           article={article}
           deleteAction={deleteAction}
@@ -150,7 +127,7 @@ export function EditorialArticleEditorPageView({
           suggestedLanguage={suggestedLanguage}
           translationGroupId={article?.translationGroupId ?? suggestedTranslationGroupId ?? null}
         />
-      </div>
+      </VStack>
     </AdminArticleShell>
   );
 }
