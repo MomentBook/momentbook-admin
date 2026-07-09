@@ -1,6 +1,7 @@
 import Script from "next/script";
 import { Manrope, Playfair_Display } from "next/font/google";
 import { defaultLanguage, toLocaleTag } from "@/lib/i18n/config";
+import { AdminThemeProvider } from "@/app/AdminThemeProvider";
 
 const manrope = Manrope({
   variable: "--font-rounded",
@@ -44,7 +45,7 @@ export function AdminRootDocument({
         </Script>
       </head>
       <body className={`${manrope.variable} ${playfairDisplay.variable}`}>
-        {children}
+        <AdminThemeProvider>{children}</AdminThemeProvider>
       </body>
     </html>
   );
