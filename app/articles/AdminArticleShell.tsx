@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
+import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
 import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import type { AdminSession } from "@/lib/admin/session";
 import {
   buildAdminArticleWorkspaceHref,
   buildAdminWorkspaceHref,
 } from "@/lib/admin/paths";
-import workspaceStyles from "@/app/_workspace/workspace.module.scss";
-import styles from "./article-admin.module.scss";
 
 type AdminArticleShellProps = {
   children: ReactNode;
@@ -20,8 +19,9 @@ export function AdminArticleShell({
   session,
 }: AdminArticleShellProps) {
   return (
-    <div className={workspaceStyles.page}>
-      <div className={workspaceStyles.shell}>
+    <Layout
+      height="fill"
+      start={
         <AdminSidebar
           activeTab="articles"
           eyebrow="Editorial Admin"
@@ -49,11 +49,12 @@ export function AdminArticleShell({
           session={session}
           title="MomentBook"
         />
-
-        <section className={`${workspaceStyles.content} ${styles.workspaceContent}`}>
+      }
+      content={
+        <LayoutContent isScrollable>
           {children}
-        </section>
-      </div>
-    </div>
+        </LayoutContent>
+      }
+    />
   );
 }
