@@ -109,8 +109,14 @@ fix or docs-only edit, implement directly after inspection.
 - Preserve theme, auth, permissions, i18n overflow, state-driven transitions,
   CTA semantics, overlay/dialog behavior, and return-target sanitization.
 - Do not install dependencies, rotate secrets, modify infrastructure/production
-  config, run destructive commands, force-push, create external side effects, or
-  use subagents without explicit user request/approval.
+  config, run destructive commands, force-push, or create external side effects
+  without explicit user request/approval.
+- For every non-trivial planning or implementation task, invoke at least one
+  suitable subagent when a useful bounded task can be delegated safely.
+  Prefer independent read-only exploration, call-site/test/config analysis,
+  planning review, verification, and diff review. Delegate edits only across
+  disjoint files, with the main agent owning integration and final
+  verification.
 - Use English for code, comments, commit messages, identifiers, and technical
   artifacts. Explain to the user in Korean.
 

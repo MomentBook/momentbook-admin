@@ -100,8 +100,16 @@ Production notes:
   naming, state management, error handling, i18n, and testing patterns.
 - Preserve user/uncommitted changes. Never revert unrelated work.
 - Do not install dependencies, rotate secrets, modify infrastructure/production
-  config, run migrations, force-push, create external side effects, or use
-  subagents unless explicitly requested.
+  config, run migrations, force-push, or create external side effects unless
+  explicitly requested.
+- For every non-trivial planning or implementation task, invoke at least one
+  suitable subagent when a useful bounded task can be delegated safely.
+  Delegate independent exploration, call-site/test/config analysis, planning
+  review, verification, or diff review in parallel. Delegate implementation
+  only when file ownership is disjoint and parallel-safe.
+- The main agent owns scope, integration, and final verification. Avoid
+  duplicate work and overlapping edits. If subagents are unavailable or no
+  useful bounded task exists, continue directly and briefly report why.
 - Use `rg` for search. Use English for code, comments, commit messages,
   identifiers, and technical artifacts.
 - Explain work to the user in Korean unless they request otherwise.
