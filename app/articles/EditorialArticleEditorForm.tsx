@@ -12,7 +12,6 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Button } from "@astryxdesign/core/Button";
-import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { EditorialMarkdownContent } from "@/components/editorial/EditorialMarkdownContent";
 import { parseEditorialBody } from "@/lib/editorial/body";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
