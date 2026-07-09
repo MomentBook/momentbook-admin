@@ -1,4 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { Card } from "@astryxdesign/core/Card";
+import { VStack } from "@astryxdesign/core/VStack";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Button } from "@astryxdesign/core/Button";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { MetadataList, MetadataListItem } from "@astryxdesign/core/MetadataList";
 import { LocalizedDate } from "@/components/LocalizedTime";
 import { ADMIN_ALLOWED_EMAIL } from "@/lib/admin/config";
 import {
@@ -8,7 +19,6 @@ import {
 import type { AdminOverviewData } from "@/lib/admin/reviews";
 import type { AdminSession } from "@/lib/admin/session";
 import { defaultLanguage } from "@/lib/i18n/config";
-import styles from "./workspace.module.scss";
 
 const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
 const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
@@ -17,8 +27,6 @@ type AdminOverviewPanelProps = {
   overview: AdminOverviewData;
   session: AdminSession;
 };
-
-type OverviewMetricTone = "default" | "success" | "warning";
 
 function formatCount(value: number): string {
   return COUNT_FORMATTER.format(value);
@@ -29,195 +37,214 @@ function formatRate(value: number | null): string {
 }
 
 function readTimestamp(value: string | null): number | null {
-  if (!value) {
-    return null;
-  }
-
+  if (!value) return null;
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
 function buildPercent(count: number, total: number): number {
-  if (total <= 0) {
-    return 0;
-  }
-
+  if (total <= 0) return 0;
   return Math.round((count / total) * 100);
 }
 
+// ---------------------------------------------------------------------------
+// Metric card (KPI)
+// ---------------------------------------------------------------------------
 function OverviewMetricCard({
   label,
   value,
   hint,
-  tone = "default",
+  tone,
 }: {
   label: string;
   value: string;
   hint: string;
-  tone?: OverviewMetricTone;
+  tone?: "default" | "success" | "warning";
 }) {
   return (
-    <article
-      className={
-        tone === "success"
-          ? `${styles.metricCard} ${styles.metricSuccess}`
-          : tone === "warning"
-            ? `${styles.metricCard} ${styles.metricWarning}`
-            : styles.metricCard
-      }
-    >
-      <span className={styles.metricLabel}>{label}</span>
-      <strong className={styles.metricValue}>{value}</strong>
-      <p className={styles.metricHint}>{hint}</p>
-    </article>
+    <Card variant={tone === "warning" ? "muted" : "default"} padding={3}>
+      <VStack gap={1}>
+        <Text type="label" size="2xs" color="secondary">
+          {label}
+        </Text>
+        <Heading level={3} color="primary">
+          {value}
+        </Heading>
+        <Text type="supporting" size="xsm">
+          {hint}
+        </Text>
+      </VStack>
+    </Card>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Queue distribution card
+// ---------------------------------------------------------------------------
 function StatusDistributionCard({ overview }: { overview: AdminOverviewData }) {
   const items = [
-    {
-      key: "pending",
-      label: "Pending",
-      count: overview.pendingCount,
-      className: styles.distributionPending,
-      dotClassName: styles.distributionDotPending,
-    },
-    {
-      key: "approved",
-      label: "Approved",
-      count: overview.approvedCount,
-      className: styles.distributionApproved,
-      dotClassName: styles.distributionDotApproved,
-    },
-    {
-      key: "rejected",
-      label: "Rejected",
-      count: overview.rejectedCount,
-      className: styles.distributionRejected,
-      dotClassName: styles.distributionDotRejected,
-    },
+    { key: "pending", label: "Pending", count: overview.pendingCount, tone: "warning" as const },
+    { key: "approved", label: "Approved", count: overview.approvedCount, tone: "success" as const },
+    { key: "rejected", label: "Rejected", count: overview.rejectedCount, tone: "error" as const },
   ] as const;
 
   return (
-    <section className={styles.card}>
-      <div className={styles.cardHeader}>
-        <div className={styles.cardHeading}>
-          <span className={styles.sectionLabel}>Snapshot</span>
-          <h3 className={styles.cardTitle}>Queue distribution</h3>
-        </div>
-        <span className={styles.sectionMeta}>
+    <Card padding={3}>
+      <HStack gap={2} vAlign="center" hAlign="between">
+        <VStack gap={0.5}>
+          <Text type="label" size="2xs" color="secondary">Snapshot</Text>
+          <Heading level={3}>Queue distribution</Heading>
+        </VStack>
+        <Text type="supporting" size="xsm">
           {formatCount(overview.totalCount)} total records
-        </span>
-      </div>
+        </Text>
+      </HStack>
 
       {overview.totalCount > 0 ? (
         <>
+          {/* Distribution bar */}
           <div
-            className={styles.distributionTrack}
             role="img"
             aria-label={items
-              .map((item) => `${item.label} ${formatCount(item.count)}`)
+              .map((i) => `${i.label} ${formatCount(i.count)}`)
               .join(", ")}
+            style={{
+              display: "flex",
+              height: 8,
+              borderRadius: 4,
+              overflow: "hidden",
+              marginTop: 12,
+              marginBottom: 12,
+            }}
           >
             {items.map((item) => (
               <span
                 key={item.key}
-                className={`${styles.distributionSegment} ${item.className}`}
                 style={{
                   width: `${(item.count / overview.totalCount) * 100}%`,
+                  background:
+                    item.tone === "warning"
+                      ? "var(--color-warning)"
+                      : item.tone === "success"
+                        ? "var(--color-success)"
+                        : "var(--color-error)",
                 }}
                 aria-hidden="true"
               />
             ))}
           </div>
 
-          <div className={styles.distributionStats}>
+          {/* Distribution stats */}
+          <HStack gap={4} hAlign="between">
             {items.map((item) => (
-              <article key={item.key} className={styles.distributionStat}>
-                <div className={styles.distributionStatHeader}>
+              <VStack key={item.key} gap={0.5}>
+                <HStack gap={1} vAlign="center">
                   <span
-                    className={`${styles.distributionDot} ${item.dotClassName}`}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background:
+                        item.tone === "warning"
+                          ? "var(--color-warning)"
+                          : item.tone === "success"
+                            ? "var(--color-success)"
+                            : "var(--color-error)",
+                    }}
                     aria-hidden="true"
                   />
-                  <span className={styles.distributionLabel}>{item.label}</span>
-                </div>
-                <strong className={styles.distributionValue}>
-                  {formatCount(item.count)}
-                </strong>
-                <span className={styles.distributionMeta}>
+                  <Text type="label" size="2xs">{item.label}</Text>
+                </HStack>
+                <Heading level={4}>{formatCount(item.count)}</Heading>
+                <Text type="supporting" size="xsm">
                   {buildPercent(item.count, overview.totalCount)}%
-                </span>
-              </article>
+                </Text>
+              </VStack>
             ))}
-          </div>
+          </HStack>
         </>
       ) : (
-        <div className={styles.overviewEmptyState}>
-          <h4 className={styles.emptyTitle}>No moderation records yet</h4>
-          <p className={styles.emptyBody}>
-            This area will start showing queue distribution once published journey
-            reviews exist.
-          </p>
-        </div>
+        <EmptyState
+          title="No moderation records yet"
+          description="This area will start showing queue distribution once published journey reviews exist."
+          isCompact
+        />
       )}
 
-      <div className={styles.inlineActions}>
-        <p className={styles.chartFootnote}>
-          Overview charts summarize all moderation records, while detailed evidence
-          stays in the review queue.
-        </p>
-        <Link href={buildAdminWorkspaceHref("reviews")} className={styles.primaryButton}>
-          Open pending queue
+      <HStack gap={2} vAlign="center" hAlign="between" style={{ marginTop: 12 }}>
+        <Text type="supporting" size="xsm" color="secondary">
+          Overview charts summarize all moderation records.
+        </Text>
+        <Link href={buildAdminWorkspaceHref("reviews")}>
+          <Button variant="primary" size="sm" label="Open pending queue" />
         </Link>
-      </div>
-    </section>
+      </HStack>
+    </Card>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Recent submissions card
+// ---------------------------------------------------------------------------
 function RecentIntakeCard({ overview }: { overview: AdminOverviewData }) {
   const maxCount = Math.max(overview.recentIntake.maxCount, 1);
 
   return (
-    <section className={styles.card}>
-      <div className={styles.cardHeader}>
-        <div className={styles.cardHeading}>
-          <span className={styles.sectionLabel}>Trend</span>
-          <h3 className={styles.cardTitle}>Recent submissions</h3>
-        </div>
-        <span className={styles.sectionMeta}>Last 6 weeks</span>
-      </div>
+    <Card padding={3}>
+      <HStack gap={2} vAlign="center" hAlign="between">
+        <VStack gap={0.5}>
+          <Text type="label" size="2xs" color="secondary">Trend</Text>
+          <Heading level={3}>Recent submissions</Heading>
+        </VStack>
+        <Text type="supporting" size="xsm">Last 6 weeks</Text>
+      </HStack>
 
-      <div className={styles.intakeChart}>
+      <HStack
+        gap={3}
+        hAlign="center"
+        style={{ marginTop: 16, minHeight: 120 }}
+      >
         {overview.recentIntake.weeks.map((week) => (
-          <div
+          <VStack
             key={week.key}
-            className={styles.intakeBarItem}
+            gap={0.5}
+            vAlign="end"
+            hAlign="center"
+            style={{ flex: 1 }}
             role="img"
             aria-label={`${week.label}: ${formatCount(week.count)} submissions`}
           >
-            <strong className={styles.intakeValue}>{formatCount(week.count)}</strong>
-            <div className={styles.intakeBarTrack} aria-hidden="true">
-              <span
-                className={styles.intakeBar}
-                style={{
-                  height:
-                    week.count > 0 ? `${Math.max((week.count / maxCount) * 100, 12)}%` : "0%",
-                }}
-              />
-            </div>
-            <span className={styles.intakeLabel}>{week.label}</span>
-          </div>
+            <Text type="body" size="xsm" weight="semibold">
+              {formatCount(week.count)}
+            </Text>
+            <div
+              style={{
+                width: "100%",
+                maxWidth: 32,
+                height: Math.max((week.count / maxCount) * 100, 12),
+                minHeight: week.count > 0 ? 4 : 0,
+                background: "var(--color-accent)",
+                borderRadius: 4,
+              }}
+              aria-hidden="true"
+            />
+            <Text type="label" size="2xs" color="secondary">
+              {week.label}
+            </Text>
+          </VStack>
         ))}
-      </div>
+      </HStack>
 
-      <p className={styles.chartFootnote}>
-        Counts use journey submission time (`createdAt`) because the current admin
-        contract does not expose a review-decision timestamp.
-      </p>
-    </section>
+      <Text type="supporting" size="xsm" color="secondary" style={{ marginTop: 8 }}>
+        Counts use journey submission time (createdAt).
+      </Text>
+    </Card>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Admin context card
+// ---------------------------------------------------------------------------
 function OperationsCard({
   overview,
   session,
@@ -229,123 +256,118 @@ function OperationsCard({
   const oldestPendingAt = readTimestamp(overview.oldestPendingAt);
 
   return (
-    <section className={styles.card}>
-      <div className={styles.cardHeader}>
-        <div className={styles.cardHeading}>
-          <span className={styles.sectionLabel}>Operations</span>
-          <h3 className={styles.cardTitle}>Admin context</h3>
-        </div>
-      </div>
+    <Card padding={3}>
+      <VStack gap={0.5}>
+        <Text type="label" size="2xs" color="secondary">Operations</Text>
+        <Heading level={3}>Admin context</Heading>
+      </VStack>
 
-      <dl className={styles.overviewMetaList}>
-        <div className={styles.overviewMetaItem}>
-          <dt>Signed in</dt>
-          <dd>{session.email || session.name || "Admin"}</dd>
-        </div>
-        <div className={styles.overviewMetaItem}>
-          <dt>Allowed account</dt>
-          <dd>{ADMIN_ALLOWED_EMAIL}</dd>
-        </div>
-        <div className={styles.overviewMetaItem}>
-          <dt>Oldest pending</dt>
-          <dd>
-            {oldestPendingAt ? (
-              <LocalizedDate
-                lang={ADMIN_DISPLAY_LANGUAGE}
-                timestamp={oldestPendingAt}
-              />
-            ) : (
-              "None"
-            )}
-          </dd>
-        </div>
-        <div className={styles.overviewMetaItem}>
-          <dt>Latest submission</dt>
-          <dd>
-            {latestSubmissionAt ? (
-              <LocalizedDate
-                lang={ADMIN_DISPLAY_LANGUAGE}
-                timestamp={latestSubmissionAt}
-              />
-            ) : (
-              "None"
-            )}
-          </dd>
-        </div>
-      </dl>
+      <MetadataList columns="single" label={{ position: "start", width: 140 }}>
+        <MetadataListItem label="Signed in">
+          {session.email || session.name || "Admin"}
+        </MetadataListItem>
+        <MetadataListItem label="Allowed account">
+          {ADMIN_ALLOWED_EMAIL}
+        </MetadataListItem>
+        <MetadataListItem label="Oldest pending">
+          {oldestPendingAt ? (
+            <LocalizedDate lang={ADMIN_DISPLAY_LANGUAGE} timestamp={oldestPendingAt} />
+          ) : (
+            "None"
+          )}
+        </MetadataListItem>
+        <MetadataListItem label="Latest submission">
+          {latestSubmissionAt ? (
+            <LocalizedDate lang={ADMIN_DISPLAY_LANGUAGE} timestamp={latestSubmissionAt} />
+          ) : (
+            "None"
+          )}
+        </MetadataListItem>
+      </MetadataList>
 
-      <p className={styles.chartFootnote}>
-        Based on {formatCount(overview.totalCount)} moderation records currently
-        visible to this admin surface.
-      </p>
-    </section>
+      <Text type="supporting" size="xsm" color="secondary" style={{ marginTop: 8 }}>
+        Based on {formatCount(overview.totalCount)} moderation records.
+      </Text>
+    </Card>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Quick actions card
+// ---------------------------------------------------------------------------
 function QuickActionsCard() {
   return (
-    <section className={styles.card}>
-      <div className={styles.cardHeader}>
-        <div className={styles.cardHeading}>
-          <span className={styles.sectionLabel}>Actions</span>
-          <h3 className={styles.cardTitle}>Quick actions</h3>
-        </div>
-      </div>
+    <Card padding={3}>
+      <VStack gap={0.5}>
+        <Text type="label" size="2xs" color="secondary">Actions</Text>
+        <Heading level={3}>Quick actions</Heading>
+      </VStack>
 
-      <div className={styles.quickActionList}>
-        <Link href={buildAdminWorkspaceHref("reviews")} className={styles.primaryButton}>
-          Go to pending queue
+      <VStack gap={2} style={{ marginTop: 12 }}>
+        <Link href={buildAdminWorkspaceHref("reviews")}>
+          <Button variant="primary" size="sm" label="Go to pending queue" />
         </Link>
-        <Link
-          href={buildAdminWorkspaceHref("reviews", { status: "all" })}
-          className={styles.secondaryButton}
-        >
-          View all review statuses
+        <Link href={buildAdminWorkspaceHref("reviews", { status: "all" })}>
+          <Button variant="secondary" size="sm" label="View all review statuses" />
         </Link>
-        <Link href={buildAdminArticleWorkspaceHref()} className={styles.secondaryButton}>
-          Manage articles
+        <Link href={buildAdminArticleWorkspaceHref()}>
+          <Button variant="secondary" size="sm" label="Manage articles" />
         </Link>
-      </div>
-    </section>
+      </VStack>
+    </Card>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Panel
+// ---------------------------------------------------------------------------
 export function AdminOverviewPanel({
   overview,
   session,
 }: AdminOverviewPanelProps) {
   return (
-    <div className={styles.sectionStack}>
-      <section className={styles.kpiGrid}>
-        <OverviewMetricCard
-          label="Pending now"
-          value={formatCount(overview.pendingCount)}
-          hint="Items waiting for a review decision"
-          tone="warning"
-        />
-        <OverviewMetricCard
-          label="Approval rate"
-          value={formatRate(overview.approvalRate)}
-          hint={`Approved out of ${formatCount(overview.reviewedCount)} completed reviews`}
-          tone="success"
-        />
-        <OverviewMetricCard
-          label="Total reviewed"
-          value={formatCount(overview.reviewedCount)}
-          hint="Approved and rejected decisions combined"
-        />
-      </section>
+    <VStack gap={3}>
+      {/* KPI row */}
+      <HStack gap={3}>
+        <div style={{ flex: 1 }}>
+          <OverviewMetricCard
+            label="Pending now"
+            value={formatCount(overview.pendingCount)}
+            hint="Items waiting for a review decision"
+            tone="warning"
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <OverviewMetricCard
+            label="Approval rate"
+            value={formatRate(overview.approvalRate)}
+            hint={`Approved out of ${formatCount(overview.reviewedCount)} completed reviews`}
+            tone="success"
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <OverviewMetricCard
+            label="Total reviewed"
+            value={formatCount(overview.reviewedCount)}
+            hint="Approved and rejected decisions combined"
+          />
+        </div>
+      </HStack>
 
-      <section className={styles.overviewPrimaryGrid}>
-        <StatusDistributionCard overview={overview} />
+      {/* Primary grid: distribution + side stack */}
+      <HStack gap={3} vAlign="start">
+        <div style={{ flex: 2 }}>
+          <StatusDistributionCard overview={overview} />
+        </div>
 
-        <div className={styles.overviewSideStack}>
+        <VStack gap={3} style={{ flex: 1, minWidth: 260 }}>
           <OperationsCard overview={overview} session={session} />
           <QuickActionsCard />
-        </div>
-      </section>
+        </VStack>
+      </HStack>
 
+      {/* Recent submissions chart */}
       <RecentIntakeCard overview={overview} />
-    </div>
+    </VStack>
   );
 }

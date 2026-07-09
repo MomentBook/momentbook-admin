@@ -1,4 +1,14 @@
 import Link from "next/link";
+import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
+import { VStack } from "@astryxdesign/core/VStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Table, TableCell, TableHeaderCell, TableRow } from "@astryxdesign/core/Table";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { LocalizedDate } from "@/components/LocalizedTime";
 import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import {
@@ -30,16 +40,10 @@ type AdminWorkspaceProps = {
   session: AdminSession;
 };
 
-function buildStatusClassName(status: AdminReviewStatus): string {
-  if (status === "APPROVED") {
-    return `${styles.statusChip} ${styles.statusApproved}`;
-  }
-
-  if (status === "REJECTED") {
-    return `${styles.statusChip} ${styles.statusRejected}`;
-  }
-
-  return `${styles.statusChip} ${styles.statusPending}`;
+function resolveBadgeVariant(status: AdminReviewStatus): "warning" | "success" | "error" {
+  if (status === "APPROVED") return "success";
+  if (status === "REJECTED") return "error";
+  return "warning";
 }
 
 function buildReviewFilterHref(status: AdminReviewQueueStatus): string {
@@ -90,31 +94,24 @@ function ContentHeader({
   title: string;
 }) {
   return (
-    <header className={styles.contentHeader}>
-      <div className={styles.headerCopy}>
-        <div className={styles.headerTitleRow}>
-          <h2 className={styles.contentTitle}>{title}</h2>
-          <span className={styles.pendingBadge}>{pendingCount} pending</span>
-        </div>
-        <p className={styles.headerDescription}>{description}</p>
-      </div>
+    <VStack gap={2}>
+      <VStack gap={1}>
+        <Heading level={2}>{title}</Heading>
+        <Text type="body" color="secondary">{description}</Text>
+      </VStack>
+
+      <Badge
+        label={`${pendingCount} pending`}
+        variant={pendingCount > 0 ? "warning" : "neutral"}
+      />
 
       {banner ? (
-        <p
-          className={
-            banner.tone === "error"
-              ? styles.bannerError
-              : banner.tone === "success"
-                ? styles.bannerSuccess
-                : styles.banner
-          }
-          role="status"
-          aria-live="polite"
-        >
-          {banner.message}
-        </p>
+        <Banner
+          status={banner.tone === "error" ? "error" : banner.tone === "success" ? "success" : "info"}
+          title={banner.message}
+        />
       ) : null}
-    </header>
+    </VStack>
   );
 }
 
@@ -124,15 +121,18 @@ function ReviewTablePanel({
   queue: AdminReviewQueueData;
 }) {
   return (
-    <section className={styles.card}>
-      <div className={styles.cardHeader}>
-        <div className={styles.cardHeading}>
-          <h3 className={styles.cardTitle}>Reviews</h3>
-        </div>
-        <span className={styles.sectionMeta}>{queue.total} items</span>
-      </div>
+    <Card padding={3}>
+      <VStack gap={0.5}>
+        <Text type="label" size="2xs" color="secondary">Queue</Text>
+        <Heading level={3}>Reviews</Heading>
+      </VStack>
 
-      <div className={styles.filterRow} aria-label="Queue status filters">
+      <Text type="supporting" size="xsm" color="secondary" style={{ marginTop: 4 }}>
+        {queue.total} items
+      </Text>
+
+      {/* Filter chips */}
+      <div style={{ display: "flex", gap: 8, marginTop: 12, marginBottom: 12 }}>
         {(
           [
             ["pending", "Pending"],
@@ -141,97 +141,87 @@ function ReviewTablePanel({
             ["all", "All"],
           ] as const
         ).map(([value, label]) => (
-          <Link
-            key={value}
-            href={buildReviewFilterHref(value)}
-            className={
-              queue.status === value ? styles.filterChipActive : styles.filterChip
-            }
-          >
-            {label}
+          <Link key={value} href={buildReviewFilterHref(value)}>
+            <Badge
+              label={label}
+              variant={queue.status === value ? "info" : "neutral"}
+            />
           </Link>
         ))}
       </div>
 
       {queue.items.length > 0 ? (
         <>
-          <div className={styles.tableScroll}>
-            <table className={styles.queueTable}>
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Journey</th>
-                  <th>User ID</th>
-                  <th>Public ID</th>
-                  <th>Visibility</th>
-                  <th>Photos</th>
-                  <th>Created</th>
-                  <th>Published</th>
-                </tr>
-              </thead>
-              <tbody>
-                {queue.items.map((item) => (
-                  <tr key={item.publicId} className={styles.queueTableRow}>
-                    <td>
-                      <span className={buildStatusClassName(item.review.status)}>
-                        {getAdminReviewStatusLabel(item.review.status)}
-                      </span>
-                    </td>
-                    <td>
-                      <Link
-                        href={buildReviewDetailTableHref(item.publicId, {
-                          page: queue.page,
-                          status: queue.status,
-                        })}
-                        className={styles.tablePrimaryLink}
-                      >
-                        {item.title || "Untitled journey"}
-                      </Link>
-                    </td>
-                    <td className={styles.tableMono}>{item.userId}</td>
-                    <td className={styles.tableMono}>{item.publicId}</td>
-                    <td>{item.visibility}</td>
-                    <td>{item.photoCount}</td>
-                    <td>
-                      <LocalizedDate
-                        lang={ADMIN_DISPLAY_LANGUAGE}
-                        timestamp={Date.parse(item.createdAt)}
-                      />
-                    </td>
-                    <td>
-                      {item.publishedAt ? (
-                        <LocalizedDate
-                          lang={ADMIN_DISPLAY_LANGUAGE}
-                          timestamp={Date.parse(item.publishedAt)}
-                        />
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell>Journey</TableHeaderCell>
+            <TableHeaderCell>User ID</TableHeaderCell>
+            <TableHeaderCell>Public ID</TableHeaderCell>
+            <TableHeaderCell>Visibility</TableHeaderCell>
+            <TableHeaderCell>Photos</TableHeaderCell>
+            <TableHeaderCell>Created</TableHeaderCell>
+            <TableHeaderCell>Published</TableHeaderCell>
+            {queue.items.map((item) => (
+              <TableRow key={item.publicId}>
+                <TableCell>
+                  <Badge
+                    label={getAdminReviewStatusLabel(item.review.status)}
+                    variant={resolveBadgeVariant(item.review.status)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={buildReviewDetailTableHref(item.publicId, {
+                      page: queue.page,
+                      status: queue.status,
+                    })}
+                  >
+                    {item.title || "Untitled journey"}
+                  </Link>
+                </TableCell>
+                <TableCell>{item.userId}</TableCell>
+                <TableCell>{item.publicId}</TableCell>
+                <TableCell>{item.visibility}</TableCell>
+                <TableCell>{item.photoCount}</TableCell>
+                <TableCell>
+                  <LocalizedDate
+                    lang={ADMIN_DISPLAY_LANGUAGE}
+                    timestamp={Date.parse(item.createdAt)}
+                  />
+                </TableCell>
+                <TableCell>
+                  {item.publishedAt ? (
+                    <LocalizedDate
+                      lang={ADMIN_DISPLAY_LANGUAGE}
+                      timestamp={Date.parse(item.publishedAt)}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </Table>
 
           {queue.pages > 1 ? (
-            <div className={styles.pagination}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, justifyContent: "space-between" }}>
               <Link
                 href={buildAdminWorkspaceHref("reviews", {
                   page:
                     queue.page > 1 ? String(Math.max(1, queue.page - 1)) : null,
                   status: queue.status === "pending" ? null : queue.status,
                 })}
-                aria-disabled={queue.page <= 1}
-                className={
-                  queue.page <= 1 ? styles.paginationDisabled : styles.paginationLink
-                }
               >
-                Previous
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  label="Previous"
+                  isDisabled={queue.page <= 1}
+                />
               </Link>
-              <span className={styles.sectionMeta}>
+              <Text type="supporting" size="xsm">
                 Page {queue.page} of {queue.pages}
-              </span>
+              </Text>
               <Link
                 href={buildAdminWorkspaceHref("reviews", {
                   page:
@@ -240,35 +230,32 @@ function ReviewTablePanel({
                       : String(queue.pages),
                   status: queue.status === "pending" ? null : queue.status,
                 })}
-                aria-disabled={queue.page >= queue.pages}
-                className={
-                  queue.page >= queue.pages
-                    ? styles.paginationDisabled
-                    : styles.paginationLink
-                }
               >
-                Next
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  label="Next"
+                  isDisabled={queue.page >= queue.pages}
+                />
               </Link>
             </div>
           ) : null}
         </>
       ) : (
-        <div className={styles.emptyState}>
-          <h4 className={styles.emptyTitle}>No records in this filter</h4>
-          <p className={styles.emptyBody}>
-            Switch the filter or return to pending.
-          </p>
-          {queue.status !== "pending" ? (
-            <Link
-              href={buildAdminWorkspaceHref("reviews")}
-              className={styles.secondaryButton}
-            >
-              Show pending
-            </Link>
-          ) : null}
-        </div>
+        <EmptyState
+          title="No records in this filter"
+          description="Switch the filter or return to pending."
+          isCompact
+          actions={
+            queue.status !== "pending" ? (
+              <Link href={buildAdminWorkspaceHref("reviews")}>
+                <Button variant="primary" size="sm" label="Show pending" />
+              </Link>
+            ) : undefined
+          }
+        />
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -311,15 +298,17 @@ export function AdminWorkspace({
   ];
 
   return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
+    <Layout
+      height="fill"
+      start={
         <AdminSidebar
           activeTab={activeTab}
           navigationItems={navigationItems}
           session={session}
         />
-
-        <section className={styles.content}>
+      }
+      content={
+        <LayoutContent isScrollable>
           <ContentHeader
             banner={banner}
             description={getActiveTabDescription(activeTab)}
@@ -332,8 +321,8 @@ export function AdminWorkspace({
           ) : (
             <AdminOverviewPanel overview={overview} session={session} />
           )}
-        </section>
-      </div>
-    </main>
+        </LayoutContent>
+      }
+    />
   );
 }

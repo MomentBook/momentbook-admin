@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
 import { FullscreenImageDialog } from "@/components/FullscreenImageDialog";
-import { AdminSidebar, type AdminSidebarNavigationItem } from "@/app/_workspace/AdminSidebar";
+import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import { updatePublishedJourneyReviewAction } from "@/app/_workspace/actions";
 import { buildAdminWorkspaceHref } from "@/lib/admin/paths";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
@@ -374,8 +375,9 @@ export function AdminReviewDetailPageView({
   });
 
   return (
-    <main className={workspaceStyles.page}>
-      <div className={workspaceStyles.shell}>
+    <Layout
+      height="fill"
+      start={
         <AdminSidebar
           activeTab="reviews"
           navigationItems={[
@@ -404,8 +406,9 @@ export function AdminReviewDetailPageView({
           ]}
           session={session}
         />
-
-        <section className={workspaceStyles.content}>
+      }
+      content={
+        <LayoutContent isScrollable>
           <PageHeader
             banner={banner}
             pendingCount={queue.summary.pendingCount}
@@ -437,8 +440,8 @@ export function AdminReviewDetailPageView({
               />
             </aside>
           </div>
-        </section>
-      </div>
-    </main>
+        </LayoutContent>
+      }
+    />
   );
 }
