@@ -1,28 +1,31 @@
-/* eslint-disable @next/next/no-img-element -- admin article cover images are arbitrary remote URLs without stable optimization contracts */
-
 import Link from "next/link";
-import { buildAdminArticleDetailHref, buildAdminArticleNewHref, buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
-import type { AdminSession } from "@/lib/admin/session";
 import {
-  type AdminEditorialArticleDashboardData,
-} from "@/lib/editorial/admin";
+  buildAdminArticleDetailHref,
+  buildAdminArticleNewHref,
+  buildAdminArticleWorkspaceHref,
+} from "@/lib/admin/paths";
+import type { AdminSession } from "@/lib/admin/session";
+import { type AdminEditorialArticleDashboardData } from "@/lib/editorial/admin";
 import { getEditorialCategoryLabel } from "@/lib/editorial/copy";
 import { editorialArticleCategories } from "@/lib/editorial/types";
 import { languageList } from "@/lib/i18n/config";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { AdminArticleShell } from "./AdminArticleShell";
-import styles from "./article-admin.module.scss";
+import { VStack } from "@astryxdesign/core/VStack";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Table, TableCell, TableHeaderCell, TableRow } from "@astryxdesign/core/Table";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 
 function formatAdminDate(value: string): string {
   const timestamp = Date.parse(value);
-
-  if (!Number.isFinite(timestamp)) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-  }).format(timestamp);
+  if (!Number.isFinite(timestamp)) return value;
+  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(timestamp);
 }
 
 type AdminArticleListPageViewProps = {
@@ -43,87 +46,53 @@ export function AdminArticleListPageView({
     lang: dashboard.language,
     category: dashboard.category,
   });
-  const bannerClassName =
-    banner?.tone === "error"
-      ? styles.bannerError
-      : banner?.tone === "success"
-        ? styles.bannerSuccess
-        : styles.banner;
-  const activeLanguageLabel = dashboard.language
-    ? dashboard.language.toUpperCase()
-    : "All languages";
-  const activeCategoryLabel = dashboard.category
-    ? getEditorialCategoryLabel("en", dashboard.category)
-    : "All categories";
 
   return (
     <AdminArticleShell pendingReviews={pendingReviews} session={session}>
-      <div className={styles.pageStack}>
-        <section className={styles.headerCard}>
-          <div className={styles.headerTop}>
-            <div className={styles.headerCopy}>
-              <span className={styles.eyebrow}>Editorial admin</span>
-              <h1 className={styles.title}>Articles</h1>
-              <p className={styles.description}>
-                Published-only guide records. Summary, cover image, and reading
-                time are derived from the markdown body on the server.
-              </p>
-              <p className={styles.sessionLine}>
-                Session: {session.email || session.name || "Admin"} · {dashboard.total} records
-              </p>
-            </div>
+      <VStack gap={4}>
+        {/* Header */}
+        <Card padding={3}>
+          <HStack gap={2} vAlign="center" hAlign="between">
+            <VStack gap={1}>
+              <Text type="label" size="2xs" color="secondary">Editorial admin</Text>
+              <Heading level={1}>Articles</Heading>
+              <Text type="body" color="secondary">
+                {dashboard.total} published records
+              </Text>
+            </VStack>
 
-            <div className={styles.headerActions}>
-              <Link href={buildAdminArticleNewHref()} className={styles.button}>
-                New article
-              </Link>
-            </div>
-          </div>
-        </section>
+            <Link href={buildAdminArticleNewHref()}>
+              <Button variant="primary" size="sm" label="New article" />
+            </Link>
+          </HStack>
+        </Card>
 
+        {/* Banner */}
         {banner ? (
-          <p className={bannerClassName} role="status" aria-live="polite">
-            {banner.message}
-          </p>
+          <Banner
+            status={
+              banner.tone === "error" ? "error"
+              : banner.tone === "success" ? "success"
+              : "info"
+            }
+            title={banner.message}
+          />
         ) : null}
 
-        <section className={styles.summaryStrip}>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Current view</span>
-            <span className={styles.summaryValue}>
-              {activeLanguageLabel} · {activeCategoryLabel}
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Pagination</span>
-            <span className={styles.summaryValue}>
-              Page {dashboard.page} of {Math.max(1, dashboard.pages)}
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Model</span>
-            <span className={styles.summaryValue}>Published-only markdown article</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Derived fields</span>
-            <span className={styles.summaryValue}>Summary, cover image, reading time</span>
-          </div>
-        </section>
-
-        <section className={styles.filterSection}>
-          <div className={styles.filterRow}>
-            <div className={styles.filterGroup}>
-              <span className={styles.filterLabel}>Language</span>
-              <div className={styles.filterChips}>
+        {/* Filters */}
+        <Card padding={3}>
+          <VStack gap={2}>
+            {/* Language filter */}
+            <VStack gap={1}>
+              <Text type="label" size="2xs" color="secondary">Language</Text>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 <Link
-                  href={buildAdminArticleWorkspaceHref({
-                    category: dashboard.category,
-                  })}
-                  className={
-                    dashboard.language ? styles.filterChip : styles.filterChipActive
-                  }
+                  href={buildAdminArticleWorkspaceHref({ category: dashboard.category })}
                 >
-                  All
+                  <Badge
+                    label="All"
+                    variant={!dashboard.language ? "info" : "neutral"}
+                  />
                 </Link>
                 {languageList.map((language) => (
                   <Link
@@ -133,30 +102,27 @@ export function AdminArticleListPageView({
                       lang: language,
                       category: dashboard.category,
                     })}
-                    className={
-                      dashboard.language === language
-                        ? styles.filterChipActive
-                        : styles.filterChip
-                    }
                   >
-                    {language.toUpperCase()}
+                    <Badge
+                      label={language.toUpperCase()}
+                      variant={dashboard.language === language ? "info" : "neutral"}
+                    />
                   </Link>
                 ))}
               </div>
-            </div>
+            </VStack>
 
-            <div className={styles.filterGroup}>
-              <span className={styles.filterLabel}>Category</span>
-              <div className={styles.filterChips}>
+            {/* Category filter */}
+            <VStack gap={1}>
+              <Text type="label" size="2xs" color="secondary">Category</Text>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 <Link
-                  href={buildAdminArticleWorkspaceHref({
-                    lang: dashboard.language,
-                  })}
-                  className={
-                    dashboard.category ? styles.filterChip : styles.filterChipActive
-                  }
+                  href={buildAdminArticleWorkspaceHref({ lang: dashboard.language })}
                 >
-                  All
+                  <Badge
+                    label="All"
+                    variant={!dashboard.category ? "info" : "neutral"}
+                  />
                 </Link>
                 {editorialArticleCategories.map((category) => (
                   <Link
@@ -166,142 +132,109 @@ export function AdminArticleListPageView({
                       lang: dashboard.language,
                       category,
                     })}
-                    className={
-                      dashboard.category === category
-                        ? styles.filterChipActive
-                        : styles.filterChip
-                    }
                   >
-                    {getEditorialCategoryLabel("en", category)}
+                    <Badge
+                      label={getEditorialCategoryLabel("en", category)}
+                      variant={dashboard.category === category ? "info" : "neutral"}
+                    />
                   </Link>
                 ))}
               </div>
-            </div>
-          </div>
-        </section>
+            </VStack>
+          </VStack>
+        </Card>
 
+        {/* Article table or empty state */}
         {dashboard.items.length === 0 ? (
-          <section className={styles.emptyState}>
-            <h2 className={styles.emptyTitle}>No articles match the current filters.</h2>
-            <p className={styles.emptyBody}>
-              Widen the language or category filters, or create a new article.
-            </p>
-          </section>
+          <Card padding={3}>
+            <EmptyState
+              title="No articles match the current filters."
+              description="Widen the language or category filters, or create a new article."
+              isCompact
+            />
+          </Card>
         ) : (
-          <>
-            <div className={styles.listHeader}>
-              <h2 className={styles.listTitle}>Editorial archive</h2>
-              <span className={styles.listMeta}>{dashboard.total} published records</span>
-            </div>
-
-            <ol className={styles.articleList}>
-              {dashboard.items.map((item) => (
-                <li key={item.id} className={styles.articleCard}>
-                  <Link
-                    href={buildAdminArticleDetailHref(item.id, {
-                      returnTo: currentWorkspaceHref,
-                    })}
-                    className={styles.articleCardLink}
-                  >
-                    <div className={styles.articleCover}>
-                      {item.coverImage ? (
-                        <img
-                          alt={item.coverImage.alt}
-                          className={styles.articleCoverImage}
-                          src={item.coverImage.url}
-                        />
-                      ) : (
-                        <div className={styles.articleCoverEmpty}>No derived cover image</div>
-                      )}
-                    </div>
-
-                    <div className={styles.articleBody}>
-                      <div className={styles.articleMetaGroup}>
-                        <span className={styles.metaChip}>{item.language.toUpperCase()}</span>
-                        <span className={styles.metaChip}>
-                          {getEditorialCategoryLabel("en", item.category)}
-                        </span>
-                      </div>
-
-                      <h3 className={styles.articleTitle}>{item.title}</h3>
-                      <span className={styles.routeText}>
+          <Card padding={0}>
+            <div style={{ overflowX: "auto" }}>
+              <Table>
+                <TableHeaderCell>Title</TableHeaderCell>
+                <TableHeaderCell>Language</TableHeaderCell>
+                <TableHeaderCell>Category</TableHeaderCell>
+                <TableHeaderCell>Route</TableHeaderCell>
+                <TableHeaderCell>Reading time</TableHeaderCell>
+                <TableHeaderCell>Published</TableHeaderCell>
+                {dashboard.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <Link
+                        href={buildAdminArticleDetailHref(item.id, {
+                          returnTo: currentWorkspaceHref,
+                        })}
+                      >
+                        {item.title}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Badge label={item.language.toUpperCase()} variant="neutral" />
+                    </TableCell>
+                    <TableCell>
+                      {getEditorialCategoryLabel("en", item.category)}
+                    </TableCell>
+                    <TableCell>
+                      <Text type="body" size="xsm" color="secondary">
                         /{item.language}/guides/{item.slug}
-                      </span>
-                      <p className={styles.articleSummary}>{item.summary}</p>
-                    </div>
-
-                    <div className={styles.articleUtility}>
-                      <div className={styles.articleUtilityTop}>
-                        <span className={styles.utilityReadingTime}>
-                          {item.readingMinutes} min
-                        </span>
-                        <span className={styles.statusChip}>
-                          {item.coverImage ? "Cover derived" : "No cover"}
-                        </span>
-                      </div>
-
-                      <dl className={styles.utilityMetaList}>
-                        <div className={styles.utilityMetaItem}>
-                          <dt className={styles.detailLabel}>Author</dt>
-                          <dd className={styles.detailValue}>{item.authorName}</dd>
-                        </div>
-                        <div className={styles.utilityMetaItem}>
-                          <dt className={styles.detailLabel}>Published</dt>
-                          <dd className={styles.detailValue}>
-                            {formatAdminDate(item.publishedAt)}
-                          </dd>
-                        </div>
-                        <div className={styles.utilityMetaItem}>
-                          <dt className={styles.detailLabel}>Updated</dt>
-                          <dd className={styles.detailValue}>
-                            {formatAdminDate(item.updatedAt)}
-                          </dd>
-                        </div>
-                      </dl>
-
-                      <span className={styles.editAffordance}>Open editor</span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-
-            {dashboard.pages > 1 ? (
-              <div className={styles.pagination}>
-                <Link
-                  href={buildAdminArticleWorkspaceHref({
-                    page: Math.max(1, dashboard.page - 1),
-                    lang: dashboard.language,
-                    category: dashboard.category,
-                  })}
-                  className={
-                    dashboard.page <= 1 ? styles.paginationDisabled : styles.paginationLink
-                  }
-                >
-                  Previous
-                </Link>
-                <span className={styles.paginationStatus}>
-                  Page {dashboard.page} of {dashboard.pages}
-                </span>
-                <Link
-                  href={buildAdminArticleWorkspaceHref({
-                    page: Math.min(dashboard.pages, dashboard.page + 1),
-                    lang: dashboard.language,
-                    category: dashboard.category,
-                  })}
-                  className={
-                    dashboard.page >= dashboard.pages
-                      ? styles.paginationDisabled
-                      : styles.paginationLink
-                  }
-                >
-                  Next
-                </Link>
-              </div>
-            ) : null}
-          </>
+                      </Text>
+                    </TableCell>
+                    <TableCell>
+                      {item.readingMinutes} min
+                    </TableCell>
+                    <TableCell>
+                      {formatAdminDate(item.publishedAt)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </Table>
+            </div>
+          </Card>
         )}
-      </div>
+
+        {/* Pagination */}
+        {dashboard.pages > 1 ? (
+          <HStack gap={2} hAlign="between" vAlign="center">
+            <Link
+              href={buildAdminArticleWorkspaceHref({
+                page: Math.max(1, dashboard.page - 1),
+                lang: dashboard.language,
+                category: dashboard.category,
+              })}
+            >
+              <Button
+                variant="secondary"
+                size="sm"
+                label="Previous"
+                isDisabled={dashboard.page <= 1}
+              />
+            </Link>
+            <Text type="supporting" size="xsm">
+              Page {dashboard.page} of {dashboard.pages}
+            </Text>
+            <Link
+              href={buildAdminArticleWorkspaceHref({
+                page: Math.min(dashboard.pages, dashboard.page + 1),
+                lang: dashboard.language,
+                category: dashboard.category,
+              })}
+            >
+              <Button
+                variant="secondary"
+                size="sm"
+                label="Next"
+                isDisabled={dashboard.page >= dashboard.pages}
+              />
+            </Link>
+          </HStack>
+        ) : null}
+      </VStack>
     </AdminArticleShell>
   );
 }
