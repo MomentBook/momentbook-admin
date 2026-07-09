@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import styles from "./login.module.scss";
+import { FormLayout } from "@astryxdesign/core/FormLayout";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { Button } from "@astryxdesign/core/Button";
+import { FieldStatus } from "@astryxdesign/core/FieldStatus";
 import { loginAdminAction, type LoginState } from "./actions";
 
 const initialState: LoginState = { error: null };
@@ -10,9 +14,12 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button type="submit" className={styles.submitButton} disabled={pending}>
-      {pending ? "Signing in..." : "Sign in"}
-    </button>
+    <Button
+      type="submit"
+      variant="primary"
+      label={pending ? "Signing in..." : "Sign in"}
+      isLoading={pending}
+    />
   );
 }
 
@@ -24,42 +31,42 @@ export function AdminLoginForm({
   allowedEmail: string;
 }) {
   const [state, formAction] = useFormState(loginAdminAction, initialState);
+  const [password, setPassword] = useState("");
 
   return (
-    <form action={formAction} className={styles.form}>
+    <form action={formAction}>
       <input type="hidden" name="next" value={nextPath} />
 
-      <label className={styles.field}>
-        <span className={styles.label}>Email</span>
-        <input
-          className={`${styles.input} ${styles.inputLocked}`}
+      <FormLayout direction="vertical">
+        <TextInput
+          label="Email"
           type="email"
-          name="email"
           value={allowedEmail}
-          readOnly
-          aria-readonly="true"
+          onChange={() => {}}
+          isDisabled
+          disabledMessage="Admin email is pre-configured."
         />
-      </label>
 
-      <label className={styles.field}>
-        <span className={styles.label}>Password</span>
-        <input
-          className={styles.input}
+        <TextInput
+          label="Password"
           type="password"
-          name="password"
-          autoComplete="current-password"
+          htmlName="password"
+          value={password}
+          onChange={setPassword}
           placeholder="Password"
-          required
+          isRequired
         />
-      </label>
 
-      {state.error ? (
-        <p className={`${styles.notice} ${styles.noticeError}`} aria-live="polite">
-          {state.error}
-        </p>
-      ) : null}
+        <FieldStatus
+          id="login-error"
+          type="error"
+          message={
+            state.error ?? ""
+          }
+        />
 
-      <SubmitButton />
+        <SubmitButton />
+      </FormLayout>
     </form>
   );
 }

@@ -1,10 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FullscreenImageDialog } from "@/components/FullscreenImageDialog";
-import {
-  logoutAdminAction,
-  updatePublishedJourneyReviewAction,
-} from "@/app/_workspace/actions";
+import { AdminSidebar, type AdminSidebarNavigationItem } from "@/app/_workspace/AdminSidebar";
+import { updatePublishedJourneyReviewAction } from "@/app/_workspace/actions";
 import { buildAdminWorkspaceHref } from "@/lib/admin/paths";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
 import { shouldBypassNextImageOptimization } from "@/lib/next-image-optimization";
@@ -106,81 +104,6 @@ function buildPhotoAltText(
   total: number,
 ): string {
   return `${sectionTitle} photo ${index} of ${total}`;
-}
-
-function Sidebar({
-  queue,
-  session,
-}: {
-  queue: AdminReviewQueueData;
-  session: AdminSession;
-}) {
-  const navigationItems = [
-    {
-      label: "Overview",
-      href: buildTabHref("overview", {
-        page: queue.page,
-        status: queue.status,
-      }),
-      active: false,
-    },
-    {
-      label: "Reviews",
-      href: buildTabHref("reviews", {
-        page: queue.page,
-        status: queue.status,
-      }),
-      active: true,
-      badge: String(queue.summary.pendingCount),
-    },
-    {
-      label: "Articles",
-      href: buildAdminArticleWorkspaceHref(),
-      active: false,
-    },
-  ];
-
-  return (
-    <aside className={workspaceStyles.sidebar}>
-      <div className={workspaceStyles.brandBlock}>
-        <span className={workspaceStyles.brandEyebrow}>MomentBook Admin</span>
-        <h1 className={workspaceStyles.brandTitle}>Moderation</h1>
-      </div>
-
-      <nav className={workspaceStyles.nav} aria-label="Workspace sections">
-        {navigationItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={
-              item.active ? workspaceStyles.navItemActive : workspaceStyles.navItem
-            }
-            aria-current={item.active ? "page" : undefined}
-          >
-            <div className={workspaceStyles.navCopy}>
-              <span className={workspaceStyles.navLabel}>{item.label}</span>
-            </div>
-            {item.badge ? (
-              <span className={workspaceStyles.navBadge}>{item.badge}</span>
-            ) : null}
-          </Link>
-        ))}
-      </nav>
-
-      <div className={workspaceStyles.sidebarCard}>
-        <span className={workspaceStyles.sidebarLabel}>Account</span>
-        <strong className={workspaceStyles.sidebarValue}>
-          {session.email || session.name || "Admin"}
-        </strong>
-      </div>
-
-      <form action={logoutAdminAction}>
-        <button type="submit" className={workspaceStyles.signOutButton}>
-          Sign out
-        </button>
-      </form>
-    </aside>
-  );
 }
 
 function PageHeader({
@@ -453,7 +376,34 @@ export function AdminReviewDetailPageView({
   return (
     <main className={workspaceStyles.page}>
       <div className={workspaceStyles.shell}>
-        <Sidebar queue={queue} session={session} />
+        <AdminSidebar
+          activeTab="reviews"
+          navigationItems={[
+            {
+              tab: "overview",
+              href: buildTabHref("overview", {
+                page: queue.page,
+                status: queue.status,
+              }),
+              label: "Overview",
+            },
+            {
+              tab: "reviews",
+              href: buildTabHref("reviews", {
+                page: queue.page,
+                status: queue.status,
+              }),
+              label: "Reviews",
+              badge: String(queue.summary.pendingCount),
+            },
+            {
+              tab: "articles",
+              href: buildAdminArticleWorkspaceHref(),
+              label: "Articles",
+            },
+          ]}
+          session={session}
+        />
 
         <section className={workspaceStyles.content}>
           <PageHeader
