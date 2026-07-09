@@ -28,7 +28,6 @@ import type { AdminSession } from "@/lib/admin/session";
 import { defaultLanguage } from "@/lib/i18n/config";
 import type { AdminDashboardBanner } from "./workspace-data";
 import { AdminOverviewPanel } from "./AdminOverviewPanel";
-import styles from "./workspace.module.scss";
 
 const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
 
@@ -265,9 +264,9 @@ function ReviewsPanel({
   queue: AdminReviewQueueData;
 }) {
   return (
-    <div className={styles.sectionStack}>
+    <VStack gap={4}>
       <ReviewTablePanel queue={queue} />
-    </div>
+    </VStack>
   );
 }
 

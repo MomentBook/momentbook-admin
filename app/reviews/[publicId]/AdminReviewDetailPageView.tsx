@@ -1,6 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
+import { VStack } from "@astryxdesign/core/VStack";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Text } from "@astryxdesign/core/Text";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { FullscreenImageDialog } from "@/components/FullscreenImageDialog";
 import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import { updatePublishedJourneyReviewAction } from "@/app/_workspace/actions";
@@ -18,7 +27,6 @@ import {
 } from "@/lib/admin/reviews";
 import type { AdminSession } from "@/lib/admin/session";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
-import workspaceStyles from "@/app/_workspace/workspace.module.scss";
 import styles from "./review-detail.module.scss";
 
 type ReviewMutationSummary = {
@@ -36,16 +44,10 @@ type AdminReviewDetailPageViewProps = {
   targetPublicId: string | null;
 };
 
-function buildStatusClassName(status: AdminReviewStatus): string {
-  if (status === "APPROVED") {
-    return `${styles.statusBadge} ${styles.statusApproved}`;
-  }
-
-  if (status === "REJECTED") {
-    return `${styles.statusBadge} ${styles.statusRejected}`;
-  }
-
-  return `${styles.statusBadge} ${styles.statusPending}`;
+function resolveBadgeVariant(status: AdminReviewStatus): "warning" | "success" | "error" {
+  if (status === "APPROVED") return "success";
+  if (status === "REJECTED") return "error";
+  return "warning";
 }
 
 function buildTabHref(
@@ -115,34 +117,28 @@ function PageHeader({
   pendingCount: number;
 }) {
   return (
-    <header className={workspaceStyles.contentHeader}>
-      <div className={styles.headerRow}>
-        <div className={workspaceStyles.headerCopy}>
-          <div className={workspaceStyles.headerTitleRow}>
-            <h2 className={workspaceStyles.contentTitle}>Review evidence</h2>
-            <span className={workspaceStyles.pendingBadge}>
-              {pendingCount} pending
-            </span>
-          </div>
-        </div>
-      </div>
+    <VStack gap={2}>
+      <HStack gap={2} vAlign="center">
+        <Heading level={2}>Review evidence</Heading>
+        <Badge
+          label={`${pendingCount} pending`}
+          variant={pendingCount > 0 ? "warning" : "neutral"}
+        />
+      </HStack>
 
       {banner ? (
-        <p
-          className={
+        <Banner
+          status={
             banner.tone === "error"
-              ? workspaceStyles.bannerError
+              ? "error"
               : banner.tone === "success"
-                ? workspaceStyles.bannerSuccess
-                : workspaceStyles.banner
+                ? "success"
+                : "info"
           }
-          role="status"
-          aria-live="polite"
-        >
-          {banner.message}
-        </p>
+          title={banner.message}
+        />
       ) : null}
-    </header>
+    </VStack>
   );
 }
 
@@ -202,21 +198,19 @@ function EvidenceSectionCard({
   const title = getSectionHeading(section, index, totalSections);
 
   return (
-    <section className={`${workspaceStyles.card} ${styles.sectionCard}`}>
-      <div className={styles.sectionHeader}>
-        <div className={styles.sectionTitleBlock}>
-          <span className={styles.sectionEyebrow}>
+    <Card padding={3}>
+      <HStack gap={2} vAlign="center" hAlign="between">
+        <VStack gap={0.5}>
+          <Text type="label" size="2xs" color="secondary">
             {section.kind === "cluster"
               ? `Cluster ${String(index + 1).padStart(2, "0")}`
               : "Remaining"}
-          </span>
-          <h3 className={styles.sectionTitle}>{title}</h3>
-        </div>
+          </Text>
+          <Heading level={3}>{title}</Heading>
+        </VStack>
 
-        <div className={styles.sectionBadges}>
-          <span className={styles.metaBadge}>{section.photoCount} photos</span>
-        </div>
-      </div>
+        <Badge label={`${section.photoCount} photos`} variant="neutral" />
+      </HStack>
 
       {section.photos.length > 0 ? (
         <div className={styles.photoGrid}>
@@ -231,29 +225,27 @@ function EvidenceSectionCard({
           ))}
         </div>
       ) : (
-        <div className={styles.emptySection}>
-          <strong className={styles.emptyTitle}>No photo assets resolved</strong>
-          <p className={styles.emptyBody}>
-            This cluster exists in the moderation payload, but no photo assets were
-            attached to it.
-          </p>
-        </div>
+        <EmptyState
+          title="No photo assets resolved"
+          description="This cluster exists in the moderation payload, but no photo assets were attached to it."
+          isCompact
+        />
       )}
-    </section>
+    </Card>
   );
 }
 
 function EmptyEvidenceCard({ detail }: { detail: AdminReviewDetail }) {
   return (
-    <section className={`${workspaceStyles.card} ${styles.sectionCard}`}>
-      <div className={styles.emptySection}>
-        <strong className={styles.emptyTitle}>No evidence photos available</strong>
-        <p className={styles.emptyBody}>
-          {detail.evidence.unavailableReason ??
-            "The admin detail contract did not return any photo evidence for this journey."}
-        </p>
-      </div>
-    </section>
+    <Card padding={3}>
+      <EmptyState
+        title="No evidence photos available"
+        description={
+          detail.evidence.unavailableReason ??
+          "The admin detail contract did not return any photo evidence for this journey."
+        }
+      />
+    </Card>
   );
 }
 
@@ -265,29 +257,28 @@ function JourneySummary({
   backHref: string;
 }) {
   return (
-    <section className={`${workspaceStyles.card} ${styles.heroCard}`}>
-      <div className={styles.heroTopRow}>
-        <Link href={backHref} className={workspaceStyles.secondaryButton}>
-          Back to reviews
+    <Card padding={3}>
+      <HStack gap={2} vAlign="center" hAlign="between">
+        <Link href={backHref}>
+          <Button variant="secondary" size="sm" label="Back to reviews" />
         </Link>
 
-        <div className={styles.heroBadges}>
-          <span className={buildStatusClassName(detail.journey.review.status)}>
-            {getAdminReviewStatusLabel(detail.journey.review.status)}
-          </span>
-        </div>
-      </div>
+        <Badge
+          label={getAdminReviewStatusLabel(detail.journey.review.status)}
+          variant={resolveBadgeVariant(detail.journey.review.status)}
+        />
+      </HStack>
 
-      <div className={styles.heroCopy}>
-        <span className={styles.heroEyebrow}>Journey</span>
-        <h1 className={styles.heroTitle}>
+      <VStack gap={1} style={{ marginTop: 12 }}>
+        <Text type="label" size="2xs" color="secondary">Journey</Text>
+        <Heading level={1}>
           {detail.journey.title || "Untitled journey"}
-        </h1>
+        </Heading>
         {detail.journey.description ? (
-          <p className={styles.heroDescription}>{detail.journey.description}</p>
+          <Text type="body" color="secondary">{detail.journey.description}</Text>
         ) : null}
-      </div>
-    </section>
+      </VStack>
+    </Card>
   );
 }
 
@@ -310,25 +301,24 @@ function ReviewUpdatePanel({
   });
 
   return (
-    <section className={`${workspaceStyles.card} ${styles.panel} ${styles.stickyPanel}`}>
-      <div className={styles.panelHeader}>
-        <h3 className={styles.panelTitle}>Review status</h3>
+    <Card padding={3}>
+      <HStack gap={2} vAlign="center" hAlign="between">
+        <Heading level={3}>Review status</Heading>
         {reviewMutation ? (
-          <div className={styles.inlineStatus}>
-            <span className={buildStatusClassName(reviewMutation.reviewStatus)}>
-              {getAdminReviewStatusLabel(reviewMutation.reviewStatus)}
-            </span>
-          </div>
+          <Badge
+            label={getAdminReviewStatusLabel(reviewMutation.reviewStatus)}
+            variant={resolveBadgeVariant(reviewMutation.reviewStatus)}
+          />
         ) : null}
-      </div>
+      </HStack>
 
-      <form action={updatePublishedJourneyReviewAction} className={workspaceStyles.formCard}>
+      <form action={updatePublishedJourneyReviewAction} style={{ marginTop: 12 }}>
         <input type="hidden" name="returnTo" value={returnTo} />
         <input type="hidden" name="targetPublicId" value={effectiveTargetPublicId} />
 
-        <fieldset className={workspaceStyles.statusFieldset}>
-          <legend className={workspaceStyles.fieldLabel}>Review status</legend>
-          <div className={styles.radioGrid}>
+        <VStack gap={2}>
+          <Text type="label" size="2xs" color="secondary">Review status</Text>
+          <div style={{ display: "flex", gap: 8 }}>
             {(
               [
                 ["PENDING", "Pending"],
@@ -336,27 +326,35 @@ function ReviewUpdatePanel({
                 ["REJECTED", "Rejected"],
               ] as const
             ).map(([value, label]) => (
-              <label key={value} className={styles.radioOption}>
+              <label
+                key={value}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 12px",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-element, 8px)",
+                  cursor: "pointer",
+                }}
+              >
                 <input
                   type="radio"
                   name="reviewStatus"
                   value={value}
                   defaultChecked={defaultReviewStatus === value}
-                  className={styles.radioInput}
                 />
-                <span className={styles.radioCard}>{label}</span>
+                <Text type="body" size="sm">{label}</Text>
               </label>
             ))}
           </div>
-        </fieldset>
+        </VStack>
 
-        <div className={styles.formActions}>
-          <button type="submit" className={workspaceStyles.primaryButton}>
-            Save
-          </button>
+        <div style={{ marginTop: 12 }}>
+          <Button type="submit" variant="primary" label="Save" />
         </div>
       </form>
-    </section>
+    </Card>
   );
 }
 
