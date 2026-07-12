@@ -46,8 +46,6 @@ Required variables are documented in `.env.example` and `AGENTS.md`:
 - `NEXT_PUBLIC_APP_IS_LOCAL`
 - `ADMIN_ALLOWED_EMAIL`
 - `ADMIN_SESSION_SECRET`
-- `WEB_REVALIDATION_URL`
-- `WEB_REVALIDATION_SECRET`
 
 Production must use an absolute HTTPS admin URL unless
 `NEXT_PUBLIC_APP_IS_LOCAL=true`. Vercel Deployment Protection is expected in
@@ -57,8 +55,8 @@ addition to in-app admin login.
 
 - Admin pages must remain noindex.
 - Root/layout utilities must stay admin-only.
-- Public helper code can exist for revalidation and split compatibility, but
-  public UX must not be added here without an ADR update.
+- Public helper code can exist for split compatibility, but public UX must not
+  be added here without an ADR update.
 - Routing, metadata, CSP, security header, deployment, or environment behavior
   changes require `yarn build` after focused checks.
 

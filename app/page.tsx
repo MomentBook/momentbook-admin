@@ -39,7 +39,6 @@ export default async function AdminIndexPage({
         category: readQueryParam(resolvedSearchParams.category),
         articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
         mutation: readQueryParam(resolvedSearchParams.mutation),
-        revalidation: readQueryParam(resolvedSearchParams.revalidation),
         error: readQueryParam(resolvedSearchParams.error),
         message: readQueryParam(resolvedSearchParams.message),
       }),
@@ -60,7 +59,6 @@ export default async function AdminIndexPage({
   const banner = resolveBanner({
     error: readQueryParam(resolvedSearchParams.error),
     mutation,
-    revalidation: readQueryParam(resolvedSearchParams.revalidation),
     reviewStatus,
     targetPublicId,
   });

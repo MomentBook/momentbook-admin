@@ -7,12 +7,10 @@ const redirect = vi.fn((href: string) => {
 });
 const cookies = vi.fn();
 const requireAdminActionSession = vi.fn();
-const fetchPublishedGuideSitemapChunks = vi.fn();
 const createAdminArticle = vi.fn();
 const updateAdminArticle = vi.fn();
 const deleteAdminArticle = vi.fn();
 const loadAdminEditorialArticle = vi.fn();
-const requestWebRevalidation = vi.fn();
 
 vi.mock("next/headers", () => ({
   cookies,
@@ -29,11 +27,6 @@ vi.mock("next/dist/client/components/redirect-error", () => ({
 
 vi.mock("@/lib/admin/session", () => ({
   requireAdminActionSession,
-}));
-
-vi.mock("@/lib/admin/revalidation", () => ({
-  requestWebRevalidation,
-  WEB_REVALIDATION_FAILED_QUERY_VALUE: "failed",
 }));
 
 vi.mock("@/lib/admin/api", () => ({
@@ -54,14 +47,6 @@ vi.mock("@/lib/editorial/admin", () => ({
   loadAdminEditorialArticle,
 }));
 
-vi.mock("@/lib/editorial/public", () => ({
-  PUBLISHED_GUIDES_SITEMAP_TAG: "published-guides-sitemap",
-}));
-
-vi.mock("@/lib/sitemap/editorial-guides", () => ({
-  fetchPublishedGuideSitemapChunks,
-}));
-
 async function loadArticleActionsModule() {
   return import("@/app/articles/actions");
 }
@@ -72,14 +57,11 @@ afterEach(() => {
 });
 
 describe("createEditorialArticleAction", () => {
-  it("requests public web revalidation after creating an article", async () => {
+  it("redirects to the success banner after creating an article", async () => {
     cookies.mockResolvedValue(new Map());
     requireAdminActionSession.mockResolvedValue({
       accessToken: "admin-access-token",
     });
-    fetchPublishedGuideSitemapChunks
-      .mockResolvedValueOnce([{ index: 1, items: [] }])
-      .mockResolvedValueOnce([{ index: 2, items: [] }]);
     createAdminArticle.mockResolvedValue({
       articleId: "article-123",
       slug: "fresh-guide",
@@ -101,7 +83,6 @@ describe("createEditorialArticleAction", () => {
       publishedAt: "2026-04-18T00:00:00.000Z",
       updatedAt: "2026-04-18T00:00:00.000Z",
     });
-    requestWebRevalidation.mockResolvedValue(true);
 
     const { createEditorialArticleAction } = await loadArticleActionsModule();
     const formData = new FormData();
@@ -113,18 +94,6 @@ describe("createEditorialArticleAction", () => {
     await expect(createEditorialArticleAction(formData)).rejects.toThrow(
       "REDIRECT:/articles/article-123?mutation=article_created&articleSlug=fresh-guide",
     );
-
-    expect(requestWebRevalidation).toHaveBeenCalledWith({
-      paths: expect.arrayContaining([
-        "/en/guides",
-        "/ko/guides",
-        "/en/guides/fresh-guide",
-        "/sitemap.xml",
-        "/sitemaps/guides/1.xml",
-        "/sitemaps/guides/2.xml",
-      ]),
-      tags: ["published-guides-sitemap"],
-    });
   });
 });
 
@@ -134,9 +103,6 @@ describe("updateEditorialArticleAction", () => {
     requireAdminActionSession.mockResolvedValue({
       accessToken: "admin-access-token",
     });
-    fetchPublishedGuideSitemapChunks
-      .mockResolvedValueOnce([{ index: 1, items: [] }])
-      .mockResolvedValueOnce([{ index: 1, items: [] }]);
     const article = {
       id: "article-123",
       translationGroupId: "group-1",
@@ -159,7 +125,6 @@ describe("updateEditorialArticleAction", () => {
       articleId: "article-123",
       slug: "fresh-guide",
     });
-    requestWebRevalidation.mockResolvedValue(true);
 
     const { updateEditorialArticleAction } = await loadArticleActionsModule();
     const formData = new FormData();

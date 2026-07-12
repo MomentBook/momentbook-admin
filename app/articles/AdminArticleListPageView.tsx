@@ -52,7 +52,7 @@ export function AdminArticleListPageView({
       <VStack gap={4}>
         {/* Header */}
         <Card padding={3}>
-          <HStack gap={2} vAlign="center" hAlign="between">
+          <HStack gap={2} vAlign="center" hAlign="between" wrap="wrap">
             <VStack gap={1}>
               <Text type="label" size="2xs" color="secondary">Editorial admin</Text>
               <Heading level={1}>Articles</Heading>
@@ -85,7 +85,7 @@ export function AdminArticleListPageView({
             {/* Language filter */}
             <VStack gap={1}>
               <Text type="label" size="2xs" color="secondary">Language</Text>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <HStack gap={1} wrap="wrap">
                 <Link
                   href={buildAdminArticleWorkspaceHref({ category: dashboard.category })}
                 >
@@ -109,13 +109,13 @@ export function AdminArticleListPageView({
                     />
                   </Link>
                 ))}
-              </div>
+              </HStack>
             </VStack>
 
             {/* Category filter */}
             <VStack gap={1}>
               <Text type="label" size="2xs" color="secondary">Category</Text>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <HStack gap={1} wrap="wrap">
                 <Link
                   href={buildAdminArticleWorkspaceHref({ lang: dashboard.language })}
                 >
@@ -139,7 +139,7 @@ export function AdminArticleListPageView({
                     />
                   </Link>
                 ))}
-              </div>
+              </HStack>
             </VStack>
           </VStack>
         </Card>
@@ -155,7 +155,7 @@ export function AdminArticleListPageView({
           </Card>
         ) : (
           <Card padding={0}>
-            <div style={{ overflowX: "auto" }}>
+            <VStack gap={0} isScrollable>
               <Table>
                 <TableHeaderCell>Title</TableHeaderCell>
                 <TableHeaderCell>Language</TableHeaderCell>
@@ -194,7 +194,7 @@ export function AdminArticleListPageView({
                   </TableRow>
                 ))}
               </Table>
-            </div>
+            </VStack>
           </Card>
         )}
 

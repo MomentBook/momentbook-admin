@@ -23,7 +23,6 @@ type AdminArticleWorkspaceHrefOptions = {
   category?: string | null;
   articleSlug?: string | null;
   mutation?: string | null;
-  revalidation?: string | null;
   error?: string | null;
   message?: string | null;
 };
@@ -218,7 +217,6 @@ export function buildAdminArticleWorkspaceHref(
     category: readOptionalQueryValue(options?.category),
     articleSlug: readOptionalQueryValue(options?.articleSlug),
     mutation: readOptionalQueryValue(options?.mutation),
-    revalidation: readOptionalQueryValue(options?.revalidation),
     error: readOptionalQueryValue(options?.error),
     message: readOptionalQueryValue(options?.message),
   });

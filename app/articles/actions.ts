@@ -16,20 +16,13 @@ import {
   sanitizeAdminPath,
   withAdminQuery,
 } from "@/lib/admin/paths";
-import {
-  requestWebRevalidation,
-  WEB_REVALIDATION_FAILED_QUERY_VALUE,
-} from "@/lib/admin/revalidation";
 import { requireAdminActionSession } from "@/lib/admin/session";
 import { loadAdminEditorialArticle } from "@/lib/editorial/admin";
-import { PUBLISHED_GUIDES_SITEMAP_TAG } from "@/lib/editorial/public";
 import {
   editorialArticleCategories,
   type EditorialArticleCategory,
-  type EditorialArticleRecord,
 } from "@/lib/editorial/types";
 import { languageList, type Language } from "@/lib/i18n/config";
-import { fetchPublishedGuideSitemapChunks } from "@/lib/sitemap/editorial-guides";
 import type {
   CreateAdminArticleRequestDto,
   UpdateAdminArticleRequestDto,
@@ -45,7 +38,6 @@ type ArticleActionErrorCode =
 type ArticleMutationKind = "create" | "update" | "delete";
 type ArticleActionContext = {
   nextPath: string;
-  previousSitemapPaths: string[];
   returnTo: string;
   session: Awaited<ReturnType<typeof requireAdminActionSession>>;
 };
@@ -108,7 +100,6 @@ function buildArticleFailureRedirect(options: {
       message: options.message ? sanitizeBannerMessage(options.message) : null,
       mutation: null,
       articleSlug: null,
-      revalidation: null,
     }),
   );
 }
@@ -265,93 +256,19 @@ async function prepareArticleActionContext(
     nextPath,
     returnTo: resolveReturnTo(formData),
     session: await requireAdminActionSession(cookieStore, nextPath),
-    previousSitemapPaths: await captureGuideSitemapPaths(),
   };
-}
-
-async function captureGuideSitemapPaths(): Promise<string[]> {
-  const chunks = await fetchPublishedGuideSitemapChunks();
-  return chunks.map((chunk) => `/sitemaps/guides/${chunk.index}.xml`);
-}
-
-function unique(values: Array<string | null | undefined>): string[] {
-  return [...new Set(values.filter((value): value is string => Boolean(value)))];
-}
-
-function extractPublishedGuidePaths(
-  article: EditorialArticleRecord | null | undefined,
-): string[] {
-  if (!article) {
-    return [];
-  }
-
-  return unique([
-    `/${article.language}/guides/${article.slug}`,
-    ...article.alternates.map(
-      (alternate) => `/${alternate.language}/guides/${alternate.slug}`,
-    ),
-  ]);
-}
-
-function collectGuideSurfacePaths(options: {
-  detailPaths?: string[];
-  sitemapPaths?: string[];
-}): string[] {
-  const paths = new Set<string>();
-
-  for (const lang of languageList) {
-    paths.add(`/${lang}/guides`);
-  }
-
-  for (const path of options.detailPaths ?? []) {
-    paths.add(path);
-  }
-
-  paths.add("/sitemap.xml");
-
-  for (const sitemapPath of options.sitemapPaths ?? []) {
-    paths.add(sitemapPath);
-  }
-
-  return [...paths];
-}
-
-async function revalidateGuideSurfaceAfterMutation(options: {
-  previousArticle?: EditorialArticleRecord | null;
-  nextArticle?: EditorialArticleRecord | null;
-  previousSitemapPaths: string[];
-}): Promise<boolean> {
-  const nextSitemapPaths = await captureGuideSitemapPaths();
-
-  return requestWebRevalidation({
-    paths: collectGuideSurfacePaths({
-      detailPaths: unique([
-        ...extractPublishedGuidePaths(options.previousArticle),
-        ...extractPublishedGuidePaths(options.nextArticle),
-      ]),
-      sitemapPaths: unique([
-        ...options.previousSitemapPaths,
-        ...nextSitemapPaths,
-      ]),
-    }),
-    tags: [PUBLISHED_GUIDES_SITEMAP_TAG],
-  });
 }
 
 function redirectToArticleDetail(options: {
   articleId: string;
   articleSlug: string | null | undefined;
   mutation: "article_created" | "article_updated";
-  revalidationFailed: boolean;
   returnTo: string;
 }): never {
   redirect(
     buildAdminArticleDetailHref(options.articleId, {
       mutation: options.mutation,
       articleSlug: options.articleSlug ?? null,
-      revalidation: options.revalidationFailed
-        ? WEB_REVALIDATION_FAILED_QUERY_VALUE
-        : null,
       returnTo: normalizeDetailReturnTo(options.returnTo),
     }),
   );
@@ -359,7 +276,6 @@ function redirectToArticleDetail(options: {
 
 function redirectToArticleWorkspace(options: {
   articleSlug: string | null | undefined;
-  revalidationFailed: boolean;
   returnTo: string;
 }): never {
   redirect(
@@ -368,9 +284,6 @@ function redirectToArticleWorkspace(options: {
       articleSlug: options.articleSlug ?? null,
       error: null,
       message: null,
-      revalidation: options.revalidationFailed
-        ? WEB_REVALIDATION_FAILED_QUERY_VALUE
-        : null,
     }),
   );
 }
@@ -387,7 +300,7 @@ async function withArticleActionFailureRedirect(
       throw error;
     }
 
-    buildArticleFailureRedirect({
+    return buildArticleFailureRedirect({
       ...resolveArticleActionFailure(kind, error),
       nextPath,
     });
@@ -407,21 +320,10 @@ export async function createEditorialArticleAction(
       accessToken: context.session.accessToken,
       article: buildCreatePayload(formData),
     });
-    const createdArticle = await loadAdminEditorialArticle({
-      accessToken: context.session.accessToken,
-      articleId: created.articleId,
-    });
-
-    const revalidationSucceeded = await revalidateGuideSurfaceAfterMutation({
-      nextArticle: createdArticle,
-      previousSitemapPaths: context.previousSitemapPaths,
-    });
-
     redirectToArticleDetail({
       articleId: created.articleId,
       articleSlug: created.slug,
       mutation: "article_created",
-      revalidationFailed: !revalidationSucceeded,
       returnTo: context.returnTo,
     });
   });
@@ -442,7 +344,7 @@ export async function updateEditorialArticleAction(
       articleId,
     });
     if (!previousArticle) {
-      buildArticleFailureRedirect({
+      return buildArticleFailureRedirect({
         error: "article_not_found",
         message: null,
         nextPath: buildAdminArticleWorkspaceHref(),
@@ -454,22 +356,10 @@ export async function updateEditorialArticleAction(
       articleId,
       article: buildUpdatePayload(formData),
     });
-    const nextArticle = await loadAdminEditorialArticle({
-      accessToken: context.session.accessToken,
-      articleId,
-    });
-
-    const revalidationSucceeded = await revalidateGuideSurfaceAfterMutation({
-      previousArticle,
-      nextArticle,
-      previousSitemapPaths: context.previousSitemapPaths,
-    });
-
     redirectToArticleDetail({
       articleId: updated.articleId,
       articleSlug: updated.slug,
       mutation: "article_updated",
-      revalidationFailed: !revalidationSucceeded,
       returnTo: context.returnTo,
     });
   });
@@ -494,14 +384,8 @@ export async function deleteEditorialArticleAction(
       articleId,
     });
 
-    const revalidationSucceeded = await revalidateGuideSurfaceAfterMutation({
-      previousArticle,
-      previousSitemapPaths: context.previousSitemapPaths,
-    });
-
     redirectToArticleWorkspace({
       articleSlug: previousArticle?.slug,
-      revalidationFailed: !revalidationSucceeded,
       returnTo: context.returnTo,
     });
   });

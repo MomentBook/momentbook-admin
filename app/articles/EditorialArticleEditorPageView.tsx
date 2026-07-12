@@ -62,7 +62,7 @@ export function EditorialArticleEditorPageView({
       <VStack gap={4}>
         {/* Header */}
         <Card padding={3}>
-          <HStack gap={2} vAlign="center" hAlign="between">
+          <HStack gap={2} vAlign="center" hAlign="between" wrap="wrap">
             <VStack gap={1}>
               <Link href={workspaceHref}>
                 <Text type="body" size="sm" color="accent">Back to articles</Text>

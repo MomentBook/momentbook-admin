@@ -65,7 +65,6 @@ export function parseReviewStatus(value: string | null): AdminReviewStatus | nul
 export function resolveBanner(options: {
   error: string | null;
   mutation: string | null;
-  revalidation: string | null;
   reviewStatus: AdminReviewStatus | null;
   targetPublicId: string | null;
 }): AdminDashboardBanner | null {
@@ -74,12 +73,6 @@ export function resolveBanner(options: {
     options.targetPublicId &&
     options.reviewStatus
   ) {
-    if (options.revalidation === "failed") {
-      return {
-        tone: "error",
-        message: `${options.targetPublicId} updated to ${getAdminReviewStatusLabel(options.reviewStatus)}, but public web cache revalidation failed.`,
-      };
-    }
 
     return {
       tone: "success",

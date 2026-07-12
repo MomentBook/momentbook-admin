@@ -51,7 +51,6 @@ export default async function AdminReviewDetailPage({
   const banner = resolveBanner({
     error: readQueryParam(resolvedSearchParams.error),
     mutation,
-    revalidation: readQueryParam(resolvedSearchParams.revalidation),
     reviewStatus,
     targetPublicId,
   });

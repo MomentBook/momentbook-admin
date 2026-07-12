@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
+import { AppShell } from "@astryxdesign/core/AppShell";
 import { VStack } from "@astryxdesign/core/VStack";
 import { Heading } from "@astryxdesign/core/Heading";
 import { Text } from "@astryxdesign/core/Text";
@@ -9,6 +9,7 @@ import { Table, TableCell, TableHeaderCell, TableRow } from "@astryxdesign/core/
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { HStack } from "@astryxdesign/core/HStack";
 import { LocalizedDate } from "@/components/LocalizedTime";
 import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import {
@@ -131,7 +132,7 @@ function ReviewTablePanel({
       </Text>
 
       {/* Filter chips */}
-      <div style={{ display: "flex", gap: 8, marginTop: 12, marginBottom: 12 }}>
+      <HStack gap={1} wrap="wrap" style={{ marginBlock: "var(--spacing-2)" }}>
         {(
           [
             ["pending", "Pending"],
@@ -147,7 +148,7 @@ function ReviewTablePanel({
             />
           </Link>
         ))}
-      </div>
+      </HStack>
 
       {queue.items.length > 0 ? (
         <>
@@ -203,7 +204,7 @@ function ReviewTablePanel({
           </Table>
 
           {queue.pages > 1 ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, justifyContent: "space-between" }}>
+            <HStack gap={1} vAlign="center" hAlign="between" wrap="wrap" style={{ marginTop: "var(--spacing-2)" }}>
               <Link
                 href={buildAdminWorkspaceHref("reviews", {
                   page:
@@ -237,7 +238,7 @@ function ReviewTablePanel({
                   isDisabled={queue.page >= queue.pages}
                 />
               </Link>
-            </div>
+            </HStack>
           ) : null}
         </>
       ) : (
@@ -297,17 +298,18 @@ export function AdminWorkspace({
   ];
 
   return (
-    <Layout
+    <AppShell
       height="fill"
-      start={
+      mobileNav={{ breakpoint: "md" }}
+      sideNav={
         <AdminSidebar
           activeTab={activeTab}
           navigationItems={navigationItems}
           session={session}
         />
       }
-      content={
-        <LayoutContent isScrollable>
+    >
+      <VStack gap={4}>
           <ContentHeader
             banner={banner}
             description={getActiveTabDescription(activeTab)}
@@ -320,8 +322,7 @@ export function AdminWorkspace({
           ) : (
             <AdminOverviewPanel overview={overview} session={session} />
           )}
-        </LayoutContent>
-      }
-    />
+      </VStack>
+    </AppShell>
   );
 }

@@ -6,7 +6,7 @@ Standalone Next.js admin app for MomentBook moderation and editorial operations.
 
 - Owns `/admin`, `/admin/login`, `/admin/reviews`, `/admin/articles`, and admin session routes.
 - Talks to the Nest API for authentication, role/RBAC enforcement, review mutations, and article mutations.
-- Sends signed cache revalidation requests to `momentbook-web` after public-surface mutations.
+- Completes public-surface mutations through the Nest API; `momentbook-web` serves fresh public content with its no-cache policy.
 - Does not own public journeys, guides, sitemaps, analytics, public chrome, or app marketing pages.
 
 ## Environment Variables
@@ -56,17 +56,14 @@ Set **all** variables from `.env.example` in Vercel Project Settings > Environme
 | `NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN` | CloudFront CDN origin |
 | `NEXT_PUBLIC_APP_ENV` | Set to `production` |
 | `NEXT_PUBLIC_APP_IS_LOCAL` | Set to `false` (disables localhost fallbacks, enforces HTTPS) |
-| `WEB_REVALIDATION_URL` | Production web revalidation webhook URL |
 | `ADMIN_ALLOWED_EMAIL` | Allowed admin email for login |
 | `ADMIN_SESSION_SECRET` | Random 64-char hex string (secret) |
-| `WEB_REVALIDATION_SECRET` | Shared revalidation HMAC secret (secret) |
 
 ### Post-Deployment Checklist
 
 1. Enable **Vercel Deployment Protection** (Vercel Dashboard > Project > Settings > Deployment Protection)
 2. Verify Nest API CORS allows the Vercel admin origin and preview deployment origins
-3. Confirm `WEB_REVALIDATION_URL` is reachable from Vercel Functions
-4. Confirm `NEXT_PUBLIC_API_BASE_URL` is reachable from Vercel Functions (check Nest API firewall/security groups)
+3. Confirm `NEXT_PUBLIC_API_BASE_URL` is reachable from Vercel Functions (check Nest API firewall/security groups)
 
 ### Runtime Logs
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
+import { AppShell } from "@astryxdesign/core/AppShell";
 import { VStack } from "@astryxdesign/core/VStack";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Heading } from "@astryxdesign/core/Heading";
@@ -9,6 +9,7 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Grid } from "@astryxdesign/core/Grid";
 import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import { updatePublishedJourneyReviewAction } from "@/app/_workspace/actions";
 import { buildAdminWorkspaceHref } from "@/lib/admin/paths";
@@ -25,6 +26,7 @@ import {
 import type { AdminSession } from "@/lib/admin/session";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { LightboxPhotoTile } from "./LightboxPhotoTile";
+import styles from "./AdminReviewDetailPageView.module.css";
 
 type ReviewMutationSummary = {
   publicId: string;
@@ -40,19 +42,6 @@ type AdminReviewDetailPageViewProps = {
   session: AdminSession;
   targetPublicId: string | null;
 };
-
-const detailLayoutStyle = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1.7fr) minmax(18rem, 24rem)",
-  gap: "var(--spacing-3, 0.75rem)",
-  alignItems: "start",
-} as const;
-
-const photoGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(13rem, 1fr))",
-  gap: "0.75rem",
-} as const;
 
 function resolveBadgeVariant(status: AdminReviewStatus): "warning" | "success" | "error" {
   if (status === "APPROVED") return "success";
@@ -206,7 +195,7 @@ function EvidenceSectionCard({
       </HStack>
 
       {section.photos.length > 0 ? (
-        <div style={photoGridStyle}>
+        <Grid columns={{ minWidth: 208, repeat: "fit" }} gap={3}>
           {section.photos.map((photo, photoIndex) => (
             <PhotoTile
               key={photo.key}
@@ -216,7 +205,7 @@ function EvidenceSectionCard({
               total={section.photos.length}
             />
           ))}
-        </div>
+        </Grid>
       ) : (
         <EmptyState
           title="No photo assets resolved"
@@ -251,25 +240,27 @@ function JourneySummary({
 }) {
   return (
     <Card padding={3}>
-      <HStack gap={2} vAlign="center" hAlign="between">
-        <Link href={backHref}>
-          <Button variant="secondary" size="sm" label="Back to reviews" />
-        </Link>
+      <VStack gap={3}>
+        <HStack gap={2} vAlign="center" hAlign="between">
+          <Link href={backHref}>
+            <Button variant="secondary" size="sm" label="Back to reviews" />
+          </Link>
 
-        <Badge
-          label={getAdminReviewStatusLabel(detail.journey.review.status)}
-          variant={resolveBadgeVariant(detail.journey.review.status)}
-        />
-      </HStack>
+          <Badge
+            label={getAdminReviewStatusLabel(detail.journey.review.status)}
+            variant={resolveBadgeVariant(detail.journey.review.status)}
+          />
+        </HStack>
 
-      <VStack gap={1} style={{ marginTop: 12 }}>
-        <Text type="label" size="2xs" color="secondary">Journey</Text>
-        <Heading level={1}>
-          {detail.journey.title || "Untitled journey"}
-        </Heading>
-        {detail.journey.description ? (
-          <Text type="body" color="secondary">{detail.journey.description}</Text>
-        ) : null}
+        <VStack gap={1}>
+          <Text type="label" size="2xs" color="secondary">Journey</Text>
+          <Heading level={1}>
+            {detail.journey.title || "Untitled journey"}
+          </Heading>
+          {detail.journey.description ? (
+            <Text type="body" color="secondary">{detail.journey.description}</Text>
+          ) : null}
+        </VStack>
       </VStack>
     </Card>
   );
@@ -295,58 +286,52 @@ function ReviewUpdatePanel({
 
   return (
     <Card padding={3}>
-      <HStack gap={2} vAlign="center" hAlign="between">
-        <Heading level={3}>Review status</Heading>
-        {reviewMutation ? (
-          <Badge
-            label={getAdminReviewStatusLabel(reviewMutation.reviewStatus)}
-            variant={resolveBadgeVariant(reviewMutation.reviewStatus)}
-          />
-        ) : null}
-      </HStack>
+      <VStack gap={3}>
+        <HStack gap={2} vAlign="center" hAlign="between">
+          <Heading level={3}>Review status</Heading>
+          {reviewMutation ? (
+            <Badge
+              label={getAdminReviewStatusLabel(reviewMutation.reviewStatus)}
+              variant={resolveBadgeVariant(reviewMutation.reviewStatus)}
+            />
+          ) : null}
+        </HStack>
 
-      <form action={updatePublishedJourneyReviewAction} style={{ marginTop: 12 }}>
-        <input type="hidden" name="returnTo" value={returnTo} />
-        <input type="hidden" name="targetPublicId" value={effectiveTargetPublicId} />
+        <form action={updatePublishedJourneyReviewAction}>
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <input type="hidden" name="targetPublicId" value={effectiveTargetPublicId} />
 
-        <VStack gap={2}>
-          <Text type="label" size="2xs" color="secondary">Review status</Text>
-          <div style={{ display: "flex", gap: 8 }}>
-            {(
-              [
-                ["PENDING", "Pending"],
-                ["APPROVED", "Approved"],
-                ["REJECTED", "Rejected"],
-              ] as const
-            ).map(([value, label]) => (
-              <label
-                key={value}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "8px 12px",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "var(--radius-element, 8px)",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="radio"
-                  name="reviewStatus"
-                  value={value}
-                  defaultChecked={defaultReviewStatus === value}
-                />
-                <Text type="body" size="sm">{label}</Text>
-              </label>
-            ))}
-          </div>
-        </VStack>
+          <VStack gap={3}>
+            <VStack gap={2}>
+              <Text type="label" size="2xs" color="secondary">Review status</Text>
+              <HStack gap={1} wrap="wrap">
+                {(
+                  [
+                    ["PENDING", "Pending"],
+                    ["APPROVED", "Approved"],
+                    ["REJECTED", "Rejected"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <label
+                    key={value}
+                    className={styles.radioOption}
+                  >
+                    <input
+                      type="radio"
+                      name="reviewStatus"
+                      value={value}
+                      defaultChecked={defaultReviewStatus === value}
+                    />
+                    <Text type="body" size="sm">{label}</Text>
+                  </label>
+                ))}
+              </HStack>
+            </VStack>
 
-        <div style={{ marginTop: 12 }}>
-          <Button type="submit" variant="primary" label="Save" />
-        </div>
-      </form>
+            <Button type="submit" variant="primary" label="Save" />
+          </VStack>
+        </form>
+      </VStack>
     </Card>
   );
 }
@@ -366,9 +351,10 @@ export function AdminReviewDetailPageView({
   });
 
   return (
-    <Layout
+    <AppShell
       height="fill"
-      start={
+      mobileNav={{ breakpoint: "md" }}
+      sideNav={
         <AdminSidebar
           activeTab="reviews"
           navigationItems={[
@@ -398,15 +384,15 @@ export function AdminReviewDetailPageView({
           session={session}
         />
       }
-      content={
-        <LayoutContent isScrollable>
+    >
+      <VStack gap={4}>
           <PageHeader
             banner={banner}
             pendingCount={queue.summary.pendingCount}
           />
 
-          <div style={detailLayoutStyle}>
-            <VStack gap={4}>
+          <HStack gap={3} vAlign="start">
+            <VStack style={{ flex: "1 1 0", minWidth: 0 }} gap={4}>
               <JourneySummary detail={detail} backHref={backHref} />
               {detail.evidence.sections.length > 0 ? (
                 detail.evidence.sections.map((section, index) => (
@@ -422,7 +408,7 @@ export function AdminReviewDetailPageView({
               )}
             </VStack>
 
-            <VStack gap={3}>
+            <VStack style={{ flex: "0 1 24rem", minWidth: "18rem", maxWidth: "24rem" }} gap={3}>
               <ReviewUpdatePanel
                 detail={detail}
                 reviewMutation={reviewMutation}
@@ -430,9 +416,8 @@ export function AdminReviewDetailPageView({
                 targetPublicId={targetPublicId}
               />
             </VStack>
-          </div>
-        </LayoutContent>
-      }
-    />
+          </HStack>
+      </VStack>
+    </AppShell>
   );
 }

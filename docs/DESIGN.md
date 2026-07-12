@@ -170,8 +170,8 @@ Guidance for replacing custom UI with Astryx components:
   behavior.
 - Empty, loading, failed, and post-mutation states should be explicit and
   low-noise via `EmptyState`, `Spinner`, and `Banner`.
-- When a review update succeeds but public web revalidation fails, show an admin
-  `Banner status="warning"` while keeping the mutation success intact.
+- After a successful review update, show the normal success state. Public-web
+  freshness is handled by its no-cache rendering policy.
 
 ## Editorial Workflow
 
