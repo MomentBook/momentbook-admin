@@ -34,9 +34,8 @@ directly because no admin session exists yet.
   `/v2/admin/journeys/publish/:publicId/review`
 - Articles: `/v2/admin/articles`, `/v2/admin/articles/:articleId`
 
-Public helper calls that support sitemap/revalidation path discovery use
-`lib/public-api.ts` and public endpoints. They do not make this app the owner of
-public UX.
+Public helper calls use `lib/public-api.ts` and public endpoints where needed
+for admin-compatible data. They do not make this app the owner of public UX.
 
 ## Consequences
 

@@ -23,7 +23,7 @@ ADR during startup.
 | [0001](0001-admin-app-ownership-and-runtime.md) | Active | Admin app ownership and runtime | Routes, layouts, metadata, env, deployment, headers, or ownership boundaries change. |
 | [0002](0002-admin-auth-session-boundary.md) | Active | Auth and session boundary | Login, session cookie, refresh, invalidation, logout, allowed email, or RBAC behavior changes. |
 | [0003](0003-backend-contract-and-api-wrapper.md) | Active | Backend contract and API wrapper | Generated API types, backend calls, admin API wrappers, or backend error mapping changes. |
-| [0004](0004-public-web-revalidation-boundary.md) | Active | Public web revalidation | Admin mutations affect public journeys, guides, sitemap visibility, cache invalidation, or warning banners. |
+| [0004](0004-public-web-revalidation-boundary.md) | Active | Public web freshness | Admin mutations affect public journeys, guides, sitemap visibility, or public freshness behavior. |
 | [0005](0005-moderation-workspace-and-review-evidence.md) | Active | Moderation workspace and evidence | `/admin`, review queues, review detail, overview metrics, evidence grouping, or review mutations change. |
 | [0006](0006-editorial-articles-and-guide-support.md) | Active | Editorial articles and guide support | `/admin/articles`, article editor/list/actions, markdown parsing, guide sitemap support, or editorial helpers change. |
 
@@ -36,7 +36,7 @@ ADR during startup.
   analytics, localized public chrome, marketing, recap, archive, and community
   UX belong to the public MomentBook web app.
 - Existing public/editorial helpers in this repo support admin split
-  compatibility and public revalidation path discovery. They are not permission
+  compatibility. They are not permission
   to add public product surfaces here.
 - The Nest API contract is represented by generated `src/apis/client.ts`.
 

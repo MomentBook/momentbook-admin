@@ -1,4 +1,4 @@
-# 0004: Public Web Revalidation Boundary
+# 0004: Public Web Freshness Boundary
 
 ## Status
 
@@ -6,49 +6,25 @@ Active.
 
 ## Decision
 
-Admin mutations that affect public visibility or public editorial content must
-request cache revalidation from the public MomentBook web app through the signed
-webhook in `lib/admin/revalidation.ts`.
-
-Admin mutations must not import `revalidatePath`, `revalidateTag`, or
-`updateTag` directly.
+`momentbook-web` serves public journeys, guides, images, and sitemaps through
+its no-cache rendering policy. After a successful Nest API mutation, the admin
+app does not call a public-web webhook and does not import Next.js cache
+invalidation APIs.
 
 ## Implementation Shape
 
-- `requestWebRevalidation` normalizes and sorts paths/tags, signs
-  `timestamp.body` with `WEB_REVALIDATION_SECRET`, and posts to
-  `WEB_REVALIDATION_URL`.
-- Missing webhook URL/secret, invalid webhook URL, network failure, or non-OK
-  webhook responses return `false`.
-- A failed revalidation request does not roll back a successful backend
-  mutation. The admin UI receives the warning query `revalidation=failed`.
-
-## Journey Review Revalidation
-
-`updatePublishedJourneyReviewAction`:
-
-- captures journey sitemap chunks before and after mutation
-- loads previous and next journey detail photo IDs when available
-- revalidates localized home paths, localized journey lists, localized journey
-  detail paths, localized photo paths, `/sitemap.xml`, affected journey sitemap
-  chunks, and the `published-journeys-sitemap` tag
-
-## Editorial Article Revalidation
-
-Article create/update/delete actions:
-
-- capture guide sitemap chunks before and after mutation
-- load previous and next article records when relevant
-- revalidate localized guide listing paths, affected localized guide detail
-  paths including published alternates, `/sitemap.xml`, affected guide sitemap
-  chunks, and the `published-guides-sitemap` tag
+- Admin review and editorial actions redirect with their backend mutation
+  result only.
+- The admin app has no `WEB_REVALIDATION_URL` or `WEB_REVALIDATION_SECRET`
+  runtime configuration.
+- The public web owns dynamic/no-store rendering and sitemap freshness. This
+  admin repository remains responsible only for admin mutation UX.
 
 ## Consequences
 
-- Public web revalidation is best effort after backend success.
-- UI banners must distinguish mutation success from revalidation warning.
-- Adding a new public-affecting admin mutation requires explicit path/tag
-  collection and focused tests.
-- Revalidation changes should run:
-  `yarn vitest run scripts/__tests__/admin-actions.test.ts scripts/__tests__/admin-article-actions.test.ts`
-
+- A completed backend mutation is immediately eligible for display on a new
+  public-web request; the admin UI does not show a separate cache-warning
+  state.
+- Admin code must not import `revalidatePath`, `revalidateTag`, or `updateTag`.
+- Public freshness changes require coordinated verification in `momentbook-web`;
+  admin mutation changes should run their focused action tests.

@@ -30,7 +30,7 @@ Read `docs/adr/README.md` first, then relevant ADRs only:
 - Routes/layouts/deployment: `0001-admin-app-ownership-and-runtime.md`
 - Auth/session/RBAC: `0002-admin-auth-session-boundary.md`
 - API contract: `0003-backend-contract-and-api-wrapper.md`
-- Public revalidation: `0004-public-web-revalidation-boundary.md`
+- Public freshness policy: `0004-public-web-revalidation-boundary.md`
 - Moderation workspace: `0005-moderation-workspace-and-review-evidence.md`
 - Editorial articles: `0006-editorial-articles-and-guide-support.md`
 
@@ -39,15 +39,14 @@ Read `docs/adr/README.md` first, then relevant ADRs only:
 - Auth backed by Nest API role/RBAC. Cookie is web-session wrapper only.
 - `role === "admin"` validation in login, session, refresh, and action flows.
 - Admin route helpers centralized in `lib/admin/paths.ts`.
-- Admin mutations → signed public web revalidation webhook via `lib/admin/revalidation.ts`. Never call Next.js `revalidatePath`/`revalidateTag` directly.
-- Revalidation failures must not roll back successful backend mutations.
+- Admin mutations complete at the Nest API boundary; public-web freshness is provided by that app's no-cache rendering policy. Never call Next.js `revalidatePath`/`revalidateTag` directly.
 - No import of public `RootDocument`, analytics, language sync, public navigation, public chrome.
 - Preserve noindex admin metadata, CSP/security headers, HTTPS origin validation.
 - Do not edit `src/apis/client.ts` by hand.
 
 ## Environment
 
-Required: `NEXT_PUBLIC_ADMIN_SITE_URL`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN`, `NEXT_PUBLIC_APP_ENV`, `NEXT_PUBLIC_APP_IS_LOCAL`, `ADMIN_ALLOWED_EMAIL`, `ADMIN_SESSION_SECRET`, `WEB_REVALIDATION_URL`, `WEB_REVALIDATION_SECRET`.
+Required: `NEXT_PUBLIC_ADMIN_SITE_URL`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN`, `NEXT_PUBLIC_APP_ENV`, `NEXT_PUBLIC_APP_IS_LOCAL`, `ADMIN_ALLOWED_EMAIL`, `ADMIN_SESSION_SECRET`.
 Production: `ADMIN_SITE_URL` must be absolute `https` unless `APP_IS_LOCAL=true`.
 
 ## Verification

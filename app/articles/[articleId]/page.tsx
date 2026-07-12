@@ -47,7 +47,6 @@ export default async function AdminArticleDetailPage({
     error: readQueryParam(resolvedSearchParams.error),
     message: readQueryParam(resolvedSearchParams.message),
     mutation: readQueryParam(resolvedSearchParams.mutation),
-    revalidation: readQueryParam(resolvedSearchParams.revalidation),
     articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
   });
   const { data, session } = await withAdminWorkspaceSession({

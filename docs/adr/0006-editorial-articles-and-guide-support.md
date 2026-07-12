@@ -44,15 +44,14 @@ from that body and article metadata.
 ## Public Guide Support Code
 
 - `lib/editorial/public.ts`, `lib/editorial/records.ts`,
-  `lib/sitemap/editorial-guides.ts`, and related helpers exist so admin
-  mutations can discover affected guide paths and sitemap chunks.
-- These helpers may use `unstable_cache` and public article endpoints to model
-  public guide variants for sitemap/revalidation support.
+  `lib/sitemap/editorial-guides.ts`, and related helpers provide
+  admin-compatible guide metadata where required.
 - They do not make this repository responsible for public guide pages.
 
 ## Consequences
 
-- Article banners must preserve success vs revalidation-warning distinction.
+- Article banners report the backend mutation outcome; public freshness is
+  provided by the public web's no-cache policy.
 - Article filters, route previews, derived metadata summaries, and alternate
   language sibling visibility are part of the admin workflow.
 - Do not add public guide pages, marketing pages, or public SEO rendering here.

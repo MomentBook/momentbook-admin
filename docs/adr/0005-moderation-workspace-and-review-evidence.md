@@ -46,8 +46,8 @@ filter is pending.
 
 - `updatePublishedJourneyReviewAction` validates `targetPublicId` and
   `reviewStatus`, requires an admin action session, calls the backend review
-  mutation, requests public web revalidation, then redirects with mutation,
-  review status, target ID, and optional `revalidation=failed`.
+  mutation, then redirects with mutation, review status, and target ID. The
+  public web's no-cache policy exposes the updated content.
 
 ## Consequences
 

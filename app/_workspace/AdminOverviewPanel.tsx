@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Card } from "@astryxdesign/core/Card";
 import { VStack } from "@astryxdesign/core/VStack";
-import { HStack } from "@astryxdesign/core/HStack";
 import { Heading } from "@astryxdesign/core/Heading";
 import { Text } from "@astryxdesign/core/Text";
 import { MetadataList, MetadataListItem } from "@astryxdesign/core/MetadataList";
+import { Grid } from "@astryxdesign/core/Grid";
 import { LocalizedDate } from "@/components/LocalizedTime";
 import {
   buildAdminWorkspaceHref,
@@ -93,7 +93,7 @@ function StatusDistributionCard({ overview }: { overview: AdminOverviewData }) {
       </Text>
 
       {overview.totalCount > 0 ? (
-        <HStack gap={3} style={{ marginTop: 12 }}>
+        <Grid columns={{ minWidth: 100, repeat: "fit" }} gap={2} style={{ marginTop: "var(--spacing-2)" }}>
           {items.map((item) => (
             <VStack key={item.key} gap={0.5} style={{ flex: 1 }}>
               <Text type="label" size="2xs">{item.label}</Text>
@@ -103,14 +103,14 @@ function StatusDistributionCard({ overview }: { overview: AdminOverviewData }) {
               </Text>
             </VStack>
           ))}
-        </HStack>
+        </Grid>
       ) : null}
 
-      <div style={{ marginTop: 12 }}>
+      <VStack gap={0} style={{ marginTop: "var(--spacing-2)" }}>
         <Link href={buildAdminWorkspaceHref("reviews")}>
           <Text type="body" size="sm" color="accent">Open pending queue</Text>
         </Link>
-      </div>
+      </VStack>
     </Card>
   );
 }
@@ -172,42 +172,34 @@ export function AdminOverviewPanel({
   return (
     <VStack gap={3}>
       {/* KPI row */}
-      <HStack gap={3}>
-        <div style={{ flex: 1 }}>
+      <Grid columns={{ minWidth: 220, repeat: "fit" }} gap={3}>
           <OverviewMetricCard
             label="Pending now"
             value={formatCount(overview.pendingCount)}
             hint="Items waiting for a review decision"
             tone="warning"
           />
-        </div>
-        <div style={{ flex: 1 }}>
+
           <OverviewMetricCard
             label="Approval rate"
             value={formatRate(overview.approvalRate)}
             hint={`Approved out of ${formatCount(overview.reviewedCount)} completed reviews`}
             tone="success"
           />
-        </div>
-        <div style={{ flex: 1 }}>
+
           <OverviewMetricCard
             label="Total reviewed"
             value={formatCount(overview.reviewedCount)}
             hint="Approved and rejected decisions combined"
           />
-        </div>
-      </HStack>
+      </Grid>
 
       {/* Distribution + context */}
-      <HStack gap={3} vAlign="start">
-        <div style={{ flex: 2 }}>
+      <Grid columns={{ minWidth: 280, repeat: "fit" }} gap={3} align="start">
           <StatusDistributionCard overview={overview} />
-        </div>
 
-        <div style={{ flex: 1, minWidth: 260 }}>
           <OperationsCard overview={overview} session={session} />
-        </div>
-      </HStack>
+      </Grid>
     </VStack>
   );
 }

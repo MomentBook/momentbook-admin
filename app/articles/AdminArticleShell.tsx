@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
+import { AppShell } from "@astryxdesign/core/AppShell";
 import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import type { AdminSession } from "@/lib/admin/session";
 import {
@@ -19,9 +19,10 @@ export function AdminArticleShell({
   session,
 }: AdminArticleShellProps) {
   return (
-    <Layout
+    <AppShell
       height="fill"
-      start={
+      mobileNav={{ breakpoint: "md" }}
+      sideNav={
         <AdminSidebar
           activeTab="articles"
           eyebrow="Editorial Admin"
@@ -50,11 +51,8 @@ export function AdminArticleShell({
           title="MomentBook"
         />
       }
-      content={
-        <LayoutContent isScrollable>
-          {children}
-        </LayoutContent>
-      }
-    />
+    >
+      {children}
+    </AppShell>
   );
 }

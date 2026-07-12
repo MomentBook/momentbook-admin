@@ -4,7 +4,6 @@ type ResolveArticleBannerOptions = {
   error: string | null;
   message: string | null;
   mutation: string | null;
-  revalidation: string | null;
   articleSlug: string | null;
 };
 
@@ -16,12 +15,6 @@ export function resolveArticleBanner(
   options: ResolveArticleBannerOptions,
 ): AdminDashboardBanner | null {
   if (options.mutation === "article_created") {
-    if (options.revalidation === "failed") {
-      return {
-        tone: "error",
-        message: `${readSlugLabel(options.articleSlug)} created, but public web cache revalidation failed.`,
-      };
-    }
 
     return {
       tone: "success",
@@ -30,12 +23,6 @@ export function resolveArticleBanner(
   }
 
   if (options.mutation === "article_updated") {
-    if (options.revalidation === "failed") {
-      return {
-        tone: "error",
-        message: `${readSlugLabel(options.articleSlug)} updated, but public web cache revalidation failed.`,
-      };
-    }
 
     return {
       tone: "success",
@@ -44,12 +31,6 @@ export function resolveArticleBanner(
   }
 
   if (options.mutation === "article_deleted") {
-    if (options.revalidation === "failed") {
-      return {
-        tone: "error",
-        message: `${readSlugLabel(options.articleSlug)} deleted, but public web cache revalidation failed.`,
-      };
-    }
 
     return {
       tone: "success",

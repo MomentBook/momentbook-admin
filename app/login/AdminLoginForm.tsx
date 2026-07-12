@@ -57,13 +57,13 @@ export function AdminLoginForm({
           isRequired
         />
 
-        <FieldStatus
-          id="login-error"
-          type="error"
-          message={
-            state.error ?? ""
-          }
-        />
+        {state.error ? (
+          <FieldStatus
+            id="login-error"
+            type="error"
+            message={state.error}
+          />
+        ) : null}
 
         <SubmitButton />
       </FormLayout>

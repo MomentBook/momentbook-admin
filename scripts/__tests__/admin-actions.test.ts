@@ -12,9 +12,6 @@ const getStoredAdminSession = vi.fn();
 const clearAdminSession = vi.fn();
 const logoutAdminFromBackend = vi.fn();
 const updatePublishedJourneyReviewStatus = vi.fn();
-const getAdminPublishedJourneyDetail = vi.fn();
-const fetchPublishedJourneySitemapChunks = vi.fn();
-const requestWebRevalidation = vi.fn();
 
 vi.mock("next/navigation", () => ({
   redirect,
@@ -30,11 +27,6 @@ vi.mock("@/lib/admin/session", () => ({
   getStoredAdminSession,
 }));
 
-vi.mock("@/lib/admin/revalidation", () => ({
-  requestWebRevalidation,
-  WEB_REVALIDATION_FAILED_QUERY_VALUE: "failed",
-}));
-
 vi.mock("@/lib/admin/api", () => ({
   AdminAccessDeniedError: class AdminAccessDeniedError extends Error {},
   AdminSessionExpiredError: class AdminSessionExpiredError extends Error {},
@@ -46,14 +38,8 @@ vi.mock("@/lib/admin/api", () => ({
       this.statusCode = statusCode;
     }
   },
-  getAdminPublishedJourneyDetail,
   logoutAdminFromBackend,
   updatePublishedJourneyReviewStatus,
-}));
-
-vi.mock("@/lib/sitemap/public-content", () => ({
-  PUBLISHED_JOURNEYS_SITEMAP_TAG: "published-journeys-sitemap",
-  fetchPublishedJourneySitemapChunks,
 }));
 
 async function loadActionsModule() {
@@ -71,27 +57,12 @@ describe("updatePublishedJourneyReviewAction", () => {
     requireAdminActionSession.mockResolvedValue({
       accessToken: "admin-access-token",
     });
-    fetchPublishedJourneySitemapChunks
-      .mockResolvedValueOnce([{ index: 1, items: [] }])
-      .mockResolvedValueOnce([{ index: 2, items: [] }]);
-    getAdminPublishedJourneyDetail
-      .mockResolvedValueOnce({
-        images: [{ photoId: "photo-before" }],
-        timeline: [],
-        recapDraft: { timeline: [] },
-      })
-      .mockResolvedValueOnce({
-        images: [{ photoId: "photo-after" }],
-        timeline: [],
-        recapDraft: { timeline: [] },
-      });
     updatePublishedJourneyReviewStatus.mockResolvedValue({
       publicId: "public-123",
       review: {
         status: "APPROVED",
       },
     });
-    requestWebRevalidation.mockResolvedValue(true);
 
     const { updatePublishedJourneyReviewAction } = await loadActionsModule();
     const formData = new FormData();
@@ -107,57 +78,7 @@ describe("updatePublishedJourneyReviewAction", () => {
       publicId: "public-123",
       status: "APPROVED",
     });
-    expect(requestWebRevalidation).toHaveBeenCalledWith({
-      paths: expect.arrayContaining([
-        "/en",
-        "/en/journeys",
-        "/en/journeys/public-123",
-        "/en/photos/photo-before",
-        "/en/photos/photo-after",
-        "/ko",
-        "/ko/journeys",
-        "/ko/journeys/public-123",
-        "/ko/photos/photo-before",
-        "/ko/photos/photo-after",
-        "/sitemap.xml",
-        "/sitemaps/journeys/1.xml",
-        "/sitemaps/journeys/2.xml",
-      ]),
-      tags: ["published-journeys-sitemap"],
-    });
     expect(clearAdminSession).not.toHaveBeenCalled();
     expect(redirect).toHaveBeenCalledTimes(1);
-  });
-
-  it("redirects with a revalidation warning when the web webhook fails", async () => {
-    cookies.mockResolvedValue(new Map());
-    requireAdminActionSession.mockResolvedValue({
-      accessToken: "admin-access-token",
-    });
-    fetchPublishedJourneySitemapChunks
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
-    getAdminPublishedJourneyDetail.mockResolvedValue({
-      images: [],
-      timeline: [],
-      recapDraft: { timeline: [] },
-    });
-    updatePublishedJourneyReviewStatus.mockResolvedValue({
-      publicId: "public-123",
-      review: {
-        status: "APPROVED",
-      },
-    });
-    requestWebRevalidation.mockResolvedValue(false);
-
-    const { updatePublishedJourneyReviewAction } = await loadActionsModule();
-    const formData = new FormData();
-    formData.set("returnTo", "/reviews/public-123");
-    formData.set("targetPublicId", "public-123");
-    formData.set("reviewStatus", "APPROVED");
-
-    await expect(updatePublishedJourneyReviewAction(formData)).rejects.toThrow(
-      "REDIRECT:/reviews/public-123?targetPublicId=public-123&mutation=review_updated&reviewStatus=APPROVED&revalidation=failed",
-    );
   });
 });
