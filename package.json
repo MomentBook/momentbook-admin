@@ -11,8 +11,11 @@
     "build": "NODE_ENV=production next build",
     "start": "NODE_ENV=production next start -p 3200",
     "lint": "eslint",
-    "generate:api": "npx swagger-typescript-api@13.1.3 generate -p http://10.133.199.134:3001/api-docs-json -o ./src/apis -n client.ts -t axios",
-    "astryx": "node node_modules/@astryxdesign/cli/bin/astryx.mjs"
+    "generate:api": "yarn run generate:api:auth && yarn run generate:api:core && yarn run generate:api:chat",
+    "astryx": "node node_modules/@astryxdesign/cli/bin/astryx.mjs",
+    "generate:api:auth": "npx swagger-typescript-api@13.1.3 generate -p http://10.133.199.134:3301/api-docs-json -o ./src/apis/auth -n client.ts",
+    "generate:api:core": "npx swagger-typescript-api@13.1.3 generate -p http://10.133.199.134:3302/api-docs-json -o ./src/apis/core -n client.ts",
+    "generate:api:chat": "npx swagger-typescript-api@13.1.3 generate -p http://10.133.199.134:3303/api-docs-json -o ./src/apis/chat -n client.ts"
   },
   "dependencies": {
     "@astryxdesign/core": "^0.1.4",
