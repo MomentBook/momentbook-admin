@@ -3,13 +3,7 @@ export const PUBLIC_IMAGE_ORIGIN_ENV_KEY = "NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN";
 export const PRODUCTION_PUBLIC_IMAGE_ORIGIN =
   "https://d1mnbpnyxoksha.cloudfront.net";
 export const DEVELOPMENT_PUBLIC_IMAGE_ORIGIN =
-  "https://d17831w57uibmm.cloudfront.net";
-export const DEFAULT_PUBLIC_IMAGE_ORIGINS = [
-  PRODUCTION_PUBLIC_IMAGE_ORIGIN,
-  DEVELOPMENT_PUBLIC_IMAGE_ORIGIN,
-] as const;
-
-function resolveDefaultPublicImageOrigin(): string {
+  "https://d17831w57uibmm.cloudfront.net";function resolveDefaultPublicImageOrigin(): string {
   const appEnv = process.env.NEXT_PUBLIC_APP_ENV?.trim().toLowerCase();
 
   if (appEnv === "production") {
