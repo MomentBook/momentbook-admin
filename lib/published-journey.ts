@@ -1185,10 +1185,9 @@ export const fetchPublishedJourneyResult = cache(async function fetchPublishedJo
         }
 
         return { status: "error", data: null, message };
-    } catch (error) {
+    } catch {
         console.warn(
             "[published-journey] Failed to fetch published journey",
-            error,
         );
         return { status: "error", data: null };
     }
@@ -1435,10 +1434,9 @@ async function requestPublishedJourneys(
             nextCursor: readText(payload.data.nextCursor) ?? null,
             discoverySeed: readText(payload.data.discoverySeed) ?? null,
         };
-    } catch (error) {
+    } catch {
         console.warn(
             "[published-journey] Failed to fetch published journeys",
-            error,
         );
         return null;
     }
@@ -1563,10 +1561,9 @@ export const fetchPublishedPhotoResult = cache(async function fetchPublishedPhot
             status: "success",
             data: photo,
         };
-    } catch (error) {
+    } catch {
         console.warn(
             "[published-journey] Failed to fetch published photo",
-            error,
         );
         return { status: "error", data: null };
     }

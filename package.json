@@ -13,7 +13,7 @@
     "lint": "eslint",
     "generate:api": "yarn run generate:api:core",
     "astryx": "node node_modules/@astryxdesign/cli/bin/astryx.mjs",
-    "generate:api:core": "npx swagger-typescript-api@13.1.3 generate -p http://10.133.199.134:8080/core/swagger/json -o ./src/apis/core -n client.ts"
+    "generate:api:core": "npx swagger-typescript-api@13.1.3 generate -p $API_SWAGGER_URL/core/swagger/json -o ./src/apis/core -n client.ts"
   },
   "dependencies": {
     "@astryxdesign/core": "^0.1.4",
