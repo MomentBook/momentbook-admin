@@ -28,7 +28,7 @@ export function AdminLoginForm({
   allowedEmail,
 }: {
   nextPath: string;
-  allowedEmail: string;
+  allowedEmail: string | null;
 }) {
   const [state, formAction] = useFormState(loginAdminAction, initialState);
   const [password, setPassword] = useState("");
@@ -41,7 +41,7 @@ export function AdminLoginForm({
         <TextInput
           label="Email"
           type="email"
-          value={allowedEmail}
+          value={allowedEmail ?? ""}
           onChange={() => {}}
           isDisabled
           disabledMessage="Admin email is pre-configured."

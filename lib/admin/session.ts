@@ -94,7 +94,7 @@ export async function createAdminSession(
   cookieStore.set(ADMIN_SESSION_COOKIE_NAME, encrypted, {
     httpOnly: true,
     secure: isSessionCookieSecure(),
-    sameSite: "lax",
+    sameSite: "strict",
     expires,
     path: ADMIN_SESSION_COOKIE_PATH,
   });
@@ -212,7 +212,7 @@ export async function clearAdminSession(
   cookieStore.set(ADMIN_SESSION_COOKIE_NAME, "", {
     httpOnly: true,
     secure: isSessionCookieSecure(),
-    sameSite: "lax",
+    sameSite: "strict",
     expires: new Date(0),
     path: ADMIN_SESSION_COOKIE_PATH,
   });
