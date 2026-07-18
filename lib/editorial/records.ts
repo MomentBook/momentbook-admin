@@ -1,5 +1,5 @@
 import { type Language, languageList } from "@/lib/i18n/config";
-import type { ArticleAlternateDto } from "@/src/apis/client";
+import type { ArticleAlternateDto } from "@/src/apis/core/client";
 import { normalizeCoverImage, readPositiveInteger, readText } from "./normalize";
 import {
   editorialArticleCategories,

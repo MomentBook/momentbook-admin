@@ -5,7 +5,7 @@ import { type Language } from "@/lib/i18n/config";
 import type {
   AdminArticleDetailDto,
   AdminArticleListItemDto,
-} from "@/src/apis/client";
+} from "@/src/apis/core/client";
 import {
   editorialArticleCategories,
   type EditorialArticleCategory,
