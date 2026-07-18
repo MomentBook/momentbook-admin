@@ -817,7 +817,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title MomentBook Auth
- * @version 2.3.46
+ * @version 2.3.47
  * @contact
  *
  * MomentBook 인증/세션 API 문서
@@ -862,11 +862,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerSignInWithGoogle
+     * @name AuthOAuthControllerSignInWithGoogle
      * @summary Google OAuth 인증 시작 (웹 브라우저 리다이렉트)
      * @request GET:/v2/auth/google
      */
-    authControllerSignInWithGoogle: (params: RequestParams = {}) =>
+    authOAuthControllerSignInWithGoogle: (params: RequestParams = {}) =>
       this.request<void, any>({
         path: `/v2/auth/google`,
         method: "GET",
@@ -877,11 +877,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerHandleGoogleCallback
+     * @name AuthOAuthControllerHandleGoogleCallback
      * @summary Google OAuth Callback
      * @request GET:/v2/auth/google/callback
      */
-    authControllerHandleGoogleCallback: (
+    authOAuthControllerHandleGoogleCallback: (
       query: {
         code: string;
       },
@@ -898,11 +898,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerSignInWithGoogleToken
+     * @name AuthOAuthControllerSignInWithGoogleToken
      * @summary Google Token으로 인증 (모바일/웹)
      * @request POST:/v2/auth/google/token
      */
-    authControllerSignInWithGoogleToken: (
+    authOAuthControllerSignInWithGoogleToken: (
       data: GoogleTokenAuthDto,
       params: RequestParams = {},
     ) =>
@@ -919,11 +919,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerSignInWithApple
+     * @name AuthOAuthControllerSignInWithApple
      * @summary Apple Sign-In 인증
      * @request POST:/v2/auth/apple
      */
-    authControllerSignInWithApple: (
+    authOAuthControllerSignInWithApple: (
       data: AppleAuthDto,
       params: RequestParams = {},
     ) =>
@@ -940,11 +940,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerRefreshToken
+     * @name AuthTokenControllerRefreshToken
      * @summary Access Token 갱신
      * @request POST:/v2/auth/refresh
      */
-    authControllerRefreshToken: (
+    authTokenControllerRefreshToken: (
       data: RefreshTokenDto,
       params: RequestParams = {},
     ) =>
@@ -961,11 +961,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerLogout
+     * @name AuthTokenControllerLogout
      * @summary 로그아웃 (단일 디바이스)
      * @request POST:/v2/auth/logout
      */
-    authControllerLogout: (data: LogoutDto, params: RequestParams = {}) =>
+    authTokenControllerLogout: (data: LogoutDto, params: RequestParams = {}) =>
       this.request<LogoutResponseDto, any>({
         path: `/v2/auth/logout`,
         method: "POST",
@@ -979,11 +979,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerSendEmailVerificationCode
+     * @name AuthEmailControllerSendEmailVerificationCode
      * @summary 이메일 인증 코드 발송
      * @request POST:/v2/auth/email/send-verification
      */
-    authControllerSendEmailVerificationCode: (
+    authEmailControllerSendEmailVerificationCode: (
       data: SendVerificationCodeDto,
       params: RequestParams = {},
     ) =>
@@ -1000,11 +1000,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerVerifyEmailCode
+     * @name AuthEmailControllerVerifyEmailCode
      * @summary 이메일 인증 코드 확인
      * @request POST:/v2/auth/email/verify-code
      */
-    authControllerVerifyEmailCode: (
+    authEmailControllerVerifyEmailCode: (
       data: VerifyEmailCodeDto,
       params: RequestParams = {},
     ) =>
@@ -1021,11 +1021,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerSignupWithEmail
+     * @name AuthEmailControllerSignupWithEmail
      * @summary 이메일 회원가입
      * @request POST:/v2/auth/email/signup
      */
-    authControllerSignupWithEmail: (
+    authEmailControllerSignupWithEmail: (
       data: EmailSignupDto,
       params: RequestParams = {},
     ) =>
@@ -1042,11 +1042,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerLoginWithEmail
+     * @name AuthEmailControllerLoginWithEmail
      * @summary 이메일 로그인
      * @request POST:/v2/auth/email/login
      */
-    authControllerLoginWithEmail: (
+    authEmailControllerLoginWithEmail: (
       data: EmailLoginDto,
       params: RequestParams = {},
     ) =>
@@ -1063,12 +1063,12 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerChangePassword
+     * @name AuthEmailControllerChangePassword
      * @summary 비밀번호 변경
      * @request POST:/v2/auth/email/password
      * @secure
      */
-    authControllerChangePassword: (
+    authEmailControllerChangePassword: (
       data: ChangePasswordDto,
       params: RequestParams = {},
     ) =>
@@ -1086,11 +1086,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerRequestPasswordReset
+     * @name AuthEmailControllerRequestPasswordReset
      * @summary 비밀번호 재설정 코드 요청
      * @request POST:/v2/auth/email/request-password-reset
      */
-    authControllerRequestPasswordReset: (
+    authEmailControllerRequestPasswordReset: (
       data: RequestPasswordResetDto,
       params: RequestParams = {},
     ) =>
@@ -1107,11 +1107,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerResetPassword
+     * @name AuthEmailControllerResetPassword
      * @summary 비밀번호 재설정
      * @request POST:/v2/auth/email/reset-password
      */
-    authControllerResetPassword: (
+    authEmailControllerResetPassword: (
       data: ResetPasswordDto,
       params: RequestParams = {},
     ) =>
@@ -1128,11 +1128,11 @@ export class Api<
      * No description
      *
      * @tags auth
-     * @name AuthControllerCheckEmail
+     * @name AuthEmailControllerCheckEmail
      * @summary 이메일 존재 여부 확인
      * @request GET:/v2/auth/email/check
      */
-    authControllerCheckEmail: (
+    authEmailControllerCheckEmail: (
       query: {
         /**
          * Email address to check
