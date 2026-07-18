@@ -13,9 +13,9 @@
     "lint": "eslint",
     "generate:api": "yarn run generate:api:auth && yarn run generate:api:core && yarn run generate:api:chat",
     "astryx": "node node_modules/@astryxdesign/cli/bin/astryx.mjs",
-    "generate:api:auth": "npx swagger-typescript-api@13.1.3 generate -p https://api-dev.momentbook.app/auth/swagger/json -o ./src/apis/auth -n client.ts",
-    "generate:api:core": "npx swagger-typescript-api@13.1.3 generate -p https://api-dev.momentbook.app/core/swagger/json -o ./src/apis/core -n client.ts",
-    "generate:api:chat": "npx swagger-typescript-api@13.1.3 generate -p https://api-dev.momentbook.app/chat/swagger/json -o ./src/apis/chat -n client.ts"
+    "generate:api:auth": "npx swagger-typescript-api@13.1.3 generate -p http://10.133.199.134:8080/auth/swagger/json -o ./src/apis/auth -n client.ts",
+    "generate:api:core": "npx swagger-typescript-api@13.1.3 generate -p http://10.133.199.134:8080/core/swagger/json -o ./src/apis/core -n client.ts",
+    "generate:api:chat": "npx swagger-typescript-api@13.1.3 generate -p http://10.133.199.134:8080/chat/swagger/json -o ./src/apis/chat -n client.ts"
   },
   "dependencies": {
     "@astryxdesign/core": "^0.1.4",
