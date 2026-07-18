@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Lightbox } from "@astryxdesign/core/Lightbox";
 import { VStack } from "@astryxdesign/core/VStack";
 import { Text } from "@astryxdesign/core/Text";
-import { shouldBypassNextImageOptimization } from "@/lib/next-image-optimization";
+
 import type { AdminReviewPhoto } from "@/lib/admin/reviews";
 
 const photoImageWrapStyle = {
@@ -59,7 +59,6 @@ export function LightboxPhotoTile({
               fill
               style={photoImageStyle}
               sizes={sizes}
-              unoptimized={shouldBypassNextImageOptimization(photo.thumbnailUrl)}
             />
           </div>
           <Text type="body" size="sm" style={{

@@ -1,15 +1,4 @@
 import type { NextConfig } from "next";
-import { DEFAULT_PUBLIC_IMAGE_ORIGINS } from "./lib/public-image-url";
-
-type RemotePattern = {
-  protocol: "http" | "https";
-  hostname: string;
-  port?: string;
-  pathname: string;
-};
-
-const LOCAL_IMAGE_HOSTS = ["localhost", "127.0.0.1"] as const;
-const MOMENTBOOK_HOST = "momentbook.app";
 
 function parseBooleanEnv(value: string | undefined): boolean {
   if (!value) {
@@ -50,71 +39,6 @@ function readOrigin(value: string | undefined): string | null {
   }
 }
 
-function appendRemotePatternFromUrl(
-  patterns: RemotePattern[],
-  raw: string | undefined,
-) {
-  const origin = readOrigin(raw);
-
-  if (!origin) {
-    return;
-  }
-
-  const parsed = new URL(origin);
-
-  patterns.push({
-    protocol: parsed.protocol === "https:" ? "https" : "http",
-    hostname: parsed.hostname,
-    port: parsed.port,
-    pathname: "/**",
-  });
-}
-
-function buildRemotePatterns(): RemotePattern[] {
-  const patterns: RemotePattern[] = [
-    {
-      protocol: "https",
-      hostname: MOMENTBOOK_HOST,
-      pathname: "/**",
-    },
-    {
-      protocol: "https",
-      hostname: `**.${MOMENTBOOK_HOST}`,
-      pathname: "/**",
-    },
-  ];
-
-  for (const host of LOCAL_IMAGE_HOSTS) {
-    patterns.push(
-      {
-        protocol: "http",
-        hostname: host,
-        port: "3001",
-        pathname: "/**",
-      },
-      {
-        protocol: "http",
-        hostname: host,
-        port: "3200",
-        pathname: "/**",
-      },
-    );
-  }
-
-  for (const origin of DEFAULT_PUBLIC_IMAGE_ORIGINS) {
-    appendRemotePatternFromUrl(patterns, origin);
-  }
-
-  appendRemotePatternFromUrl(patterns, process.env.NEXT_PUBLIC_ADMIN_SITE_URL);
-  appendRemotePatternFromUrl(patterns, process.env.NEXT_PUBLIC_API_BASE_URL);
-  appendRemotePatternFromUrl(
-    patterns,
-    process.env.NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN,
-  );
-
-  return patterns;
-}
-
 function buildConnectSrc(): string[] {
   const values = ["'self'"];
   const apiOrigin = readOrigin(process.env.NEXT_PUBLIC_API_BASE_URL);
@@ -152,7 +76,7 @@ if (
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
-    remotePatterns: buildRemotePatterns(),
+    unoptimized: true,
   },
   async headers() {
     const csp = [
