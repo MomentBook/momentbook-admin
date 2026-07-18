@@ -1555,6 +1555,34 @@ export interface PublishJourneyInfoResponseDto {
   data: PublishJourneyInfoDataDto;
 }
 
+export interface UnpublishPrecheckDataDto {
+  /** Published journey owner account summary */
+  publishedBy: UnpublishPrecheckPublishedByDto;
+  /** Current authenticated account summary */
+  currentAccount: UnpublishPrecheckCurrentAccountDto;
+  /** Whether the current authenticated user is the owner of the published journey */
+  isOwner: boolean;
+}
+
+export interface UnpublishPrecheckResponseDto {
+  /** @example "success" */
+  status: string;
+  /** Account comparison data for unpublish confirmation UI */
+  data: UnpublishPrecheckDataDto;
+}
+
+export interface UnpublishJourneyResponseDto {
+  /** @example "success" */
+  status: string;
+  /** Unpublish result data */
+  data: {
+    /** The public ID of the unpublished journey */
+    publicId?: string;
+    /** Number of S3 objects deleted */
+    deletedObjects?: number;
+  };
+}
+
 export interface PublishedJourneyImageDto {
   /**
    * Stable published photo identifier for public timeline/media reconstruction
@@ -1882,34 +1910,6 @@ export interface PublishedPhotoResponseDto {
   /** @example "success" */
   status: string;
   data: PublishedPhotoDto;
-}
-
-export interface UnpublishPrecheckDataDto {
-  /** Published journey owner account summary */
-  publishedBy: UnpublishPrecheckPublishedByDto;
-  /** Current authenticated account summary */
-  currentAccount: UnpublishPrecheckCurrentAccountDto;
-  /** Whether the current authenticated user is the owner of the published journey */
-  isOwner: boolean;
-}
-
-export interface UnpublishPrecheckResponseDto {
-  /** @example "success" */
-  status: string;
-  /** Account comparison data for unpublish confirmation UI */
-  data: UnpublishPrecheckDataDto;
-}
-
-export interface UnpublishJourneyResponseDto {
-  /** @example "success" */
-  status: string;
-  /** Unpublish result data */
-  data: {
-    /** The public ID of the unpublished journey */
-    publicId?: string;
-    /** Number of S3 objects deleted */
-    deletedObjects?: number;
-  };
 }
 
 export interface AdminPublishedJourneyItemDto {
@@ -3756,7 +3756,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title MomentBook Core
- * @version 2.3.46
+ * @version 2.3.47
  * @contact
  *
  * MomentBook Core 문서 - 생각을 공유하고 관리하는 플랫폼
@@ -3801,12 +3801,12 @@ export class Api<
      * @description 현재 인증된 사용자의 프로필 정보를 조회합니다. **주요 변경사항 (v1.0.14):** - 필수 동의 미완료 사용자도 프로필 조회 가능 (403 에러 제거) - 응답에 `consents` 필드 추가하여 동의 상태 정보 제공 - 클라이언트는 `consents.requiresAction`을 확인하여 동의 화면으로 네비게이션 **동의 상태 처리:** - `consents.requiresAction: true` → 동의 화면으로 이동 필요 - `consents.requiresAction: false` → 모든 필수 동의 완료
      *
      * @tags users
-     * @name UsersControllerGetMyProfile
+     * @name UsersProfileControllerGetMyProfile
      * @summary 내 프로필 조회
      * @request GET:/v2/users/profile/me
      * @secure
      */
-    usersControllerGetMyProfile: (params: RequestParams = {}) =>
+    usersProfileControllerGetMyProfile: (params: RequestParams = {}) =>
       this.request<UserProfileSuccessResponseDto, void>({
         path: `/v2/users/profile/me`,
         method: "GET",
@@ -3819,12 +3819,12 @@ export class Api<
      * @description 현재 인증된 사용자의 프로필 정보를 업데이트합니다
      *
      * @tags users
-     * @name UsersControllerUpdateMyProfile
+     * @name UsersProfileControllerUpdateMyProfile
      * @summary 내 프로필 업데이트
      * @request PUT:/v2/users/profile/me
      * @secure
      */
-    usersControllerUpdateMyProfile: (
+    usersProfileControllerUpdateMyProfile: (
       data: UpdateUserProfileDto,
       params: RequestParams = {},
     ) =>
@@ -3842,12 +3842,15 @@ export class Api<
      * @description 특정 사용자의 프로필 정보를 조회합니다. Optional Bearer token이 있으면 authenticated viewer 기준 block 관계를 검사하며, 차단된 대상은 404로 숨깁니다.
      *
      * @tags users
-     * @name UsersControllerGetUserById
+     * @name UsersProfileControllerGetUserById
      * @summary 특정 사용자 정보 조회
      * @request GET:/v2/users/profile/{userId}
      * @secure
      */
-    usersControllerGetUserById: (userId: string, params: RequestParams = {}) =>
+    usersProfileControllerGetUserById: (
+      userId: string,
+      params: RequestParams = {},
+    ) =>
       this.request<UserProfileSuccessResponseDto, void>({
         path: `/v2/users/profile/${userId}`,
         method: "GET",
@@ -3860,12 +3863,12 @@ export class Api<
      * @description 현재 인증된 사용자의 계정을 삭제합니다. **삭제 처리 내용:** - 사용자 상태를 'deleted'로 변경 (실제 데이터는 보관) - FCM 토큰 완전 삭제 및 푸시 알림 비활성화 - 사용자가 동의한 모든 이용약관 정보 완전 삭제 - 개인정보 보호를 위한 동의 기록 삭제 **푸시 알림 관련 처리:** - 등록된 FCM 토큰 삭제 - notificationEnabled 값을 false로 설정 - 향후 푸시 알림 수신 불가 탈퇴 후에는 해당 계정으로 로그인할 수 없으며, 동의 정보는 복구되지 않습니다.
      *
      * @tags users
-     * @name UsersControllerDeleteMyAccount
+     * @name UsersProfileControllerDeleteMyAccount
      * @summary 회원 탈퇴
      * @request DELETE:/v2/users/me
      * @secure
      */
-    usersControllerDeleteMyAccount: (params: RequestParams = {}) =>
+    usersProfileControllerDeleteMyAccount: (params: RequestParams = {}) =>
       this.request<BasicSuccessResponseDto, void>({
         path: `/v2/users/me`,
         method: "DELETE",
@@ -3878,12 +3881,12 @@ export class Api<
      * @description 현재 인증된 사용자가 팔로우한 사용자 목록을 최신 팔로우순으로 조회합니다. block 관계 또는 비활성/삭제 상태가 된 사용자는 이 목록에서 제외됩니다.
      *
      * @tags users
-     * @name UsersControllerGetFollowingUsers
+     * @name UsersFollowControllerGetFollowingUsers
      * @summary 팔로우한 사용자 목록 조회
      * @request GET:/v2/users/follows
      * @secure
      */
-    usersControllerGetFollowingUsers: (
+    usersFollowControllerGetFollowingUsers: (
       query?: {
         /**
          * 페이지 번호 (default: 1)
@@ -3911,12 +3914,12 @@ export class Api<
      * @description 현재 인증된 사용자를 기준으로 특정 대상 사용자의 effective follow state를 조회합니다. block 관계이거나 비활성/삭제 상태이거나 팔로우 대상이 자기 자신이면 `isFollowing=false`를 반환합니다.
      *
      * @tags users
-     * @name UsersControllerGetFollowState
+     * @name UsersFollowControllerGetFollowState
      * @summary 사용자 팔로우 상태 조회
      * @request GET:/v2/users/follows/{followingUserId}/state
      * @secure
      */
-    usersControllerGetFollowState: (
+    usersFollowControllerGetFollowState: (
       followingUserId: string,
       params: RequestParams = {},
     ) =>
@@ -3932,12 +3935,12 @@ export class Api<
      * @description 특정 사용자를 팔로우합니다. 이미 팔로우 중인 경우에도 현재 상태를 그대로 반환합니다.
      *
      * @tags users
-     * @name UsersControllerFollowUser
+     * @name UsersFollowControllerFollowUser
      * @summary 사용자 팔로우
      * @request POST:/v2/users/follows/{followingUserId}
      * @secure
      */
-    usersControllerFollowUser: (
+    usersFollowControllerFollowUser: (
       followingUserId: string,
       params: RequestParams = {},
     ) =>
@@ -3953,12 +3956,12 @@ export class Api<
      * @description 특정 사용자의 팔로우를 해제합니다. 이미 언팔로우된 상태여도 현재 상태를 반환합니다.
      *
      * @tags users
-     * @name UsersControllerUnfollowUser
+     * @name UsersFollowControllerUnfollowUser
      * @summary 사용자 언팔로우
      * @request DELETE:/v2/users/follows/{followingUserId}
      * @secure
      */
-    usersControllerUnfollowUser: (
+    usersFollowControllerUnfollowUser: (
       followingUserId: string,
       params: RequestParams = {},
     ) =>
@@ -3974,12 +3977,12 @@ export class Api<
      * @description 현재 인증된 사용자가 차단한 사용자 목록을 최신 차단순으로 조회합니다. 이 엔드포인트는 unblock management surface 용도이며, 차단 정책으로 숨겨진 공개 프로필/여정 조회를 대체하지 않습니다.
      *
      * @tags users
-     * @name UsersControllerGetBlockedUsers
+     * @name UsersBlockControllerGetBlockedUsers
      * @summary 차단한 사용자 목록 조회
      * @request GET:/v2/users/blocks
      * @secure
      */
-    usersControllerGetBlockedUsers: (
+    usersBlockControllerGetBlockedUsers: (
       query?: {
         /**
          * 페이지 번호 (default: 1)
@@ -4007,12 +4010,12 @@ export class Api<
      * @description 특정 사용자를 차단합니다
      *
      * @tags users
-     * @name UsersControllerBlockUser
+     * @name UsersBlockControllerBlockUser
      * @summary 사용자 차단
      * @request POST:/v2/users/blocks/{blockedUserId}
      * @secure
      */
-    usersControllerBlockUser: (
+    usersBlockControllerBlockUser: (
       blockedUserId: string,
       params: RequestParams = {},
     ) =>
@@ -4028,12 +4031,12 @@ export class Api<
      * @description 특정 사용자의 차단을 해제합니다
      *
      * @tags users
-     * @name UsersControllerUnblockUser
+     * @name UsersBlockControllerUnblockUser
      * @summary 사용자 차단 해제
      * @request DELETE:/v2/users/blocks/{blockedUserId}
      * @secure
      */
-    usersControllerUnblockUser: (
+    usersBlockControllerUnblockUser: (
       blockedUserId: string,
       params: RequestParams = {},
     ) =>
@@ -4049,12 +4052,12 @@ export class Api<
      * @description 현재 인증된 사용자가 직접 차단한 사용자에 대해 unblock management 용 최소 프로필 상세를 조회합니다. public profile/public journey visibility 정책은 우회하지 않으며, 이 엔드포인트는 차단 관계가 있는 대상에 대해서만 name/picture/biography 같은 최소 식별 정보를 반환합니다.
      *
      * @tags users
-     * @name UsersControllerGetBlockedUserDetail
+     * @name UsersBlockControllerGetBlockedUserDetail
      * @summary 차단한 사용자 상세 조회
      * @request GET:/v2/users/blocks/{blockedUserId}/detail
      * @secure
      */
-    usersControllerGetBlockedUserDetail: (
+    usersBlockControllerGetBlockedUserDetail: (
       blockedUserId: string,
       params: RequestParams = {},
     ) =>
@@ -4070,12 +4073,12 @@ export class Api<
      * @description 특정 사용자의 차단 상태를 조회합니다
      *
      * @tags users
-     * @name UsersControllerGetBlockStatus
+     * @name UsersBlockControllerGetBlockStatus
      * @summary 사용자 차단 상태 조회
      * @request GET:/v2/users/blocks/{blockedUserId}/status
      * @secure
      */
-    usersControllerGetBlockStatus: (
+    usersBlockControllerGetBlockStatus: (
       blockedUserId: string,
       params: RequestParams = {},
     ) =>
@@ -4199,12 +4202,12 @@ export class Api<
      * @description Stores a fresh publish snapshot before upload, creates server-owned asset identities, and returns 24-hour presigned PUT URLs. New same-owner non-published intents supersede older ones. If the journey is already published, the existing published state is returned.
      *
      * @tags journeys
-     * @name PublishJourneyControllerCreatePublishIntent
+     * @name PublishJourneyWriteControllerCreatePublishIntent
      * @summary Create a durable background publish intent
      * @request POST:/v2/journeys/publish/intents
      * @secure
      */
-    publishJourneyControllerCreatePublishIntent: (
+    publishJourneyWriteControllerCreatePublishIntent: (
       data: CreatePublishIntentRequestDto,
       params: RequestParams = {},
     ) =>
@@ -4222,12 +4225,12 @@ export class Api<
      * @description Transitions the intent from UPLOADING to published and enters the review queue after verifying every expected presigned-upload object exists with the intended size and content type. Call this endpoint after all presigned uploads have completed successfully.
      *
      * @tags journeys
-     * @name PublishJourneyControllerCompletePublishIntent
+     * @name PublishJourneyWriteControllerCompletePublishIntent
      * @summary Complete a background publish intent after all assets are uploaded
      * @request POST:/v2/journeys/publish/intents/{publishOperationId}/complete
      * @secure
      */
-    publishJourneyControllerCompletePublishIntent: (
+    publishJourneyWriteControllerCompletePublishIntent: (
       publishOperationId: string,
       params: RequestParams = {},
     ) =>
@@ -4243,12 +4246,12 @@ export class Api<
      * @description Cancels an owned upload intent. If the operation already completed, this request unpublishes the public journey and returns CANCELLED.
      *
      * @tags journeys
-     * @name PublishJourneyControllerCancelPublishIntent
+     * @name PublishJourneyWriteControllerCancelPublishIntent
      * @summary Cancel a background publish intent
      * @request DELETE:/v2/journeys/publish/intents/{publishOperationId}
      * @secure
      */
-    publishJourneyControllerCancelPublishIntent: (
+    publishJourneyWriteControllerCancelPublishIntent: (
       publishOperationId: string,
       params: RequestParams = {},
     ) =>
@@ -4264,12 +4267,12 @@ export class Api<
      * @description Store published journey content with images. Client provides title, description, thumbnail, and optional source language in metadata. If title is not provided, a default title will be generated based on journey date. Localized title/description/hashtags and localized cluster impressions are materialized later when admin review moves the journey into APPROVED. **Photo Upload:** - Client may send the full published photo set for the journey - recapDraft may reference only a subset of images[], but every recapDraft photo must exist in images[] **Publish Stage Contract:** - recapStage must be FINALIZED - Successful publish records start with review.status=PENDING and become publicly visible on approved public surfaces after admin approval - A same-owner rejected publish can be replaced by submitting a new finalized snapshot; pending and approved records remain idempotent/blocked as existing publishes - After publish commit, the server sends a best-effort review-submitted push notification and admin-chat message to the owner - If `SLACK_REVIEW_WEBHOOK_URL` is configured, the server also sends a best-effort review-queue webhook after publish commit
      *
      * @tags journeys
-     * @name PublishJourneyControllerPublishJourney
+     * @name PublishJourneyWriteControllerPublishJourney
      * @summary Publish a journey
      * @request POST:/v2/journeys/publish
      * @secure
      */
-    publishJourneyControllerPublishJourney: (
+    publishJourneyWriteControllerPublishJourney: (
       data: PublishJourneyRequestDto,
       params: RequestParams = {},
     ) =>
@@ -4287,11 +4290,11 @@ export class Api<
      * @description Returns publish booleans and server-side publish metadata for the given journeyId
      *
      * @tags journeys
-     * @name PublishJourneyControllerGetPublishInfo
+     * @name PublishJourneyWriteControllerGetPublishInfo
      * @summary Get publish info for a journey
      * @request GET:/v2/journeys/publish/info/{journeyId}
      */
-    publishJourneyControllerGetPublishInfo: (
+    publishJourneyWriteControllerGetPublishInfo: (
       journeyId: string,
       params: RequestParams = {},
     ) =>
@@ -4303,15 +4306,57 @@ export class Api<
       }),
 
     /**
+     * @description Returns account comparison data for unpublish confirmation UI. This endpoint has no delete or cleanup side effects. Raw published owner email is not returned.
+     *
+     * @tags journeys
+     * @name PublishJourneyWriteControllerGetUnpublishPrecheck
+     * @summary Precheck unpublish ownership account
+     * @request GET:/v2/journeys/publish/{publicId}/unpublish-precheck
+     * @secure
+     */
+    publishJourneyWriteControllerGetUnpublishPrecheck: (
+      publicId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<UnpublishPrecheckResponseDto, void>({
+        path: `/v2/journeys/publish/${publicId}/unpublish-precheck`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Hide public exposure, then delete manifest-owned S3 images and interaction state. Cleanup failures leave a hidden retryable record. Only the owner can unpublish.
+     *
+     * @tags journeys
+     * @name PublishJourneyWriteControllerUnpublishJourney
+     * @summary Unpublish a journey
+     * @request DELETE:/v2/journeys/publish/{publicId}
+     * @secure
+     */
+    publishJourneyWriteControllerUnpublishJourney: (
+      publicId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<UnpublishJourneyResponseDto, void>({
+        path: `/v2/journeys/publish/${publicId}`,
+        method: "DELETE",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
      * @description Public endpoint to retrieve publicly visible approved journeys for the discovery feed. Supports legacy offset pagination and additive cursor pagination for short-feed style clients. `sort=discovery` provides a non-personalized exploration order that keeps the newest head chronological and then rotates older approved journeys more broadly with a seed-stable order. Fresh discovery requests may omit `discoverySeed`; the server will return the applied seed so later offset pages can reuse it. Seedless fresh discovery responses are not publicly cacheable; resend the returned seed to make later discovery pages deterministic. Optional `reviewStatus=APPROVED` may be supplied to make the approved-only contract explicit. Creator-specific lists should prefer `/v2/users/public/:userId/journeys`. When an optional Bearer token is present, authors in a block relationship with the authenticated viewer are suppressed from the feed.
      *
      * @tags journeys
-     * @name PublishJourneyControllerGetPublishedJourneys
+     * @name PublishJourneyPublicControllerGetPublishedJourneys
      * @summary Get list of published journeys (public feed)
      * @request GET:/v2/journeys/public
      * @secure
      */
-    publishJourneyControllerGetPublishedJourneys: (
+    publishJourneyPublicControllerGetPublishedJourneys: (
       query?: {
         /**
          * Offset pagination page number. Keep using this for legacy clients. Cursor mode requires page=1 or omission.
@@ -4380,12 +4425,12 @@ export class Api<
      * @description Public endpoint to search approved public journeys with normalized autocomplete and substring matching. Searches stored title, description, and hashtags across source metadata and localized entries, and also supports Hangul choseong-only prefix queries over the same fields. Ranking prefers exact phrase matches first, exact token matches next for single-token queries, prefix matches after that, and broader substring matches last. Ties are broken deterministically by newer publish time with `_id` as the final fallback. When an optional Bearer token is present, authors in a block relationship with the authenticated viewer are suppressed from the result set. Anonymous responses carry short-TTL public cache validators; authenticated or `excludeMine` requests are always served private no-store.
      *
      * @tags journeys
-     * @name PublishJourneyControllerSearchPublishedJourneys
+     * @name PublishJourneyPublicControllerSearchPublishedJourneys
      * @summary Search approved public journeys
      * @request GET:/v2/journeys/public/search
      * @secure
      */
-    publishJourneyControllerSearchPublishedJourneys: (
+    publishJourneyPublicControllerSearchPublishedJourneys: (
       query: {
         /**
          * Autocomplete or substring query for approved public journeys. Matches normalized title, description, and hashtags across source metadata and localized entries. Case, punctuation, repeated whitespace, and spacing variants are normalized, so a query like `kik i` can match `KIki`. Hangul choseong-only prefix queries such as ㄴ or ㄴㄷ are also supported. Ranking prefers exact phrase, then exact token for single-token queries, then prefix, then broader substring matches.
@@ -4434,12 +4479,12 @@ export class Api<
      * @description Public endpoint to retrieve viewer payload with server-side policy branching by viewer=web|app. Both app and web return full payload only after review approval, including stable timeline media references via images[] and timeline[].photos; pending/rejected journeys return a status-focused response with contentStatus and notice. When an optional Bearer token is present and the author is hidden from the authenticated viewer by block policy, this endpoint returns 404.
      *
      * @tags journeys
-     * @name PublishJourneyControllerGetPublishedJourneyViewer
+     * @name PublishJourneyPublicControllerGetPublishedJourneyViewer
      * @summary Get public journey viewer payload with viewer policy
      * @request GET:/v2/journeys/public/{publicId}/viewer
      * @secure
      */
-    publishJourneyControllerGetPublishedJourneyViewer: (
+    publishJourneyPublicControllerGetPublishedJourneyViewer: (
       publicId: string,
       query: {
         /** Viewer channel policy selector */
@@ -4465,12 +4510,12 @@ export class Api<
      * @description Public endpoint to retrieve a published photo with its journey context. When an optional Bearer token is present and the author is hidden from the authenticated viewer by block policy, this endpoint returns 404.
      *
      * @tags journeys
-     * @name PublishJourneyControllerGetPublishedPhoto
+     * @name PublishJourneyPublicControllerGetPublishedPhoto
      * @summary Get published photo by photo ID (for SEO)
      * @request GET:/v2/journeys/public/photos/{photoId}
      * @secure
      */
-    publishJourneyControllerGetPublishedPhoto: (
+    publishJourneyPublicControllerGetPublishedPhoto: (
       photoId: string,
       query?: {
         /**
@@ -4485,48 +4530,6 @@ export class Api<
         path: `/v2/journeys/public/photos/${photoId}`,
         method: "GET",
         query: query,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Returns account comparison data for unpublish confirmation UI. This endpoint has no delete or cleanup side effects. Raw published owner email is not returned.
-     *
-     * @tags journeys
-     * @name PublishJourneyControllerGetUnpublishPrecheck
-     * @summary Precheck unpublish ownership account
-     * @request GET:/v2/journeys/publish/{publicId}/unpublish-precheck
-     * @secure
-     */
-    publishJourneyControllerGetUnpublishPrecheck: (
-      publicId: string,
-      params: RequestParams = {},
-    ) =>
-      this.request<UnpublishPrecheckResponseDto, void>({
-        path: `/v2/journeys/publish/${publicId}/unpublish-precheck`,
-        method: "GET",
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description Hide public exposure, then delete manifest-owned S3 images and interaction state. Cleanup failures leave a hidden retryable record. Only the owner can unpublish.
-     *
-     * @tags journeys
-     * @name PublishJourneyControllerUnpublishJourney
-     * @summary Unpublish a journey
-     * @request DELETE:/v2/journeys/publish/{publicId}
-     * @secure
-     */
-    publishJourneyControllerUnpublishJourney: (
-      publicId: string,
-      params: RequestParams = {},
-    ) =>
-      this.request<UnpublishJourneyResponseDto, void>({
-        path: `/v2/journeys/publish/${publicId}`,
-        method: "DELETE",
         secure: true,
         format: "json",
         ...params,

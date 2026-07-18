@@ -187,6 +187,11 @@ export interface CreateChatMessageDto {
    * @example "Nice photos. Which city was this?"
    */
   text: string;
+  /**
+   * Client-generated idempotency key for safe retries
+   * @maxLength 128
+   */
+  clientMessageId?: string;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -435,7 +440,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title MomentBook Chat
- * @version 2.3.46
+ * @version 2.3.47
  * @contact
  *
  * MomentBook 채팅 API 문서
