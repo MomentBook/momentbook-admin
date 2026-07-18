@@ -11,7 +11,7 @@ import type {
   UpdateAdminArticleRequestDto,
   UpdatePublishedJourneyReviewDataDto,
   UpdatePublishedJourneyReviewRequestDto,
-} from "@/src/apis/client";
+} from "@/src/apis/core/client";
 import { ENV } from "@/src/configs/env.server";
 
 type Envelope<T> = {

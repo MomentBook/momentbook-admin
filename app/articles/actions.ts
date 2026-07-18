@@ -26,7 +26,7 @@ import { languageList, type Language } from "@/lib/i18n/config";
 import type {
   CreateAdminArticleRequestDto,
   UpdateAdminArticleRequestDto,
-} from "@/src/apis/client";
+} from "@/src/apis/core/client";
 
 type ArticleActionErrorCode =
   | "article_validation"

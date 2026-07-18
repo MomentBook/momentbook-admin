@@ -10,7 +10,7 @@ import type {
   PublicArticlesDataDto,
   PublicArticleListItemDto,
   PublicArticlesResponseDto,
-} from "@/src/apis/client";
+} from "@/src/apis/core/client";
 import {
   parseEditorialBody,
   type EditorialMarkdownBlock,

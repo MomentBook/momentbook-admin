@@ -20,7 +20,7 @@ import {
   requireAdminActionSession,
   getStoredAdminSession,
 } from "@/lib/admin/session";
-import type { UpdatePublishedJourneyReviewRequestDto } from "@/src/apis/client";
+import type { UpdatePublishedJourneyReviewRequestDto } from "@/src/apis/core/client";
 
 function readText(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";

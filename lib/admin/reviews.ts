@@ -22,7 +22,7 @@ import type {
   PublishedJourneyClusterLocalizedImpressionsDto,
   PublishedJourneyClusterLocalizationEntryDto,
   PublishedJourneyReviewDto,
-} from "@/src/apis/client";
+} from "@/src/apis/core/client";
 
 export const ADMIN_REVIEW_PAGE_SIZE = 20;
 const ADMIN_REVIEW_API_PAGE_LIMIT = 50;

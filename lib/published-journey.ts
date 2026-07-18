@@ -5,7 +5,7 @@ import type {
     PublishedJourneyDetailResponseDto,
     PublishedJourneyItemDto,
     PublishedJourneysResponseDto,
-} from "@/src/apis/client";
+} from "@/src/apis/core/client";
 import {
     PUBLIC_JOURNEY_REVALIDATE_SECONDS,
     PUBLIC_PHOTO_REVALIDATE_SECONDS,
@@ -1203,7 +1203,7 @@ export async function fetchPublishedJourney(
 }
 
 type PublishedJourneysQuery = NonNullable<
-    Parameters<Api<unknown>["v2"]["publishJourneyControllerGetPublishedJourneys"]>[0]
+    Parameters<Api<unknown>["v2"]["publishJourneyPublicControllerGetPublishedJourneys"]>[0]
 >;
 
 export type PublishedJourneyListSort = NonNullable<
