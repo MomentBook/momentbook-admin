@@ -391,8 +391,8 @@ export function AdminReviewDetailPageView({
             pendingCount={queue.summary.pendingCount}
           />
 
-          <HStack gap={3} vAlign="start">
-            <VStack style={{ flex: "1 1 0", minWidth: 0 }} gap={4}>
+          <HStack gap={3} vAlign="start" wrap="wrap">
+            <VStack style={{ flex: "1 1 0", minWidth: "18rem" }} gap={4}>
               <JourneySummary detail={detail} backHref={backHref} />
               {detail.evidence.sections.length > 0 ? (
                 detail.evidence.sections.map((section, index) => (
