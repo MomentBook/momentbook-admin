@@ -37,7 +37,7 @@ type BackendLoginPayload = {
 };
 
 function buildLoginEndpoint() {
-  return new URL("/v2/auth/email/login", ENV.API_BASE_URL).toString();
+  return new URL("/auth/email/login", ENV.API_BASE_URL).toString();
 }
 
 export async function loginAdminAction(

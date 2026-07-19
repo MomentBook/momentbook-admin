@@ -130,7 +130,7 @@ export async function logoutAdminFromBackend(
   refreshToken: string,
 ): Promise<void> {
   await requestEnvelope<void>({
-    pathname: "/v2/auth/logout",
+    pathname: "/auth/logout",
     method: "POST",
     body: { refreshToken },
   });
@@ -140,7 +140,7 @@ export async function refreshAdminTokens(
   refreshToken: string,
 ): Promise<TokenRefreshResponseData> {
   const response = await requestEnvelope<TokenRefreshResponseData>({
-    pathname: "/v2/auth/refresh",
+    pathname: "/auth/refresh",
     method: "POST",
     body: { refreshToken },
   });
@@ -154,7 +154,7 @@ export async function getAdminPublishedJourneysPage(input: {
   limit: number;
 }): Promise<AdminPublishedJourneysDataDto> {
   const response = await requestEnvelope<AdminPublishedJourneysDataDto>({
-    pathname: "/v2/admin/journeys/publish",
+    pathname: "/core/admin/journeys/publish",
     accessToken: input.accessToken,
     query: {
       page: input.page,
@@ -171,7 +171,7 @@ export async function getAdminPublishedJourneyDetail(input: {
   lang?: string;
 }): Promise<PublishedJourneyDetailDto> {
   const response = await requestEnvelope<PublishedJourneyDetailDto>({
-    pathname: `/v2/admin/journeys/publish/${encodeURIComponent(input.publicId)}`,
+    pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}`,
     accessToken: input.accessToken,
     query: input.lang
       ? {
@@ -189,7 +189,7 @@ export async function updatePublishedJourneyReviewStatus(input: {
   status: UpdatePublishedJourneyReviewRequestDto["status"];
 }): Promise<UpdatePublishedJourneyReviewDataDto> {
   const response = await requestEnvelope<UpdatePublishedJourneyReviewDataDto>({
-    pathname: `/v2/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review`,
+    pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review`,
     method: "PATCH",
     accessToken: input.accessToken,
     body: {
@@ -208,7 +208,7 @@ export async function getAdminArticles(input: {
   category?: AdminArticleCategory;
 }): Promise<AdminArticlesDataDto> {
   const response = await requestEnvelope<AdminArticlesDataDto>({
-    pathname: "/v2/admin/articles",
+    pathname: "/core/admin/articles",
     accessToken: input.accessToken,
     query: {
       page: input.page,
@@ -226,7 +226,7 @@ export async function getAdminArticle(input: {
   articleId: string;
 }): Promise<AdminArticleDetailDto> {
   const response = await requestEnvelope<AdminArticleDetailDto>({
-    pathname: `/v2/admin/articles/${encodeURIComponent(input.articleId)}`,
+    pathname: `/core/admin/articles/${encodeURIComponent(input.articleId)}`,
     accessToken: input.accessToken,
   });
 
@@ -238,7 +238,7 @@ export async function createAdminArticle(input: {
   article: CreateAdminArticleRequestDto;
 }): Promise<AdminArticleMutationDataDto> {
   const response = await requestEnvelope<AdminArticleMutationDataDto>({
-    pathname: "/v2/admin/articles",
+    pathname: "/core/admin/articles",
     method: "POST",
     accessToken: input.accessToken,
     body: input.article,
@@ -253,7 +253,7 @@ export async function updateAdminArticle(input: {
   article: UpdateAdminArticleRequestDto;
 }): Promise<AdminArticleMutationDataDto> {
   const response = await requestEnvelope<AdminArticleMutationDataDto>({
-    pathname: `/v2/admin/articles/${encodeURIComponent(input.articleId)}`,
+    pathname: `/core/admin/articles/${encodeURIComponent(input.articleId)}`,
     method: "PATCH",
     accessToken: input.accessToken,
     body: input.article,
@@ -267,7 +267,7 @@ export async function deleteAdminArticle(input: {
   articleId: string;
 }): Promise<AdminDeleteArticleDataDto> {
   const response = await requestEnvelope<AdminDeleteArticleDataDto>({
-    pathname: `/v2/admin/articles/${encodeURIComponent(input.articleId)}`,
+    pathname: `/core/admin/articles/${encodeURIComponent(input.articleId)}`,
     method: "DELETE",
     accessToken: input.accessToken,
   });

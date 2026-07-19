@@ -1116,7 +1116,7 @@ export const fetchPublishedJourneyResult = cache(async function fetchPublishedJo
         const params = new URLSearchParams({ viewer: "web" });
         appendPublicApiLanguage(params, lang);
         const response = await fetchPublicApi(
-            `/v2/journeys/public/${encodeURIComponent(publicId)}/viewer?${params.toString()}`,
+            `/core/journeys/public/${encodeURIComponent(publicId)}/viewer?${params.toString()}`,
             { next: { revalidate: PUBLIC_JOURNEY_REVALIDATE_SECONDS } },
         );
 
@@ -1380,7 +1380,7 @@ async function requestPublishedJourneys(
                     next: { revalidate: PUBLIC_JOURNEY_REVALIDATE_SECONDS },
                 };
         const response = await fetchPublicApi(
-            `/v2/journeys/public?${params.toString()}`,
+            `/core/journeys/public?${params.toString()}`,
             {
                 ...fetchOptions,
                 ...(headers ? { headers } : {}),
@@ -1504,7 +1504,7 @@ export const fetchPublishedPhotoResult = cache(async function fetchPublishedPhot
         appendPublicApiLanguage(params, lang);
         const query = params.toString();
         const response = await fetchPublicApi(
-            `/v2/journeys/public/photos/${encodeURIComponent(photoId)}${query ? `?${query}` : ""}`,
+            `/core/journeys/public/photos/${encodeURIComponent(photoId)}${query ? `?${query}` : ""}`,
             { next: { revalidate: PUBLIC_PHOTO_REVALIDATE_SECONDS } },
         );
 

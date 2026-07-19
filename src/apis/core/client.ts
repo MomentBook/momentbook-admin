@@ -2843,7 +2843,7 @@ export interface UpdateUserConsentsDto {
    */
   consents: UserConsentItemUpdateDto[];
   /**
-   * 동의 템플릿 버전. `GET /v2/consent-templates/signup`에서 받은 version 값을 그대로 전달해야 합니다.
+   * 동의 템플릿 버전. `GET /core/consent-templates/signup`에서 받은 version 값을 그대로 전달해야 합니다.
    * @example "1.0.0"
    */
   version: string;
@@ -3756,7 +3756,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title MomentBook Core
- * @version 2.3.47
+ * @version 2.3.48
  * @contact
  *
  * MomentBook Core 문서 - 생각을 공유하고 관리하는 플랫폼
@@ -3764,18 +3764,18 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
-  v2 = {
+  core = {
     /**
      * No description
      *
      * @tags health
      * @name HealthControllerHealthz
      * @summary Health Check (process only)
-     * @request GET:/v2/health/healthz
+     * @request GET:/core/health/healthz
      */
     healthControllerHealthz: (params: RequestParams = {}) =>
       this.request<HealthzResponseDto, any>({
-        path: `/v2/health/healthz`,
+        path: `/core/health/healthz`,
         method: "GET",
         format: "json",
         ...params,
@@ -3787,11 +3787,11 @@ export class Api<
      * @tags health
      * @name HealthControllerReadyz
      * @summary Ready Check (includes Mongo ping)
-     * @request GET:/v2/health/readyz
+     * @request GET:/core/health/readyz
      */
     healthControllerReadyz: (params: RequestParams = {}) =>
       this.request<ReadyzResponseDto, ReadyzUnavailableResponseDto>({
-        path: `/v2/health/readyz`,
+        path: `/core/health/readyz`,
         method: "GET",
         format: "json",
         ...params,
@@ -3803,12 +3803,12 @@ export class Api<
      * @tags users
      * @name UsersProfileControllerGetMyProfile
      * @summary 내 프로필 조회
-     * @request GET:/v2/users/profile/me
+     * @request GET:/core/users/profile/me
      * @secure
      */
     usersProfileControllerGetMyProfile: (params: RequestParams = {}) =>
       this.request<UserProfileSuccessResponseDto, void>({
-        path: `/v2/users/profile/me`,
+        path: `/core/users/profile/me`,
         method: "GET",
         secure: true,
         format: "json",
@@ -3821,7 +3821,7 @@ export class Api<
      * @tags users
      * @name UsersProfileControllerUpdateMyProfile
      * @summary 내 프로필 업데이트
-     * @request PUT:/v2/users/profile/me
+     * @request PUT:/core/users/profile/me
      * @secure
      */
     usersProfileControllerUpdateMyProfile: (
@@ -3829,7 +3829,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<UserProfileUpdateSuccessResponseDto, void>({
-        path: `/v2/users/profile/me`,
+        path: `/core/users/profile/me`,
         method: "PUT",
         body: data,
         secure: true,
@@ -3844,7 +3844,7 @@ export class Api<
      * @tags users
      * @name UsersProfileControllerGetUserById
      * @summary 특정 사용자 정보 조회
-     * @request GET:/v2/users/profile/{userId}
+     * @request GET:/core/users/profile/{userId}
      * @secure
      */
     usersProfileControllerGetUserById: (
@@ -3852,7 +3852,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<UserProfileSuccessResponseDto, void>({
-        path: `/v2/users/profile/${userId}`,
+        path: `/core/users/profile/${userId}`,
         method: "GET",
         secure: true,
         format: "json",
@@ -3865,12 +3865,12 @@ export class Api<
      * @tags users
      * @name UsersProfileControllerDeleteMyAccount
      * @summary 회원 탈퇴
-     * @request DELETE:/v2/users/me
+     * @request DELETE:/core/users/me
      * @secure
      */
     usersProfileControllerDeleteMyAccount: (params: RequestParams = {}) =>
       this.request<BasicSuccessResponseDto, void>({
-        path: `/v2/users/me`,
+        path: `/core/users/me`,
         method: "DELETE",
         secure: true,
         format: "json",
@@ -3883,7 +3883,7 @@ export class Api<
      * @tags users
      * @name UsersFollowControllerGetFollowingUsers
      * @summary 팔로우한 사용자 목록 조회
-     * @request GET:/v2/users/follows
+     * @request GET:/core/users/follows
      * @secure
      */
     usersFollowControllerGetFollowingUsers: (
@@ -3902,7 +3902,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<FollowingUsersResponseDto, void>({
-        path: `/v2/users/follows`,
+        path: `/core/users/follows`,
         method: "GET",
         query: query,
         secure: true,
@@ -3916,7 +3916,7 @@ export class Api<
      * @tags users
      * @name UsersFollowControllerGetFollowState
      * @summary 사용자 팔로우 상태 조회
-     * @request GET:/v2/users/follows/{followingUserId}/state
+     * @request GET:/core/users/follows/{followingUserId}/state
      * @secure
      */
     usersFollowControllerGetFollowState: (
@@ -3924,7 +3924,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<FollowStateResponseDto, void>({
-        path: `/v2/users/follows/${followingUserId}/state`,
+        path: `/core/users/follows/${followingUserId}/state`,
         method: "GET",
         secure: true,
         format: "json",
@@ -3937,7 +3937,7 @@ export class Api<
      * @tags users
      * @name UsersFollowControllerFollowUser
      * @summary 사용자 팔로우
-     * @request POST:/v2/users/follows/{followingUserId}
+     * @request POST:/core/users/follows/{followingUserId}
      * @secure
      */
     usersFollowControllerFollowUser: (
@@ -3945,7 +3945,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<FollowUserResponseDto, void>({
-        path: `/v2/users/follows/${followingUserId}`,
+        path: `/core/users/follows/${followingUserId}`,
         method: "POST",
         secure: true,
         format: "json",
@@ -3958,7 +3958,7 @@ export class Api<
      * @tags users
      * @name UsersFollowControllerUnfollowUser
      * @summary 사용자 언팔로우
-     * @request DELETE:/v2/users/follows/{followingUserId}
+     * @request DELETE:/core/users/follows/{followingUserId}
      * @secure
      */
     usersFollowControllerUnfollowUser: (
@@ -3966,7 +3966,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<UnfollowUserResponseDto, void>({
-        path: `/v2/users/follows/${followingUserId}`,
+        path: `/core/users/follows/${followingUserId}`,
         method: "DELETE",
         secure: true,
         format: "json",
@@ -3979,7 +3979,7 @@ export class Api<
      * @tags users
      * @name UsersBlockControllerGetBlockedUsers
      * @summary 차단한 사용자 목록 조회
-     * @request GET:/v2/users/blocks
+     * @request GET:/core/users/blocks
      * @secure
      */
     usersBlockControllerGetBlockedUsers: (
@@ -3998,7 +3998,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<BlockedUsersResponseDto, void>({
-        path: `/v2/users/blocks`,
+        path: `/core/users/blocks`,
         method: "GET",
         query: query,
         secure: true,
@@ -4012,7 +4012,7 @@ export class Api<
      * @tags users
      * @name UsersBlockControllerBlockUser
      * @summary 사용자 차단
-     * @request POST:/v2/users/blocks/{blockedUserId}
+     * @request POST:/core/users/blocks/{blockedUserId}
      * @secure
      */
     usersBlockControllerBlockUser: (
@@ -4020,7 +4020,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<BlockUserResponseDto, void>({
-        path: `/v2/users/blocks/${blockedUserId}`,
+        path: `/core/users/blocks/${blockedUserId}`,
         method: "POST",
         secure: true,
         format: "json",
@@ -4033,7 +4033,7 @@ export class Api<
      * @tags users
      * @name UsersBlockControllerUnblockUser
      * @summary 사용자 차단 해제
-     * @request DELETE:/v2/users/blocks/{blockedUserId}
+     * @request DELETE:/core/users/blocks/{blockedUserId}
      * @secure
      */
     usersBlockControllerUnblockUser: (
@@ -4041,7 +4041,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<UnblockUserResponseDto, void>({
-        path: `/v2/users/blocks/${blockedUserId}`,
+        path: `/core/users/blocks/${blockedUserId}`,
         method: "DELETE",
         secure: true,
         format: "json",
@@ -4054,7 +4054,7 @@ export class Api<
      * @tags users
      * @name UsersBlockControllerGetBlockedUserDetail
      * @summary 차단한 사용자 상세 조회
-     * @request GET:/v2/users/blocks/{blockedUserId}/detail
+     * @request GET:/core/users/blocks/{blockedUserId}/detail
      * @secure
      */
     usersBlockControllerGetBlockedUserDetail: (
@@ -4062,7 +4062,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<BlockedUserDetailResponseDto, void>({
-        path: `/v2/users/blocks/${blockedUserId}/detail`,
+        path: `/core/users/blocks/${blockedUserId}/detail`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4075,7 +4075,7 @@ export class Api<
      * @tags users
      * @name UsersBlockControllerGetBlockStatus
      * @summary 사용자 차단 상태 조회
-     * @request GET:/v2/users/blocks/{blockedUserId}/status
+     * @request GET:/core/users/blocks/{blockedUserId}/status
      * @secure
      */
     usersBlockControllerGetBlockStatus: (
@@ -4083,7 +4083,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<BlockStatusResponseDto, void>({
-        path: `/v2/users/blocks/${blockedUserId}/status`,
+        path: `/core/users/blocks/${blockedUserId}/status`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4096,7 +4096,7 @@ export class Api<
      * @tags users
      * @name PublicUsersControllerGetPublicUserProfile
      * @summary Get public user profile
-     * @request GET:/v2/users/public/{userId}
+     * @request GET:/core/users/public/{userId}
      * @secure
      */
     publicUsersControllerGetPublicUserProfile: (
@@ -4104,7 +4104,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublicUserProfileResponseDto, void>({
-        path: `/v2/users/public/${userId}`,
+        path: `/core/users/public/${userId}`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4117,7 +4117,7 @@ export class Api<
      * @tags users
      * @name PublicUsersControllerGetPublicUserMemoriesOverview
      * @summary Get public memories overview for a specific user
-     * @request GET:/v2/users/public/{userId}/memories/overview
+     * @request GET:/core/users/public/{userId}/memories/overview
      * @secure
      */
     publicUsersControllerGetPublicUserMemoriesOverview: (
@@ -4125,7 +4125,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublicMemoriesOverviewResponseDto, void>({
-        path: `/v2/users/public/${userId}/memories/overview`,
+        path: `/core/users/public/${userId}/memories/overview`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4133,12 +4133,12 @@ export class Api<
       }),
 
     /**
-     * @description Public endpoint to retrieve a paginated list of approved public journeys by a specific user. Use `continent` for continent-wide browsing, or `continent + regionId` for a specific region returned by /v2/users/public/:userId/memories/overview. When an optional Bearer token is present and the target user is hidden from the authenticated viewer by block policy, this endpoint returns 404.
+     * @description Public endpoint to retrieve a paginated list of approved public journeys by a specific user. Use `continent` for continent-wide browsing, or `continent + regionId` for a specific region returned by /core/users/public/:userId/memories/overview. When an optional Bearer token is present and the target user is hidden from the authenticated viewer by block policy, this endpoint returns 404.
      *
      * @tags users
      * @name PublicUsersControllerGetPublicUserJourneys
      * @summary Get published journeys for a specific user
-     * @request GET:/v2/users/public/{userId}/journeys
+     * @request GET:/core/users/public/{userId}/journeys
      * @secure
      */
     publicUsersControllerGetPublicUserJourneys: (
@@ -4168,7 +4168,7 @@ export class Api<
           | "oceania"
           | "antarctica";
         /**
-         * Optional opaque region identifier returned by /v2/users/public/:userId/memories/overview. Requires `continent` and must belong to that continent for the requested user.
+         * Optional opaque region identifier returned by /core/users/public/:userId/memories/overview. Requires `continent` and must belong to that continent for the requested user.
          * @example "place:ChIJm7u-8H7raDURzR3JzA8pW4M"
          */
         regionId?: string;
@@ -4190,7 +4190,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishedJourneysResponseDto, void>({
-        path: `/v2/users/public/${userId}/journeys`,
+        path: `/core/users/public/${userId}/journeys`,
         method: "GET",
         query: query,
         secure: true,
@@ -4204,7 +4204,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyWriteControllerCreatePublishIntent
      * @summary Create a durable background publish intent
-     * @request POST:/v2/journeys/publish/intents
+     * @request POST:/core/journeys/publish/intents
      * @secure
      */
     publishJourneyWriteControllerCreatePublishIntent: (
@@ -4212,7 +4212,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<CreatePublishIntentResponseDto, void>({
-        path: `/v2/journeys/publish/intents`,
+        path: `/core/journeys/publish/intents`,
         method: "POST",
         body: data,
         secure: true,
@@ -4227,7 +4227,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyWriteControllerCompletePublishIntent
      * @summary Complete a background publish intent after all assets are uploaded
-     * @request POST:/v2/journeys/publish/intents/{publishOperationId}/complete
+     * @request POST:/core/journeys/publish/intents/{publishOperationId}/complete
      * @secure
      */
     publishJourneyWriteControllerCompletePublishIntent: (
@@ -4235,7 +4235,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<CompletePublishIntentResponseDto, void>({
-        path: `/v2/journeys/publish/intents/${publishOperationId}/complete`,
+        path: `/core/journeys/publish/intents/${publishOperationId}/complete`,
         method: "POST",
         secure: true,
         format: "json",
@@ -4248,7 +4248,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyWriteControllerCancelPublishIntent
      * @summary Cancel a background publish intent
-     * @request DELETE:/v2/journeys/publish/intents/{publishOperationId}
+     * @request DELETE:/core/journeys/publish/intents/{publishOperationId}
      * @secure
      */
     publishJourneyWriteControllerCancelPublishIntent: (
@@ -4256,7 +4256,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<CancelPublishIntentResponseDto, void>({
-        path: `/v2/journeys/publish/intents/${publishOperationId}`,
+        path: `/core/journeys/publish/intents/${publishOperationId}`,
         method: "DELETE",
         secure: true,
         format: "json",
@@ -4269,7 +4269,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyWriteControllerPublishJourney
      * @summary Publish a journey
-     * @request POST:/v2/journeys/publish
+     * @request POST:/core/journeys/publish
      * @secure
      */
     publishJourneyWriteControllerPublishJourney: (
@@ -4277,7 +4277,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishJourneyResponseDto, void>({
-        path: `/v2/journeys/publish`,
+        path: `/core/journeys/publish`,
         method: "POST",
         body: data,
         secure: true,
@@ -4292,14 +4292,14 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyWriteControllerGetPublishInfo
      * @summary Get publish info for a journey
-     * @request GET:/v2/journeys/publish/info/{journeyId}
+     * @request GET:/core/journeys/publish/info/{journeyId}
      */
     publishJourneyWriteControllerGetPublishInfo: (
       journeyId: string,
       params: RequestParams = {},
     ) =>
       this.request<PublishJourneyInfoResponseDto, any>({
-        path: `/v2/journeys/publish/info/${journeyId}`,
+        path: `/core/journeys/publish/info/${journeyId}`,
         method: "GET",
         format: "json",
         ...params,
@@ -4311,7 +4311,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyWriteControllerGetUnpublishPrecheck
      * @summary Precheck unpublish ownership account
-     * @request GET:/v2/journeys/publish/{publicId}/unpublish-precheck
+     * @request GET:/core/journeys/publish/{publicId}/unpublish-precheck
      * @secure
      */
     publishJourneyWriteControllerGetUnpublishPrecheck: (
@@ -4319,7 +4319,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<UnpublishPrecheckResponseDto, void>({
-        path: `/v2/journeys/publish/${publicId}/unpublish-precheck`,
+        path: `/core/journeys/publish/${publicId}/unpublish-precheck`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4332,7 +4332,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyWriteControllerUnpublishJourney
      * @summary Unpublish a journey
-     * @request DELETE:/v2/journeys/publish/{publicId}
+     * @request DELETE:/core/journeys/publish/{publicId}
      * @secure
      */
     publishJourneyWriteControllerUnpublishJourney: (
@@ -4340,7 +4340,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<UnpublishJourneyResponseDto, void>({
-        path: `/v2/journeys/publish/${publicId}`,
+        path: `/core/journeys/publish/${publicId}`,
         method: "DELETE",
         secure: true,
         format: "json",
@@ -4348,12 +4348,12 @@ export class Api<
       }),
 
     /**
-     * @description Public endpoint to retrieve publicly visible approved journeys for the discovery feed. Supports legacy offset pagination and additive cursor pagination for short-feed style clients. `sort=discovery` provides a non-personalized exploration order that keeps the newest head chronological and then rotates older approved journeys more broadly with a seed-stable order. Fresh discovery requests may omit `discoverySeed`; the server will return the applied seed so later offset pages can reuse it. Seedless fresh discovery responses are not publicly cacheable; resend the returned seed to make later discovery pages deterministic. Optional `reviewStatus=APPROVED` may be supplied to make the approved-only contract explicit. Creator-specific lists should prefer `/v2/users/public/:userId/journeys`. When an optional Bearer token is present, authors in a block relationship with the authenticated viewer are suppressed from the feed.
+     * @description Public endpoint to retrieve publicly visible approved journeys for the discovery feed. Supports legacy offset pagination and additive cursor pagination for short-feed style clients. `sort=discovery` provides a non-personalized exploration order that keeps the newest head chronological and then rotates older approved journeys more broadly with a seed-stable order. Fresh discovery requests may omit `discoverySeed`; the server will return the applied seed so later offset pages can reuse it. Seedless fresh discovery responses are not publicly cacheable; resend the returned seed to make later discovery pages deterministic. Optional `reviewStatus=APPROVED` may be supplied to make the approved-only contract explicit. Creator-specific lists should prefer `/core/users/public/:userId/journeys`. When an optional Bearer token is present, authors in a block relationship with the authenticated viewer are suppressed from the feed.
      *
      * @tags journeys
      * @name PublishJourneyPublicControllerGetPublishedJourneys
      * @summary Get list of published journeys (public feed)
-     * @request GET:/v2/journeys/public
+     * @request GET:/core/journeys/public
      * @secure
      */
     publishJourneyPublicControllerGetPublishedJourneys: (
@@ -4378,7 +4378,7 @@ export class Api<
          */
         sort?: "recent" | "oldest" | "discovery";
         /**
-         * Deprecated creator filter on the discovery endpoint. Prefer /v2/users/public/:userId/journeys for creator-specific lists.
+         * Deprecated creator filter on the discovery endpoint. Prefer /core/users/public/:userId/journeys for creator-specific lists.
          * @deprecated
          * @example "507f1f77bcf86cd799439011"
          */
@@ -4413,7 +4413,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishedJourneysResponseDto, any>({
-        path: `/v2/journeys/public`,
+        path: `/core/journeys/public`,
         method: "GET",
         query: query,
         secure: true,
@@ -4427,7 +4427,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyPublicControllerSearchPublishedJourneys
      * @summary Search approved public journeys
-     * @request GET:/v2/journeys/public/search
+     * @request GET:/core/journeys/public/search
      * @secure
      */
     publishJourneyPublicControllerSearchPublishedJourneys: (
@@ -4467,7 +4467,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishedJourneysResponseDto, any>({
-        path: `/v2/journeys/public/search`,
+        path: `/core/journeys/public/search`,
         method: "GET",
         query: query,
         secure: true,
@@ -4481,7 +4481,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyPublicControllerGetPublishedJourneyViewer
      * @summary Get public journey viewer payload with viewer policy
-     * @request GET:/v2/journeys/public/{publicId}/viewer
+     * @request GET:/core/journeys/public/{publicId}/viewer
      * @secure
      */
     publishJourneyPublicControllerGetPublishedJourneyViewer: (
@@ -4498,7 +4498,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishedJourneyDetailResponseDto, void>({
-        path: `/v2/journeys/public/${publicId}/viewer`,
+        path: `/core/journeys/public/${publicId}/viewer`,
         method: "GET",
         query: query,
         secure: true,
@@ -4512,7 +4512,7 @@ export class Api<
      * @tags journeys
      * @name PublishJourneyPublicControllerGetPublishedPhoto
      * @summary Get published photo by photo ID (for SEO)
-     * @request GET:/v2/journeys/public/photos/{photoId}
+     * @request GET:/core/journeys/public/photos/{photoId}
      * @secure
      */
     publishJourneyPublicControllerGetPublishedPhoto: (
@@ -4527,7 +4527,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishedPhotoResponseDto, void>({
-        path: `/v2/journeys/public/photos/${photoId}`,
+        path: `/core/journeys/public/photos/${photoId}`,
         method: "GET",
         query: query,
         secure: true,
@@ -4541,7 +4541,7 @@ export class Api<
      * @tags journeys-admin
      * @name PublishJourneyAdminControllerGetAdminPublishedJourneys
      * @summary Get paginated published journeys for admin
-     * @request GET:/v2/admin/journeys/publish
+     * @request GET:/core/admin/journeys/publish
      * @secure
      */
     publishJourneyAdminControllerGetAdminPublishedJourneys: (
@@ -4568,7 +4568,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminPublishedJourneysResponseDto, void>({
-        path: `/v2/admin/journeys/publish`,
+        path: `/core/admin/journeys/publish`,
         method: "GET",
         query: query,
         secure: true,
@@ -4582,7 +4582,7 @@ export class Api<
      * @tags journeys-admin
      * @name PublishJourneyAdminControllerGetAdminPublishedJourney
      * @summary Get published journey detail for admin review
-     * @request GET:/v2/admin/journeys/publish/{publicId}
+     * @request GET:/core/admin/journeys/publish/{publicId}
      * @secure
      */
     publishJourneyAdminControllerGetAdminPublishedJourney: (
@@ -4597,7 +4597,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminPublishedJourneyDetailResponseDto, void>({
-        path: `/v2/admin/journeys/publish/${publicId}`,
+        path: `/core/admin/journeys/publish/${publicId}`,
         method: "GET",
         query: query,
         secure: true,
@@ -4611,7 +4611,7 @@ export class Api<
      * @tags journeys-admin
      * @name PublishJourneyAdminControllerUpdatePublishedJourneyReview
      * @summary Update published journey review status
-     * @request PATCH:/v2/admin/journeys/publish/{publicId}/review
+     * @request PATCH:/core/admin/journeys/publish/{publicId}/review
      * @secure
      */
     publishJourneyAdminControllerUpdatePublishedJourneyReview: (
@@ -4620,7 +4620,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<UpdatePublishedJourneyReviewResponseDto, void>({
-        path: `/v2/admin/journeys/publish/${publicId}/review`,
+        path: `/core/admin/journeys/publish/${publicId}/review`,
         method: "PATCH",
         body: data,
         secure: true,
@@ -4635,7 +4635,7 @@ export class Api<
      * @tags journeys
      * @name JourneyInteractionsControllerRecordJourneyView
      * @summary Record a public journey view
-     * @request POST:/v2/journeys/public/{publicId}/view
+     * @request POST:/core/journeys/public/{publicId}/view
      * @secure
      */
     journeyInteractionsControllerRecordJourneyView: (
@@ -4643,7 +4643,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<RecordJourneyViewResponseDto, void>({
-        path: `/v2/journeys/public/${publicId}/view`,
+        path: `/core/journeys/public/${publicId}/view`,
         method: "POST",
         secure: true,
         format: "json",
@@ -4656,7 +4656,7 @@ export class Api<
      * @tags journeys
      * @name JourneyInteractionsControllerGetJourneyEngagement
      * @summary Get public engagement summary for a journey
-     * @request GET:/v2/journeys/public/{publicId}/engagement
+     * @request GET:/core/journeys/public/{publicId}/engagement
      * @secure
      */
     journeyInteractionsControllerGetJourneyEngagement: (
@@ -4664,7 +4664,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishedJourneyEngagementResponseDto, any>({
-        path: `/v2/journeys/public/${publicId}/engagement`,
+        path: `/core/journeys/public/${publicId}/engagement`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4677,7 +4677,7 @@ export class Api<
      * @tags journeys
      * @name JourneyInteractionsControllerLikeJourney
      * @summary Like a public journey
-     * @request PUT:/v2/journeys/public/{publicId}/like
+     * @request PUT:/core/journeys/public/{publicId}/like
      * @secure
      */
     journeyInteractionsControllerLikeJourney: (
@@ -4685,7 +4685,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<LikePublishedJourneyResponseDto, any>({
-        path: `/v2/journeys/public/${publicId}/like`,
+        path: `/core/journeys/public/${publicId}/like`,
         method: "PUT",
         secure: true,
         format: "json",
@@ -4698,7 +4698,7 @@ export class Api<
      * @tags journeys
      * @name JourneyInteractionsControllerUnlikeJourney
      * @summary Remove like from a public journey
-     * @request DELETE:/v2/journeys/public/{publicId}/like
+     * @request DELETE:/core/journeys/public/{publicId}/like
      * @secure
      */
     journeyInteractionsControllerUnlikeJourney: (
@@ -4706,7 +4706,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<LikePublishedJourneyResponseDto, any>({
-        path: `/v2/journeys/public/${publicId}/like`,
+        path: `/core/journeys/public/${publicId}/like`,
         method: "DELETE",
         secure: true,
         format: "json",
@@ -4719,7 +4719,7 @@ export class Api<
      * @tags journeys
      * @name JourneyInteractionsControllerGetJourneyComments
      * @summary Get flat comments for a public journey
-     * @request GET:/v2/journeys/public/{publicId}/comments
+     * @request GET:/core/journeys/public/{publicId}/comments
      * @secure
      */
     journeyInteractionsControllerGetJourneyComments: (
@@ -4742,7 +4742,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishedJourneyCommentsResponseDto, any>({
-        path: `/v2/journeys/public/${publicId}/comments`,
+        path: `/core/journeys/public/${publicId}/comments`,
         method: "GET",
         query: query,
         secure: true,
@@ -4756,7 +4756,7 @@ export class Api<
      * @tags journeys
      * @name JourneyInteractionsControllerCreateJourneyComment
      * @summary Create a flat comment on a public journey
-     * @request POST:/v2/journeys/public/{publicId}/comments
+     * @request POST:/core/journeys/public/{publicId}/comments
      * @secure
      */
     journeyInteractionsControllerCreateJourneyComment: (
@@ -4765,7 +4765,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<CreatePublishedJourneyCommentResponseDto, any>({
-        path: `/v2/journeys/public/${publicId}/comments`,
+        path: `/core/journeys/public/${publicId}/comments`,
         method: "POST",
         body: data,
         secure: true,
@@ -4780,7 +4780,7 @@ export class Api<
      * @tags journeys
      * @name JourneyInteractionsControllerDeleteJourneyComment
      * @summary Delete a public journey comment
-     * @request DELETE:/v2/journeys/public/{publicId}/comments/{commentId}
+     * @request DELETE:/core/journeys/public/{publicId}/comments/{commentId}
      * @secure
      */
     journeyInteractionsControllerDeleteJourneyComment: (
@@ -4789,7 +4789,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<DeletePublishedJourneyCommentResponseDto, any>({
-        path: `/v2/journeys/public/${publicId}/comments/${commentId}`,
+        path: `/core/journeys/public/${publicId}/comments/${commentId}`,
         method: "DELETE",
         secure: true,
         format: "json",
@@ -4802,7 +4802,7 @@ export class Api<
      * @tags journeys
      * @name JourneyInteractionsControllerGetJourneyAnalytics
      * @summary Get creator analytics for a published journey
-     * @request GET:/v2/journeys/publish/{publicId}/analytics
+     * @request GET:/core/journeys/publish/{publicId}/analytics
      * @secure
      */
     journeyInteractionsControllerGetJourneyAnalytics: (
@@ -4810,7 +4810,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublishedJourneyAnalyticsResponseDto, any>({
-        path: `/v2/journeys/publish/${publicId}/analytics`,
+        path: `/core/journeys/publish/${publicId}/analytics`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4823,7 +4823,7 @@ export class Api<
      * @tags reports
      * @name ReportsControllerCreateReport
      * @summary 신고 생성
-     * @request POST:/v2/reports
+     * @request POST:/core/reports
      * @secure
      */
     reportsControllerCreateReport: (
@@ -4831,7 +4831,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<CreateReportResponseDto, void>({
-        path: `/v2/reports`,
+        path: `/core/reports`,
         method: "POST",
         body: data,
         secure: true,
@@ -4846,7 +4846,7 @@ export class Api<
      * @tags reports-admin
      * @name AdminReportsControllerGetAdminReports
      * @summary List reports for admin moderation
-     * @request GET:/v2/admin/reports
+     * @request GET:/core/admin/reports
      * @secure
      */
     adminReportsControllerGetAdminReports: (
@@ -4890,7 +4890,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminReportsResponseDto, void>({
-        path: `/v2/admin/reports`,
+        path: `/core/admin/reports`,
         method: "GET",
         query: query,
         secure: true,
@@ -4904,12 +4904,12 @@ export class Api<
      * @tags reports-admin
      * @name AdminReportsControllerGetAdminReportStats
      * @summary Get admin report queue statistics
-     * @request GET:/v2/admin/reports/stats
+     * @request GET:/core/admin/reports/stats
      * @secure
      */
     adminReportsControllerGetAdminReportStats: (params: RequestParams = {}) =>
       this.request<AdminReportStatsResponseDto, void>({
-        path: `/v2/admin/reports/stats`,
+        path: `/core/admin/reports/stats`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4922,7 +4922,7 @@ export class Api<
      * @tags reports-admin
      * @name AdminReportsControllerGetAdminReport
      * @summary Get one report for admin moderation
-     * @request GET:/v2/admin/reports/{reportId}
+     * @request GET:/core/admin/reports/{reportId}
      * @secure
      */
     adminReportsControllerGetAdminReport: (
@@ -4930,7 +4930,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminReportDetailResponseDto, void>({
-        path: `/v2/admin/reports/${reportId}`,
+        path: `/core/admin/reports/${reportId}`,
         method: "GET",
         secure: true,
         format: "json",
@@ -4943,7 +4943,7 @@ export class Api<
      * @tags reports-admin
      * @name AdminReportsControllerUpdateAdminReport
      * @summary Update report moderation state
-     * @request PATCH:/v2/admin/reports/{reportId}
+     * @request PATCH:/core/admin/reports/{reportId}
      * @secure
      */
     adminReportsControllerUpdateAdminReport: (
@@ -4952,7 +4952,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminReportMutationResponseDto, void>({
-        path: `/v2/admin/reports/${reportId}`,
+        path: `/core/admin/reports/${reportId}`,
         method: "PATCH",
         body: data,
         secure: true,
@@ -4967,11 +4967,11 @@ export class Api<
      * @tags consents
      * @name ConsentTemplatesControllerGetSignupConsents
      * @summary 회원가입용 동의 항목 목록 조회
-     * @request GET:/v2/consent-templates/signup
+     * @request GET:/core/consent-templates/signup
      */
     consentTemplatesControllerGetSignupConsents: (params: RequestParams = {}) =>
       this.request<SignupConsentsResponseDto, void>({
-        path: `/v2/consent-templates/signup`,
+        path: `/core/consent-templates/signup`,
         method: "GET",
         format: "json",
         ...params,
@@ -4983,7 +4983,7 @@ export class Api<
      * @tags consents
      * @name UserConsentsControllerUpdateUserConsents
      * @summary 사용자 동의 업데이트
-     * @request POST:/v2/users/consents
+     * @request POST:/core/users/consents
      * @secure
      */
     userConsentsControllerUpdateUserConsents: (
@@ -4991,7 +4991,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<UpdateUserConsentsResponseDto, void>({
-        path: `/v2/users/consents`,
+        path: `/core/users/consents`,
         method: "POST",
         body: data,
         secure: true,
@@ -5006,14 +5006,14 @@ export class Api<
      * @tags journeys
      * @name JourneyRecapControllerCreateDraft
      * @summary Generate recap draft
-     * @request POST:/v2/journeys/recap/draft
+     * @request POST:/core/journeys/recap/draft
      */
     journeyRecapControllerCreateDraft: (
       data: CreateJourneyRecapDraftRequestDto,
       params: RequestParams = {},
     ) =>
       this.request<JourneyRecapDraftResponseDto, any>({
-        path: `/v2/journeys/recap/draft`,
+        path: `/core/journeys/recap/draft`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -5022,19 +5022,19 @@ export class Api<
       }),
 
     /**
-     * @description Legacy compatibility endpoint for older two-call clients. Recap clustering and GPS outlier handling are owned by /v2/journeys/recap/draft via recap-core, so this endpoint does not reprocess, correct, or normalize the submitted draft. It returns the submitted recap draft unchanged with correction.applied=false.
+     * @description Legacy compatibility endpoint for older two-call clients. Recap clustering and GPS outlier handling are owned by /core/journeys/recap/draft via recap-core, so this endpoint does not reprocess, correct, or normalize the submitted draft. It returns the submitted recap draft unchanged with correction.applied=false.
      *
      * @tags journeys
      * @name JourneyRecapControllerCorrectGpsOutliers
      * @summary Legacy no-op GPS outlier correction compatibility endpoint
-     * @request POST:/v2/journeys/recap/draft/correct-gps-outliers
+     * @request POST:/core/journeys/recap/draft/correct-gps-outliers
      */
     journeyRecapControllerCorrectGpsOutliers: (
       data: CorrectJourneyRecapDraftRequestDto,
       params: RequestParams = {},
     ) =>
       this.request<JourneyRecapCorrectedDraftResponseDto, any>({
-        path: `/v2/journeys/recap/draft/correct-gps-outliers`,
+        path: `/core/journeys/recap/draft/correct-gps-outliers`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -5048,7 +5048,7 @@ export class Api<
      * @tags uploads
      * @name UploadsControllerGeneratePresignedUrl
      * @summary Generate presigned URL for client-side S3 upload
-     * @request POST:/v2/uploads/presign
+     * @request POST:/core/uploads/presign
      * @secure
      */
     uploadsControllerGeneratePresignedUrl: (
@@ -5056,7 +5056,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PresignUploadResponseDto, void>({
-        path: `/v2/uploads/presign`,
+        path: `/core/uploads/presign`,
         method: "POST",
         body: data,
         secure: true,
@@ -5071,7 +5071,7 @@ export class Api<
      * @tags uploads
      * @name UploadsControllerGenerateBatchPresignedUrls
      * @summary Generate multiple presigned URLs for client-side S3 uploads
-     * @request POST:/v2/uploads/presign/batch
+     * @request POST:/core/uploads/presign/batch
      * @secure
      */
     uploadsControllerGenerateBatchPresignedUrls: (
@@ -5079,7 +5079,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<BatchPresignUploadResponseDto, void>({
-        path: `/v2/uploads/presign/batch`,
+        path: `/core/uploads/presign/batch`,
         method: "POST",
         body: data,
         secure: true,
@@ -5094,7 +5094,7 @@ export class Api<
      * @tags apps
      * @name AppsVersionControllerCheckVersion
      * @summary Check if app should update (force/soft)
-     * @request GET:/v2/apps/check
+     * @request GET:/core/apps/check
      */
     appsVersionControllerCheckVersion: (
       query: {
@@ -5108,7 +5108,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<VersionCheckResponseDto, any>({
-        path: `/v2/apps/check`,
+        path: `/core/apps/check`,
         method: "GET",
         query: query,
         format: "json",
@@ -5121,7 +5121,7 @@ export class Api<
      * @tags notifications
      * @name NotificationsControllerRegisterFcmToken
      * @summary Register FCM token
-     * @request POST:/v2/notifications/fcm-token
+     * @request POST:/core/notifications/fcm-token
      * @secure
      */
     notificationsControllerRegisterFcmToken: (
@@ -5129,7 +5129,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<void, void>({
-        path: `/v2/notifications/fcm-token`,
+        path: `/core/notifications/fcm-token`,
         method: "POST",
         body: data,
         secure: true,
@@ -5143,12 +5143,12 @@ export class Api<
      * @tags notifications
      * @name NotificationsControllerDeleteFcmToken
      * @summary Delete FCM token
-     * @request DELETE:/v2/notifications/fcm-token
+     * @request DELETE:/core/notifications/fcm-token
      * @secure
      */
     notificationsControllerDeleteFcmToken: (params: RequestParams = {}) =>
       this.request<void, void>({
-        path: `/v2/notifications/fcm-token`,
+        path: `/core/notifications/fcm-token`,
         method: "DELETE",
         secure: true,
         ...params,
@@ -5160,7 +5160,7 @@ export class Api<
      * @tags notifications
      * @name NotificationsControllerUpdateNotificationSettings
      * @summary Update notification settings
-     * @request PATCH:/v2/notifications/settings
+     * @request PATCH:/core/notifications/settings
      * @secure
      */
     notificationsControllerUpdateNotificationSettings: (
@@ -5168,7 +5168,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<void, void>({
-        path: `/v2/notifications/settings`,
+        path: `/core/notifications/settings`,
         method: "PATCH",
         body: data,
         secure: true,
@@ -5182,7 +5182,7 @@ export class Api<
      * @tags articles
      * @name ArticlesControllerGetPublicArticles
      * @summary List editorial articles
-     * @request GET:/v2/articles
+     * @request GET:/core/articles
      */
     articlesControllerGetPublicArticles: (
       query?: {
@@ -5217,7 +5217,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublicArticlesResponseDto, any>({
-        path: `/v2/articles`,
+        path: `/core/articles`,
         method: "GET",
         query: query,
         format: "json",
@@ -5230,7 +5230,7 @@ export class Api<
      * @tags articles
      * @name ArticlesControllerGetPublicArticle
      * @summary Get an editorial article by slug
-     * @request GET:/v2/articles/{slug}
+     * @request GET:/core/articles/{slug}
      */
     articlesControllerGetPublicArticle: (
       slug: string,
@@ -5244,7 +5244,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<PublicArticleDetailResponseDto, void>({
-        path: `/v2/articles/${slug}`,
+        path: `/core/articles/${slug}`,
         method: "GET",
         query: query,
         format: "json",
@@ -5257,7 +5257,7 @@ export class Api<
      * @tags articles-admin
      * @name ArticlesAdminControllerGetAdminArticles
      * @summary List editorial articles for admin
-     * @request GET:/v2/admin/articles
+     * @request GET:/core/admin/articles
      * @secure
      */
     articlesAdminControllerGetAdminArticles: (
@@ -5288,7 +5288,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminArticlesResponseDto, any>({
-        path: `/v2/admin/articles`,
+        path: `/core/admin/articles`,
         method: "GET",
         query: query,
         secure: true,
@@ -5302,7 +5302,7 @@ export class Api<
      * @tags articles-admin
      * @name ArticlesAdminControllerCreateAdminArticle
      * @summary Create an editorial article
-     * @request POST:/v2/admin/articles
+     * @request POST:/core/admin/articles
      * @secure
      */
     articlesAdminControllerCreateAdminArticle: (
@@ -5310,7 +5310,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminArticleMutationResponseDto, any>({
-        path: `/v2/admin/articles`,
+        path: `/core/admin/articles`,
         method: "POST",
         body: data,
         secure: true,
@@ -5325,7 +5325,7 @@ export class Api<
      * @tags articles-admin
      * @name ArticlesAdminControllerGetAdminArticle
      * @summary Get one editorial article for admin
-     * @request GET:/v2/admin/articles/{articleId}
+     * @request GET:/core/admin/articles/{articleId}
      * @secure
      */
     articlesAdminControllerGetAdminArticle: (
@@ -5333,7 +5333,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminArticleDetailResponseDto, any>({
-        path: `/v2/admin/articles/${articleId}`,
+        path: `/core/admin/articles/${articleId}`,
         method: "GET",
         secure: true,
         format: "json",
@@ -5346,7 +5346,7 @@ export class Api<
      * @tags articles-admin
      * @name ArticlesAdminControllerUpdateAdminArticle
      * @summary Update an editorial article
-     * @request PATCH:/v2/admin/articles/{articleId}
+     * @request PATCH:/core/admin/articles/{articleId}
      * @secure
      */
     articlesAdminControllerUpdateAdminArticle: (
@@ -5355,7 +5355,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminArticleMutationResponseDto, any>({
-        path: `/v2/admin/articles/${articleId}`,
+        path: `/core/admin/articles/${articleId}`,
         method: "PATCH",
         body: data,
         secure: true,
@@ -5370,7 +5370,7 @@ export class Api<
      * @tags articles-admin
      * @name ArticlesAdminControllerDeleteAdminArticle
      * @summary Delete an editorial article
-     * @request DELETE:/v2/admin/articles/{articleId}
+     * @request DELETE:/core/admin/articles/{articleId}
      * @secure
      */
     articlesAdminControllerDeleteAdminArticle: (
@@ -5378,7 +5378,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<AdminDeleteArticleResponseDto, any>({
-        path: `/v2/admin/articles/${articleId}`,
+        path: `/core/admin/articles/${articleId}`,
         method: "DELETE",
         secure: true,
         format: "json",
