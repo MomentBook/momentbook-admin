@@ -101,7 +101,7 @@ const fetchPublicArticlesPage = cache(
       params.set("category", category);
     }
 
-    const response = await fetchPublicApi(`/v2/articles?${params.toString()}`, {
+    const response = await fetchPublicApi(`/core/articles?${params.toString()}`, {
       next: {
         revalidate: 3600,
       },
@@ -260,7 +260,7 @@ export const getPublishedGuideDetailResult = cache(async function getPublishedGu
   appendPublicApiLanguage(params, language);
   const query = params.toString();
   const response = await fetchPublicApi(
-    `/v2/articles/${encodeURIComponent(normalizedSlug)}${query ? `?${query}` : ""}`,
+    `/core/articles/${encodeURIComponent(normalizedSlug)}${query ? `?${query}` : ""}`,
     {
       next: {
         revalidate: 3600,
