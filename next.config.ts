@@ -55,7 +55,14 @@ function buildConnectSrc(): string[] {
 }
 
 function buildImgSrc(): string[] {
-  const values = ["'self'", "data:", "blob:", "https:"];
+  const values = [
+    "'self'",
+    "data:",
+    "blob:",
+    "https:",
+    "https://cdn.momentbook.app",
+    "https://cdn-dev.momentbook.app",
+  ];
 
   if (process.env.NODE_ENV !== "production") {
     values.push("http://localhost:3001", "http://127.0.0.1:3001");
@@ -77,6 +84,16 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.momentbook.app",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn-dev.momentbook.app",
+      },
+    ],
   },
   async headers() {
     const csp = [
