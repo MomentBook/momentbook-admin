@@ -1202,7 +1202,7 @@ export async function fetchPublishedJourney(
 }
 
 type PublishedJourneysQuery = NonNullable<
-    Parameters<Api<unknown>["v2"]["publishJourneyPublicControllerGetPublishedJourneys"]>[0]
+    Parameters<Api<unknown>["core"]["publishJourneyPublicControllerGetPublishedJourneys"]>[0]
 >;
 
 export type PublishedJourneyListSort = NonNullable<
