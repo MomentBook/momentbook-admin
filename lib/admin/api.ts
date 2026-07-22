@@ -47,6 +47,26 @@ export class BackendApiError extends Error {
   }
 }
 
+/**
+ * Type guard that identifies BackendApiError instances (and subclasses)
+ * without relying on `instanceof`, which can fail across Turbopack/Webpack
+ * chunk boundaries. Uses structural duck typing on `statusCode` and `message`
+ * rather than `name` string comparison, so subclasses such as
+ * `AdminSessionExpiredError` and `AdminAccessDeniedError` are also detected.
+ */
+export function isBackendApiError(
+  error: unknown,
+): error is { message: string; statusCode: number } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "statusCode" in error &&
+    typeof (error as Record<string, unknown>).statusCode === "number" &&
+    "message" in error &&
+    typeof (error as Record<string, unknown>).message === "string"
+  );
+}
+
 export class AdminSessionExpiredError extends BackendApiError {
   constructor(message = "Admin session expired") {
     super(message, 401);

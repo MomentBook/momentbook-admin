@@ -4,9 +4,11 @@ import {
   buildAdminArticleWorkspaceHref,
   sanitizeAdminPath,
 } from "@/lib/admin/paths";
+import { isBackendApiError } from "@/lib/admin/api";
 import { resolveSupportedLanguage } from "@/lib/i18n/config";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { loadAdminWorkspaceShell, readQueryParam } from "@/app/_workspace/workspace-data";
+import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { resolveArticleBanner } from "../article-banner";
 import { createEditorialArticleAction } from "../actions";
 import { EditorialArticleEditorPageView } from "../EditorialArticleEditorPageView";
@@ -42,11 +44,29 @@ export default async function AdminNewArticlePage({
     mutation: readQueryParam(resolvedSearchParams.mutation),
     articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
   });
-  const { queue, session } = await loadAdminWorkspaceShell({
-    page: 1,
-    returnTo: nextPath,
-    status: "pending",
-  });
+  let queue, session;
+
+  try {
+    const result = await loadAdminWorkspaceShell({
+      page: 1,
+      returnTo: nextPath,
+      status: "pending",
+    });
+    queue = result.queue;
+    session = result.session;
+  } catch (error) {
+    if (isBackendApiError(error)) {
+      return (
+        <AdminWorkspaceErrorPage
+          heading="The article editor is temporarily unavailable."
+          message={error.message}
+          statusCode={error.statusCode}
+        />
+      );
+    }
+
+    throw error;
+  }
 
   return (
     <EditorialArticleEditorPageView
