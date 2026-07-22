@@ -5,8 +5,10 @@ import {
   parseAdminWorkspaceTab,
 } from "@/lib/admin/paths";
 import { redirect } from "next/navigation";
+import { BackendApiError } from "@/lib/admin/api";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { AdminWorkspace } from "@/app/_workspace/AdminWorkspace";
+import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import {
   loadAdminWorkspaceShell,
   parsePage,
@@ -62,11 +64,30 @@ export default async function AdminIndexPage({
     reviewStatus,
     targetPublicId,
   });
-  const { overview, queue, session } = await loadAdminWorkspaceShell({
-    page,
-    returnTo,
-    status,
-  });
+
+  let overview, queue, session;
+
+  try {
+    const result = await loadAdminWorkspaceShell({
+      page,
+      returnTo,
+      status,
+    });
+    overview = result.overview;
+    queue = result.queue;
+    session = result.session;
+  } catch (error) {
+    if (error instanceof BackendApiError) {
+      return (
+        <AdminWorkspaceErrorPage
+          message={error.message}
+          statusCode={error.statusCode}
+        />
+      );
+    }
+
+    throw error;
+  }
 
   return (
     <AdminWorkspace
