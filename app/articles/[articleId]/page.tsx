@@ -6,6 +6,7 @@ import {
   sanitizeAdminPath,
   withAdminQuery,
 } from "@/lib/admin/paths";
+import { isBackendApiError } from "@/lib/admin/api";
 import {
   ADMIN_REVIEW_PAGE_SIZE,
   loadAdminReviewWorkspaceData,
@@ -16,6 +17,7 @@ import {
   readQueryParam,
   withAdminWorkspaceSession,
 } from "@/app/_workspace/workspace-data";
+import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { resolveArticleBanner } from "../article-banner";
 import {
   deleteEditorialArticleAction,
@@ -49,28 +51,46 @@ export default async function AdminArticleDetailPage({
     mutation: readQueryParam(resolvedSearchParams.mutation),
     articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
   });
-  const { data, session } = await withAdminWorkspaceSession({
-    returnTo: nextPath,
-    load: async (accessToken) => {
-      const [reviews, article] = await Promise.all([
-        loadAdminReviewWorkspaceData({
-          accessToken,
-          page: 1,
-          status: "pending",
-          limit: ADMIN_REVIEW_PAGE_SIZE,
-        }),
-        loadAdminEditorialArticle({
-          accessToken,
-          articleId,
-        }),
-      ]);
+  let data, session;
 
-      return {
-        article,
-        queue: reviews.queue,
-      };
-    },
-  });
+  try {
+    const result = await withAdminWorkspaceSession({
+      returnTo: nextPath,
+      load: async (accessToken) => {
+        const [reviews, article] = await Promise.all([
+          loadAdminReviewWorkspaceData({
+            accessToken,
+            page: 1,
+            status: "pending",
+            limit: ADMIN_REVIEW_PAGE_SIZE,
+          }),
+          loadAdminEditorialArticle({
+            accessToken,
+            articleId,
+          }),
+        ]);
+
+        return {
+          article,
+          queue: reviews.queue,
+        };
+      },
+    });
+    data = result.data;
+    session = result.session;
+  } catch (error) {
+    if (isBackendApiError(error)) {
+      return (
+        <AdminWorkspaceErrorPage
+          heading="The article editor is temporarily unavailable."
+          message={error.message}
+          statusCode={error.statusCode}
+        />
+      );
+    }
+
+    throw error;
+  }
   const article = data.article;
 
   if (!article) {

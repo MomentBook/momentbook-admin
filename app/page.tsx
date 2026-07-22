@@ -5,7 +5,7 @@ import {
   parseAdminWorkspaceTab,
 } from "@/lib/admin/paths";
 import { redirect } from "next/navigation";
-import { BackendApiError } from "@/lib/admin/api";
+import { isBackendApiError } from "@/lib/admin/api";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { AdminWorkspace } from "@/app/_workspace/AdminWorkspace";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
@@ -77,7 +77,7 @@ export default async function AdminIndexPage({
     queue = result.queue;
     session = result.session;
   } catch (error) {
-    if (error instanceof BackendApiError) {
+    if (isBackendApiError(error)) {
       return (
         <AdminWorkspaceErrorPage
           message={error.message}

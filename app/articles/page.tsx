@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
+import { isBackendApiError } from "@/lib/admin/api";
 import {
   ADMIN_REVIEW_PAGE_SIZE,
   loadAdminReviewWorkspaceData,
@@ -16,6 +17,7 @@ import {
   readQueryParam,
   withAdminWorkspaceSession,
 } from "@/app/_workspace/workspace-data";
+import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { resolveArticleBanner } from "./article-banner";
 import { AdminArticleListPageView } from "./AdminArticleListPageView";
 
@@ -49,31 +51,49 @@ export default async function AdminArticlesPage({
     articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
   });
 
-  const { data, session } = await withAdminWorkspaceSession({
-    returnTo,
-    load: async (accessToken) => {
-      const [dashboard, queue] = await Promise.all([
-        loadAdminEditorialArticleDashboard({
-          accessToken,
-          page,
-          limit: ADMIN_ARTICLE_PAGE_SIZE,
-          language,
-          category,
-        }),
-        loadAdminReviewWorkspaceData({
-          accessToken,
-          page: 1,
-          status: "pending",
-          limit: ADMIN_REVIEW_PAGE_SIZE,
-        }),
-      ]);
+  let data, session;
 
-      return {
-        dashboard,
-        queue,
-      };
-    },
-  });
+  try {
+    const result = await withAdminWorkspaceSession({
+      returnTo,
+      load: async (accessToken) => {
+        const [dashboard, queue] = await Promise.all([
+          loadAdminEditorialArticleDashboard({
+            accessToken,
+            page,
+            limit: ADMIN_ARTICLE_PAGE_SIZE,
+            language,
+            category,
+          }),
+          loadAdminReviewWorkspaceData({
+            accessToken,
+            page: 1,
+            status: "pending",
+            limit: ADMIN_REVIEW_PAGE_SIZE,
+          }),
+        ]);
+
+        return {
+          dashboard,
+          queue,
+        };
+      },
+    });
+    data = result.data;
+    session = result.session;
+  } catch (error) {
+    if (isBackendApiError(error)) {
+      return (
+        <AdminWorkspaceErrorPage
+          heading="The articles workspace is temporarily unavailable."
+          message={error.message}
+          statusCode={error.statusCode}
+        />
+      );
+    }
+
+    throw error;
+  }
 
   return (
     <AdminArticleListPageView

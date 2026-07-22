@@ -5,6 +5,7 @@ import {
   buildAdminReviewDetailHref,
   buildAdminWorkspaceHref,
 } from "@/lib/admin/paths";
+import { isBackendApiError } from "@/lib/admin/api";
 import { resolveSupportedLanguage, toLocaleTag } from "@/lib/i18n/config";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import {
@@ -15,6 +16,7 @@ import {
   readQueryParam,
   resolveBanner,
 } from "@/app/_workspace/workspace-data";
+import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 
 export const metadata: Metadata = {
   title: "Review Detail",
@@ -63,13 +65,32 @@ export default async function AdminReviewDetailPage({
         }
       : null;
 
-  const { detail, queue, session } = await loadAdminReviewDetailShell({
-    page,
-    publicId,
-    returnTo,
-    status,
-    lang: detailLanguage,
-  });
+  let detail, queue, session;
+
+  try {
+    const result = await loadAdminReviewDetailShell({
+      page,
+      publicId,
+      returnTo,
+      status,
+      lang: detailLanguage,
+    });
+    detail = result.detail;
+    queue = result.queue;
+    session = result.session;
+  } catch (error) {
+    if (isBackendApiError(error)) {
+      return (
+        <AdminWorkspaceErrorPage
+          heading="The review detail is temporarily unavailable."
+          message={error.message}
+          statusCode={error.statusCode}
+        />
+      );
+    }
+
+    throw error;
+  }
 
   if (!detail) {
     redirect(
