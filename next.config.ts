@@ -62,6 +62,8 @@ function buildImgSrc(): string[] {
     "https:",
     "https://cdn.momentbook.app",
     "https://cdn-dev.momentbook.app",
+    "https://d1mnbpnyxoksha.cloudfront.net",
+    "https://d17831w57uibmm.cloudfront.net",
   ];
 
   if (process.env.NODE_ENV !== "production") {
@@ -92,6 +94,14 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "cdn-dev.momentbook.app",
+      },
+      {
+        protocol: "https",
+        hostname: "d1mnbpnyxoksha.cloudfront.net",
+      },
+      {
+        protocol: "https",
+        hostname: "d17831w57uibmm.cloudfront.net",
       },
     ],
   },
