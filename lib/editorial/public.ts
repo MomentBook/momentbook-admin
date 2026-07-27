@@ -2,7 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
-import { appendPublicApiLanguage, fetchPublicApi } from "@/lib/public-api";
+import { appendPublicApiLanguage, fetchPublicApi } from "@/lib/api/public";
 import { languageList, type Language } from "@/lib/i18n/config";
 import type {
   PublicArticleDetailDto,
@@ -10,7 +10,7 @@ import type {
   PublicArticlesDataDto,
   PublicArticleListItemDto,
   PublicArticlesResponseDto,
-} from "@/src/apis/core/client";
+} from "@/src/apis/types";
 import {
   parseEditorialBody,
   type EditorialMarkdownBlock,

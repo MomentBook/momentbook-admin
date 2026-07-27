@@ -2,10 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  AdminAccessDeniedError,
-  AdminSessionExpiredError,
-} from "@/lib/admin/api";
+import { isBackendApiError } from "@/lib/api/client";
 import {
   ADMIN_REVIEW_PAGE_SIZE,
   getAdminReviewStatusLabel,
@@ -131,7 +128,7 @@ export async function withAdminWorkspaceSession<T>(options: {
       session,
     };
   } catch (error) {
-    if (error instanceof AdminSessionExpiredError) {
+    if (isBackendApiError(error) && error.statusCode === 401) {
       redirect(
         buildAdminSessionInvalidateHref({
           next: options.returnTo,
@@ -140,7 +137,7 @@ export async function withAdminWorkspaceSession<T>(options: {
       );
     }
 
-    if (error instanceof AdminAccessDeniedError) {
+    if (isBackendApiError(error) && error.statusCode === 403) {
       redirect(
         buildAdminSessionInvalidateHref({
           next: options.returnTo,

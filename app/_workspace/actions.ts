@@ -2,13 +2,9 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  AdminAccessDeniedError,
-  AdminSessionExpiredError,
-  BackendApiError,
-  logoutAdminFromBackend,
-  updatePublishedJourneyReviewStatus,
-} from "@/lib/admin/api";
+import { isBackendApiError } from "@/lib/api/client";
+import { logoutAdmin } from "@/lib/api/auth";
+import { updateReviewStatus } from "@/lib/api/journeys";
 import {
   ADMIN_ROOT_PATH,
   buildAdminLoginHref,
@@ -20,7 +16,7 @@ import {
   requireAdminActionSession,
   getStoredAdminSession,
 } from "@/lib/admin/session";
-import type { UpdatePublishedJourneyReviewRequestDto } from "@/src/apis/core/client";
+import type { UpdatePublishedJourneyReviewRequestDto } from "@/src/apis/types";
 
 function readText(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
@@ -48,7 +44,7 @@ export async function logoutAdminAction(): Promise<never> {
 
   if (session?.refreshToken) {
     try {
-      await logoutAdminFromBackend(session.refreshToken);
+      await logoutAdmin(session.refreshToken);
     } catch {
       // Clear the local admin session even if backend logout fails.
     }
@@ -100,42 +96,44 @@ export async function updatePublishedJourneyReviewAction(
   }
 
   const session = await requireAdminActionSession(cookieStore, nextPath);
-  let result: Awaited<ReturnType<typeof updatePublishedJourneyReviewStatus>>;
+  let result: Awaited<ReturnType<typeof updateReviewStatus>>;
 
   try {
-    result = await updatePublishedJourneyReviewStatus({
+    result = await updateReviewStatus({
       accessToken: session.accessToken,
       publicId: targetPublicId,
       status: reviewStatus,
     });
   } catch (error) {
-    if (error instanceof AdminSessionExpiredError) {
-      await clearAdminSession(cookieStore);
-      redirect(
-        buildAdminLoginHref({
-          next: nextPath,
-          error: "session_expired",
-        }),
-      );
-    }
+    if (isBackendApiError(error)) {
+      if (error.statusCode === 401) {
+        await clearAdminSession(cookieStore);
+        redirect(
+          buildAdminLoginHref({
+            next: nextPath,
+            error: "session_expired",
+          }),
+        );
+      }
 
-    if (error instanceof AdminAccessDeniedError) {
-      await clearAdminSession(cookieStore);
-      redirect(
-        buildAdminLoginHref({
-          next: nextPath,
-          error: "admin_access_denied",
-        }),
-      );
-    }
+      if (error.statusCode === 403) {
+        await clearAdminSession(cookieStore);
+        redirect(
+          buildAdminLoginHref({
+            next: nextPath,
+            error: "admin_access_denied",
+          }),
+        );
+      }
 
-    if (error instanceof BackendApiError && error.statusCode === 404) {
-      return buildReviewActionRedirect(
-        nextPath,
-        buildReturnEntries({
-          error: "review_target_not_found",
-        }),
-      );
+      if (error.statusCode === 404) {
+        return buildReviewActionRedirect(
+          nextPath,
+          buildReturnEntries({
+            error: "review_target_not_found",
+          }),
+        );
+      }
     }
 
     return buildReviewActionRedirect(

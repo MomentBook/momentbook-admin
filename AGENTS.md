@@ -15,7 +15,7 @@ Architecture decisions: `docs/adr/`. Product/UX: `docs/DESIGN.md`.
 - **Runtime**: Next.js 14 (App Router), TypeScript, React 18, Astryx Design System.
 - **Port**: 3200 (dev + prod).
 - **Auth**: Nest API role/RBAC-backed, encrypted `momentbook_admin_session` cookie.
-- **Generated**: `src/apis/client.ts` — do not edit, regenerate from backend contract.
+- **API types**: `src/apis/types/` — hand-written TypeScript interfaces matching the NestJS contract.
 - **Scripts**: `yarn dev`, `yarn build`, `yarn lint`, `yarn vitest run`.
 
 ## Product Boundary
@@ -42,7 +42,8 @@ Read `docs/adr/README.md` first, then relevant ADRs only:
 - Admin mutations complete at the Nest API boundary; public-web freshness is provided by that app's no-cache rendering policy. Never call Next.js `revalidatePath`/`revalidateTag` directly.
 - No import of public `RootDocument`, analytics, language sync, public navigation, public chrome.
 - Preserve noindex admin metadata, CSP/security headers, HTTPS origin validation.
-- Do not edit `src/apis/client.ts` by hand.
+- Hand-written API types live in `src/apis/types/`; update them directly when the backend contract changes.
+- API service layer organized by domain in `lib/api/` (`client.ts`, `auth.ts`, `journeys.ts`, `articles.ts`, `public.ts`).
 
 ## Environment
 

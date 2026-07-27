@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import {
   readAccessTokenClaims,
   readTokenExpiryMs,
-} from "@/lib/admin/api";
+} from "@/lib/admin/token";
 import { ADMIN_ALLOWED_EMAIL, isAllowedAdminEmail } from "@/lib/admin/config";
 import {
   ADMIN_ROOT_PATH,

@@ -1,10 +1,10 @@
 import "server-only";
 
+import { isBackendApiError } from "@/lib/api/client";
 import {
-  BackendApiError,
-  getAdminPublishedJourneyDetail,
-  getAdminPublishedJourneysPage,
-} from "@/lib/admin/api";
+  getPublishedJourneyDetail,
+  listPublishedJourneys,
+} from "@/lib/api/journeys";
 import {
   normalizeCaptureTimeContext,
   normalizeLocalDateTimeContext,
@@ -22,7 +22,7 @@ import type {
   PublishedJourneyClusterLocalizedImpressionsDto,
   PublishedJourneyClusterLocalizationEntryDto,
   PublishedJourneyReviewDto,
-} from "@/src/apis/core/client";
+} from "@/src/apis/types";
 
 export const ADMIN_REVIEW_PAGE_SIZE = 20;
 const ADMIN_REVIEW_API_PAGE_LIMIT = 50;
@@ -310,7 +310,7 @@ async function readAllAdminReviewItems(
   let totalPages = 1;
 
   do {
-    const response = await getAdminPublishedJourneysPage({
+    const response = await listPublishedJourneys({
       accessToken,
       page,
       limit: ADMIN_REVIEW_API_PAGE_LIMIT,
@@ -942,13 +942,13 @@ async function fetchAdminReviewDetailPayload(options: {
   lang?: Language | null;
 }): Promise<PublishedJourneyDetailDto | null> {
   try {
-    return await getAdminPublishedJourneyDetail({
+    return await getPublishedJourneyDetail({
       accessToken: options.accessToken,
       publicId: options.publicId,
       lang: options.lang ? toLocaleTag(options.lang) : undefined,
     });
   } catch (error) {
-    if (error instanceof BackendApiError && error.statusCode === 404) {
+    if (isBackendApiError(error) && error.statusCode === 404) {
       return null;
     }
 

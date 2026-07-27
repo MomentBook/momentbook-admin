@@ -5,7 +5,7 @@ import {
   buildAdminReviewDetailHref,
   buildAdminWorkspaceHref,
 } from "@/lib/admin/paths";
-import { isBackendApiError } from "@/lib/admin/api";
+import { isBackendApiError } from "@/lib/api/client";
 import { resolveSupportedLanguage, toLocaleTag } from "@/lib/i18n/config";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import {

@@ -5,7 +5,7 @@ import {
   parseAdminWorkspaceTab,
 } from "@/lib/admin/paths";
 import { redirect } from "next/navigation";
-import { isBackendApiError } from "@/lib/admin/api";
+import { isBackendApiError } from "@/lib/api/client";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { AdminWorkspace } from "@/app/_workspace/AdminWorkspace";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";

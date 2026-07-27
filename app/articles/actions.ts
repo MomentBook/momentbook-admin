@@ -3,12 +3,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { isBackendApiError } from "@/lib/api/client";
 import {
-  BackendApiError,
   createAdminArticle,
   deleteAdminArticle,
   updateAdminArticle,
-} from "@/lib/admin/api";
+} from "@/lib/api/articles";
 import {
   buildAdminArticleDetailHref,
   buildAdminArticleNewHref,
@@ -26,7 +26,7 @@ import { languageList, type Language } from "@/lib/i18n/config";
 import type {
   CreateAdminArticleRequestDto,
   UpdateAdminArticleRequestDto,
-} from "@/src/apis/core/client";
+} from "@/src/apis/types";
 
 type ArticleActionErrorCode =
   | "article_validation"
@@ -218,7 +218,7 @@ function resolveArticleActionFailure(
     };
   }
 
-  if (error instanceof BackendApiError) {
+  if (isBackendApiError(error)) {
     if (error.statusCode === 400 || error.statusCode === 409) {
       return {
         error: "article_validation",

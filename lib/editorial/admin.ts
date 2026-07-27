@@ -1,11 +1,11 @@
 import "server-only";
 
-import { getAdminArticle, getAdminArticles } from "@/lib/admin/api";
+import { getAdminArticle, listAdminArticles } from "@/lib/api/articles";
 import { type Language } from "@/lib/i18n/config";
 import type {
   AdminArticleDetailDto,
   AdminArticleListItemDto,
-} from "@/src/apis/core/client";
+} from "@/src/apis/types";
 import {
   editorialArticleCategories,
   type EditorialArticleCategory,
@@ -72,7 +72,7 @@ export async function loadAdminEditorialArticleDashboard(options: {
   language: Language | null;
   category: EditorialArticleCategory | null;
 }): Promise<AdminEditorialArticleDashboardData> {
-  const list = await getAdminArticles({
+  const list = await listAdminArticles({
     accessToken: options.accessToken,
     page: options.page,
     limit: options.limit,

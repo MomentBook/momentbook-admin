@@ -4,7 +4,7 @@ import {
   buildAdminArticleWorkspaceHref,
   sanitizeAdminPath,
 } from "@/lib/admin/paths";
-import { isBackendApiError } from "@/lib/admin/api";
+import { isBackendApiError } from "@/lib/api/client";
 import { resolveSupportedLanguage } from "@/lib/i18n/config";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { loadAdminWorkspaceShell, readQueryParam } from "@/app/_workspace/workspace-data";

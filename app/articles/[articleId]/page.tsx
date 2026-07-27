@@ -6,7 +6,7 @@ import {
   sanitizeAdminPath,
   withAdminQuery,
 } from "@/lib/admin/paths";
-import { isBackendApiError } from "@/lib/admin/api";
+import { isBackendApiError } from "@/lib/api/client";
 import {
   ADMIN_REVIEW_PAGE_SIZE,
   loadAdminReviewWorkspaceData,

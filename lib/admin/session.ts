@@ -6,8 +6,8 @@ import { EncryptJWT, jwtDecrypt } from "jose";
 import {
   readAccessTokenClaims,
   readTokenExpiryMs,
-  refreshAdminTokens,
-} from "@/lib/admin/api";
+} from "@/lib/admin/token";
+import { refreshAdminTokens } from "@/lib/api/auth";
 import { isAllowedAdminEmail } from "@/lib/admin/config";
 import {
   buildAdminLoginHref,

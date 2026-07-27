@@ -1,17 +1,17 @@
 import { cache } from "react";
 import type {
-    Api,
     PublishedJourneyDetailDto,
     PublishedJourneyDetailResponseDto,
     PublishedJourneyItemDto,
     PublishedJourneysResponseDto,
-} from "@/src/apis/core/client";
+    PublishedJourneyListSort,
+} from "@/src/apis/types";
 import {
     PUBLIC_JOURNEY_REVALIDATE_SECONDS,
     PUBLIC_PHOTO_REVALIDATE_SECONDS,
 } from "@/lib/cache-policy";
 import { normalizeHashtags as normalizeHashtagList } from "@/lib/hashtags";
-import { appendPublicApiLanguage, fetchPublicApi } from "@/lib/public-api";
+import { appendPublicApiLanguage, fetchPublicApi } from "@/lib/api/public";
 import { type Language, toLocaleTag } from "@/lib/i18n/config";
 import {
     normalizeCaptureTimeContext,
@@ -1201,13 +1201,8 @@ export async function fetchPublishedJourney(
     return result.status === "success" ? result.data : null;
 }
 
-type PublishedJourneysQuery = NonNullable<
-    Parameters<Api<unknown>["core"]["publishJourneyPublicControllerGetPublishedJourneys"]>[0]
->;
-
-export type PublishedJourneyListSort = NonNullable<
-    PublishedJourneysQuery["sort"]
->;
+// PublishedJourneysQueryDto is defined in src/apis/types/journeys.ts
+// PublishedJourneyListSort is imported from src/apis/types
 
 type CursorPublishedJourneySort = Extract<PublishedJourneyListSort, "recent">;
 

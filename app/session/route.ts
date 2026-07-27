@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import {
   readAccessTokenClaims,
   readTokenExpiryMs,
-} from "@/lib/admin/api";
+} from "@/lib/admin/token";
 import { ADMIN_ALLOWED_EMAIL, isAllowedAdminEmail, normalizeAdminEmail } from "@/lib/admin/config";
 import { createAdminSession } from "@/lib/admin/session";
 
