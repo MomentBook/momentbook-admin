@@ -31,20 +31,24 @@ export type AdminReviewStatus = PublishedJourneyReviewDto["status"];
 export type AdminReviewContentStatus = PublishedJourneyDetailDto["contentStatus"];
 export type AdminReviewVisibility = PublishedJourneyDetailDto["visibility"];
 export type AdminReviewQueueStatus =
+  | "flagged"
   | "pending"
-  | "approved"
-  | "rejected"
   | "all";
 
 export type AdminReviewState = {
   status: AdminReviewStatus;
   approved: boolean;
+  flagged?: boolean;
+  flagReasons?: string[];
+  decidedBy?: "AI" | "ADMIN";
+  decidedAt?: string;
 };
 
 export type AdminReviewSummary = {
   pendingCount: number;
   approvedCount: number;
   rejectedCount: number;
+  flaggedCount: number;
 };
 
 export type AdminReviewQueueItem = {
@@ -86,6 +90,7 @@ export type AdminOverviewWeeklyIntake = {
 export type AdminOverviewData = {
   totalCount: number;
   pendingCount: number;
+  flaggedCount: number;
   reviewedCount: number;
   approvedCount: number;
   rejectedCount: number;
@@ -272,6 +277,10 @@ function normalizeAdminReviewItem(
     review: {
       status: item.review.status,
       approved: item.review.approved,
+      ...(item.review.flagged !== undefined ? { flagged: item.review.flagged } : {}),
+      ...(item.review.flagReasons !== undefined ? { flagReasons: item.review.flagReasons } : {}),
+      ...(item.review.decidedBy !== undefined ? { decidedBy: item.review.decidedBy } : {}),
+      ...(item.review.decidedAt !== undefined ? { decidedAt: item.review.decidedAt } : {}),
     },
     startedAt: item.startedAt,
     endedAt: item.endedAt ?? null,
@@ -289,12 +298,8 @@ function matchesQueueStatus(
     return true;
   }
 
-  if (status === "approved") {
-    return item.review.status === "APPROVED";
-  }
-
-  if (status === "rejected") {
-    return item.review.status === "REJECTED";
+  if (status === "flagged") {
+    return item.review.status === "PENDING" && item.review.flagged === true;
   }
 
   return item.review.status === "PENDING";
@@ -340,6 +345,7 @@ function buildSummary(items: AdminReviewQueueItem[]): AdminReviewSummary {
     pendingCount: 0,
     approvedCount: 0,
     rejectedCount: 0,
+    flaggedCount: 0,
   };
 
   for (const item of items) {
@@ -351,6 +357,10 @@ function buildSummary(items: AdminReviewQueueItem[]): AdminReviewSummary {
     if (item.review.status === "REJECTED") {
       summary.rejectedCount += 1;
       continue;
+    }
+
+    if (item.review.flagged) {
+      summary.flaggedCount += 1;
     }
 
     summary.pendingCount += 1;
@@ -453,6 +463,7 @@ function buildAdminOverviewData(items: AdminReviewQueueItem[]): AdminOverviewDat
   return {
     totalCount: items.length,
     pendingCount: summary.pendingCount,
+    flaggedCount: summary.flaggedCount,
     reviewedCount,
     approvedCount: summary.approvedCount,
     rejectedCount: summary.rejectedCount,

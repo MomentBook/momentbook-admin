@@ -15,6 +15,7 @@ export {
   listPublishedJourneys,
   getPublishedJourneyDetail,
   updateReviewStatus,
+  requeueJourneyReview,
 } from "./journeys";
 
 export {

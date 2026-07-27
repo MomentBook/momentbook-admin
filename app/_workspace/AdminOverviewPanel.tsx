@@ -76,9 +76,10 @@ function OverviewMetricCard({
 // ---------------------------------------------------------------------------
 function StatusDistributionCard({ overview }: { overview: AdminOverviewData }) {
   const items = [
-    { key: "pending", label: "Pending", count: overview.pendingCount, tone: "warning" as const },
+    { key: "flagged", label: "Flagged", count: overview.flaggedCount, tone: "warning" as const },
     { key: "approved", label: "Approved", count: overview.approvedCount, tone: "success" as const },
     { key: "rejected", label: "Rejected", count: overview.rejectedCount, tone: "error" as const },
+    { key: "pending", label: "Pending", count: overview.pendingCount, tone: "default" as const },
   ] as const;
 
   return (
@@ -108,7 +109,7 @@ function StatusDistributionCard({ overview }: { overview: AdminOverviewData }) {
 
       <VStack gap={0} style={{ marginTop: "var(--spacing-2)" }}>
         <Link href={buildAdminWorkspaceHref("reviews")}>
-          <Text type="body" size="sm" color="accent">Open pending queue</Text>
+          <Text type="body" size="sm" color="accent">Open review queue</Text>
         </Link>
       </VStack>
     </Card>
@@ -174,9 +175,9 @@ export function AdminOverviewPanel({
       {/* KPI row */}
       <Grid columns={{ minWidth: 220, repeat: "fit" }} gap={3}>
           <OverviewMetricCard
-            label="Pending now"
-            value={formatCount(overview.pendingCount)}
-            hint="Items waiting for a review decision"
+            label="Flagged now"
+            value={formatCount(overview.flaggedCount)}
+            hint="Items flagged by AI review, waiting for human decision"
             tone="warning"
           />
 
@@ -188,9 +189,9 @@ export function AdminOverviewPanel({
           />
 
           <OverviewMetricCard
-            label="Total reviewed"
-            value={formatCount(overview.reviewedCount)}
-            hint="Approved and rejected decisions combined"
+            label="Total pending"
+            value={formatCount(overview.pendingCount)}
+            hint="All pending items (flagged + awaiting AI review)"
           />
       </Grid>
 

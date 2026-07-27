@@ -253,7 +253,7 @@ describe("loadAdminReviewWorkspaceData", () => {
     const result = await loadAdminReviewWorkspaceData({
       accessToken: "admin-token",
       page: 2,
-      status: "approved",
+      status: "all",
       limit: 1,
     });
 
@@ -261,9 +261,10 @@ describe("loadAdminReviewWorkspaceData", () => {
       pendingCount: 1,
       approvedCount: 2,
       rejectedCount: 1,
+      flaggedCount: 0,
     });
-    expect(result.queue.total).toBe(2);
-    expect(result.queue.pages).toBe(2);
+    expect(result.queue.total).toBe(4);
+    expect(result.queue.pages).toBe(4);
     expect(result.queue.page).toBe(2);
     expect(result.queue.items).toHaveLength(1);
     expect(result.queue.items[0]?.publicId).toBe("approved-2");
@@ -355,7 +356,7 @@ describe("loadAdminReviewWorkspaceData", () => {
     const result = await loadAdminReviewWorkspaceData({
       accessToken: "admin-token",
       page: 1,
-      status: "approved",
+      status: "all",
       limit: 20,
       publicId: "approved-1",
     });

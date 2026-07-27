@@ -2,6 +2,7 @@ import "server-only";
 
 import type {
   AdminPublishedJourneysDataDto,
+  JourneyReviewStatus,
   PublishedJourneyDetailDto,
   UpdatePublishedJourneyReviewDataDto,
   UpdatePublishedJourneyReviewRequestDto,
@@ -14,17 +15,42 @@ export async function listPublishedJourneys(input: {
   accessToken: string;
   page: number;
   limit: number;
+  reviewStatus?: JourneyReviewStatus;
+  flagged?: boolean;
 }): Promise<AdminPublishedJourneysDataDto> {
+  const query: Record<string, string | number> = {
+    page: input.page,
+    limit: input.limit,
+  };
+
+  if (input.reviewStatus) {
+    query.reviewStatus = input.reviewStatus;
+  }
+
+  if (input.flagged !== undefined) {
+    query.flagged = input.flagged ? "true" : "false";
+  }
+
   const response = await requestEnvelope<AdminPublishedJourneysDataDto>({
     pathname: "/core/admin/journeys/publish",
     accessToken: input.accessToken,
-    query: {
-      page: input.page,
-      limit: input.limit,
-    },
+    query,
   });
 
   return response.data;
+}
+
+// ─── Requeue Journey for AI Review ───────────
+
+export async function requeueJourneyReview(input: {
+  accessToken: string;
+  publicId: string;
+}): Promise<void> {
+  await requestEnvelope<Record<string, never>>({
+    pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review/requeue`,
+    method: "POST",
+    accessToken: input.accessToken,
+  });
 }
 
 // ─── Get Published Journey Detail ───────────

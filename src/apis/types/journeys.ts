@@ -25,6 +25,10 @@ export type PublishedJourneyListSort = "recent" | "oldest" | "discovery";
 export interface PublishedJourneyReviewDto {
   approved: boolean;
   status: JourneyReviewStatus;
+  flagged?: boolean;
+  flagReasons?: string[];
+  decidedBy?: "AI" | "ADMIN";
+  decidedAt?: string;
 }
 
 // ─── Time Range ──────────────────────────────
@@ -206,6 +210,15 @@ export interface PublishedJourneysQueryDto {
   reviewStatus?: "APPROVED";
 }
 
+// ─── Admin Journey List Query ────────────────
+
+export interface AdminPublishedJourneysQueryDto {
+  page?: number;
+  limit?: number;
+  reviewStatus?: JourneyReviewStatus;
+  flagged?: boolean;
+}
+
 // ─── Admin Journey List Item ─────────────────
 
 export interface AdminPublishedJourneyItemDto extends PublishedJourneyItemDto {
@@ -253,4 +266,11 @@ export interface UpdatePublishedJourneyReviewDataDto {
 export interface UpdatePublishedJourneyReviewResponseDto {
   status: string;
   data: UpdatePublishedJourneyReviewDataDto;
+}
+
+// ─── Admin Requeue Journey Review ────────────
+
+export interface RequeueJourneyReviewResponseDto {
+  status: string;
+  data: Record<string, never>;
 }

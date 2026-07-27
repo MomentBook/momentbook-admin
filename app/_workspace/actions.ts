@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isBackendApiError } from "@/lib/api/client";
 import { logoutAdmin } from "@/lib/api/auth";
-import { updateReviewStatus } from "@/lib/api/journeys";
+import { requeueJourneyReview, updateReviewStatus } from "@/lib/api/journeys";
 import {
   ADMIN_ROOT_PATH,
   buildAdminLoginHref,
@@ -150,6 +150,89 @@ export async function updatePublishedJourneyReviewAction(
       targetPublicId: result.publicId,
       mutation: "review_updated",
       reviewStatus: result.review.status,
+    }),
+  );
+}
+
+export async function requeueJourneyReviewAction(
+  formData: FormData,
+): Promise<never> {
+  const cookieStore = await cookies();
+  const nextPath =
+    sanitizeAdminPath(readText(formData.get("returnTo"))) ?? ADMIN_ROOT_PATH;
+  const targetPublicId = readText(formData.get("targetPublicId"));
+
+  const buildReturnEntries = (
+    extra: Record<string, string | null | undefined>,
+  ) => ({
+    targetPublicId: targetPublicId || null,
+    mutation: null,
+    reviewStatus: null,
+    error: null,
+    ...extra,
+  });
+
+  if (!targetPublicId) {
+    return buildReviewActionRedirect(
+      nextPath,
+      buildReturnEntries({
+        error: "missing_public_id",
+      }),
+    );
+  }
+
+  const session = await requireAdminActionSession(cookieStore, nextPath);
+
+  try {
+    await requeueJourneyReview({
+      accessToken: session.accessToken,
+      publicId: targetPublicId,
+    });
+  } catch (error) {
+    if (isBackendApiError(error)) {
+      if (error.statusCode === 401) {
+        await clearAdminSession(cookieStore);
+        redirect(
+          buildAdminLoginHref({
+            next: nextPath,
+            error: "session_expired",
+          }),
+        );
+      }
+
+      if (error.statusCode === 403) {
+        await clearAdminSession(cookieStore);
+        redirect(
+          buildAdminLoginHref({
+            next: nextPath,
+            error: "admin_access_denied",
+          }),
+        );
+      }
+
+      if (error.statusCode === 404) {
+        return buildReviewActionRedirect(
+          nextPath,
+          buildReturnEntries({
+            error: "review_target_not_found",
+          }),
+        );
+      }
+    }
+
+    return buildReviewActionRedirect(
+      nextPath,
+      buildReturnEntries({
+        error: "review_requeue_failed",
+      }),
+    );
+  }
+
+  return buildReviewActionRedirect(
+    nextPath,
+    buildReturnEntries({
+      targetPublicId,
+      mutation: "review_requeued",
     }),
   );
 }

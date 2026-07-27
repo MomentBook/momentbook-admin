@@ -7,7 +7,7 @@ export const ADMIN_SESSION_REFRESH_PATH = "/session/refresh";
 export const ADMIN_SESSION_INVALIDATE_PATH = "/session/invalidate";
 export const ADMIN_DEFAULT_WORKSPACE_TAB = "overview";
 
-export type AdminWorkspaceTab = "overview" | "reviews" | "articles";
+export type AdminWorkspaceTab = "overview" | "reviews" | "published" | "articles";
 export type AdminSessionRedirectError =
   | "session_expired"
   | "admin_access_denied";
@@ -168,6 +168,10 @@ export function parseAdminWorkspaceTab(
 ): AdminWorkspaceTab {
   if (value === "reviews" || value === "live") {
     return "reviews";
+  }
+
+  if (value === "published") {
+    return "published";
   }
 
   if (value === "articles") {

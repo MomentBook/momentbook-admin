@@ -46,15 +46,14 @@ export function parsePage(value: string | null): number {
 
 export function parseStatus(value: string | null): AdminReviewQueueStatus {
   if (
+    value === "flagged" ||
     value === "pending" ||
-    value === "approved" ||
-    value === "rejected" ||
     value === "all"
   ) {
     return value;
   }
 
-  return "pending";
+  return "flagged";
 }
 
 export function parseReviewStatus(value: string | null): AdminReviewStatus | null {
@@ -76,6 +75,13 @@ export function resolveBanner(options: {
     return {
       tone: "success",
       message: `${options.targetPublicId} updated to ${getAdminReviewStatusLabel(options.reviewStatus)}.`,
+    };
+  }
+
+  if (options.mutation === "review_requeued" && options.targetPublicId) {
+    return {
+      tone: "default",
+      message: `${options.targetPublicId} re-enqueued for AI review.`,
     };
   }
 
@@ -104,6 +110,11 @@ export function resolveBanner(options: {
       return {
         tone: "error",
         message: "Could not update review status. Try again.",
+      };
+    case "review_requeue_failed":
+      return {
+        tone: "error",
+        message: "Could not re-enqueue journey for AI review. Try again.",
       };
     default:
       return null;

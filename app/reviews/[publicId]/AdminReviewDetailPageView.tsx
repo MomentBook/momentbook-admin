@@ -11,7 +11,10 @@ import { Card } from "@astryxdesign/core/Card";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { Grid } from "@astryxdesign/core/Grid";
 import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
-import { updatePublishedJourneyReviewAction } from "@/app/_workspace/actions";
+import {
+  requeueJourneyReviewAction,
+  updatePublishedJourneyReviewAction,
+} from "@/app/_workspace/actions";
 import { buildAdminWorkspaceHref } from "@/lib/admin/paths";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
 import {
@@ -58,7 +61,7 @@ function buildTabHref(
 ): string {
   return buildAdminWorkspaceHref(tab, {
     page: options.page > 1 ? String(options.page) : null,
-    status: options.status === "pending" ? null : options.status,
+    status: options.status === "flagged" ? null : options.status,
   });
 }
 
@@ -110,18 +113,18 @@ function buildPhotoAltText(
 
 function PageHeader({
   banner,
-  pendingCount,
+  flaggedCount,
 }: {
   banner: AdminDashboardBanner | null;
-  pendingCount: number;
+  flaggedCount: number;
 }) {
   return (
     <VStack gap={2}>
       <HStack gap={2} vAlign="center">
         <Heading level={2}>Review evidence</Heading>
         <Badge
-          label={`${pendingCount} pending`}
-          variant={pendingCount > 0 ? "warning" : "neutral"}
+          label={`${flaggedCount} flagged`}
+          variant={flaggedCount > 0 ? "warning" : "neutral"}
         />
       </HStack>
 
@@ -238,6 +241,8 @@ function JourneySummary({
   detail: AdminReviewDetail;
   backHref: string;
 }) {
+  const review = detail.journey.review;
+
   return (
     <Card padding={3}>
       <VStack gap={3}>
@@ -247,8 +252,8 @@ function JourneySummary({
           </Link>
 
           <Badge
-            label={getAdminReviewStatusLabel(detail.journey.review.status)}
-            variant={resolveBadgeVariant(detail.journey.review.status)}
+            label={getAdminReviewStatusLabel(review.status)}
+            variant={resolveBadgeVariant(review.status)}
           />
         </HStack>
 
@@ -261,6 +266,29 @@ function JourneySummary({
             <Text type="body" color="secondary">{detail.journey.description}</Text>
           ) : null}
         </VStack>
+
+        {review.flagged ? (
+          <VStack gap={1}>
+            <Text type="label" size="2xs" color="secondary">AI Review Flag</Text>
+            {review.flagReasons && review.flagReasons.length > 0 ? (
+              <HStack gap={1} wrap="wrap">
+                {review.flagReasons.map((reason) => (
+                  <Badge key={reason} label={reason} variant="warning" />
+                ))}
+              </HStack>
+            ) : (
+              <Text type="body" size="sm" color="secondary">
+                Flagged for manual review
+              </Text>
+            )}
+            {review.decidedBy && (
+              <Text type="supporting" size="xsm" color="secondary">
+                Flagged by {review.decidedBy}
+                {review.decidedAt ? ` · ${new Date(review.decidedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}` : ""}
+              </Text>
+            )}
+          </VStack>
+        ) : null}
       </VStack>
     </Card>
   );
@@ -283,7 +311,6 @@ function ReviewUpdatePanel({
     reviewMutation,
     targetPublicId,
   });
-
   return (
     <Card padding={3}>
       <VStack gap={3}>
@@ -307,7 +334,6 @@ function ReviewUpdatePanel({
               <HStack gap={1} wrap="wrap">
                 {(
                   [
-                    ["PENDING", "Pending"],
                     ["APPROVED", "Approved"],
                     ["REJECTED", "Rejected"],
                   ] as const
@@ -336,6 +362,38 @@ function ReviewUpdatePanel({
   );
 }
 
+function RequeuePanel({
+  detail,
+  returnTo,
+}: {
+  detail: AdminReviewDetail;
+  returnTo: string;
+}) {
+  const isFlagged = detail.journey.review.flagged;
+
+  if (!isFlagged) {
+    return null;
+  }
+
+  return (
+    <Card padding={3}>
+      <VStack gap={3}>
+        <Heading level={3}>AI Review</Heading>
+        <Text type="body" size="sm" color="secondary">
+          This journey was flagged by the AI review pipeline. If you believe the
+          flag was incorrect, re-enqueue it for another review cycle.
+        </Text>
+
+        <form action={requeueJourneyReviewAction}>
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <input type="hidden" name="targetPublicId" value={detail.journey.publicId} />
+          <Button type="submit" variant="secondary" label="Re-enqueue for AI review" />
+        </form>
+      </VStack>
+    </Card>
+  );
+}
+
 export function AdminReviewDetailPageView({
   banner,
   detail,
@@ -347,7 +405,7 @@ export function AdminReviewDetailPageView({
 }: AdminReviewDetailPageViewProps) {
   const backHref = buildAdminWorkspaceHref("reviews", {
     page: queue.page > 1 ? String(queue.page) : null,
-    status: queue.status === "pending" ? null : queue.status,
+    status: queue.status === "flagged" ? null : queue.status,
   });
 
   return (
@@ -373,7 +431,7 @@ export function AdminReviewDetailPageView({
                 status: queue.status,
               }),
               label: "Reviews",
-              badge: String(queue.summary.pendingCount),
+              badge: String(queue.summary.flaggedCount),
             },
             {
               tab: "articles",
@@ -388,7 +446,7 @@ export function AdminReviewDetailPageView({
       <VStack gap={4}>
           <PageHeader
             banner={banner}
-            pendingCount={queue.summary.pendingCount}
+            flaggedCount={queue.summary.flaggedCount}
           />
 
           <HStack gap={3} vAlign="start" wrap="wrap">
@@ -414,6 +472,10 @@ export function AdminReviewDetailPageView({
                 reviewMutation={reviewMutation}
                 returnTo={returnTo}
                 targetPublicId={targetPublicId}
+              />
+              <RequeuePanel
+                detail={detail}
+                returnTo={returnTo}
               />
             </VStack>
           </HStack>
