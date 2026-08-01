@@ -1,12 +1,7 @@
 import Link from "next/link";
-import { Card } from "@astryxdesign/core/Card";
-import { VStack } from "@astryxdesign/core/VStack";
-import { HStack } from "@astryxdesign/core/HStack";
-import { Heading } from "@astryxdesign/core/Heading";
-import { Text } from "@astryxdesign/core/Text";
-import { Banner } from "@astryxdesign/core/Banner";
-import { Button } from "@astryxdesign/core/Button";
-import { MetadataList, MetadataListItem } from "@astryxdesign/core/MetadataList";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import type { AdminReviewQueueData } from "@/lib/admin/reviews";
 import type { AdminSession } from "@/lib/admin/session";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
@@ -59,61 +54,74 @@ export function EditorialArticleEditorPageView({
 
   return (
     <AdminArticleShell pendingReviews={queue.summary.pendingCount} session={session}>
-      <VStack gap={4}>
+      <div className="flex flex-col gap-4">
         {/* Header */}
-        <Card padding={3}>
-          <HStack gap={2} vAlign="center" hAlign="between" wrap="wrap">
-            <VStack gap={1}>
-              <Link href={workspaceHref}>
-                <Text type="body" size="sm" color="accent">Back to articles</Text>
+        <Card>
+          <CardContent className="flex items-center justify-between gap-2 pt-6">
+            <div className="flex flex-col gap-1">
+              <Link href={workspaceHref} className="text-sm text-primary hover:underline">
+                Back to articles
               </Link>
-              <Text type="label" size="2xs" color="secondary">Editorial admin</Text>
-              <Heading level={1}>{headerTitle}</Heading>
-              <Text type="body" color="secondary">
+              <span className="text-xs text-muted-foreground">Editorial admin</span>
+              <h1 className="text-2xl font-semibold tracking-tight">{headerTitle}</h1>
+              <p className="text-sm text-muted-foreground">
                 Markdown body is the canonical content source.
-              </Text>
-            </VStack>
+              </p>
+            </div>
 
-            <button form={formId} type="submit" style={{ border: "none", background: "none", padding: 0 }}>
-              <Button variant="primary" size="sm" label={submitLabel} />
+            <button
+              form={formId}
+              type="submit"
+              className="border-0 bg-transparent p-0"
+            >
+              <Button size="sm">{submitLabel}</Button>
             </button>
-          </HStack>
+          </CardContent>
         </Card>
 
         {/* Banner */}
         {banner ? (
-          <Banner
-            status={
-              banner.tone === "error" ? "error"
-              : banner.tone === "success" ? "success"
-              : "info"
-            }
-            title={banner.message}
-          />
+          <Alert variant={banner.tone === "error" ? "destructive" : "default"}>
+            <AlertDescription>{banner.message}</AlertDescription>
+          </Alert>
         ) : null}
 
         {/* Metadata summary */}
-        <Card padding={3}>
-          <MetadataList columns="multi" label={{ position: "start", width: 120 }}>
-            <MetadataListItem label="Language">
-              {article?.language ?? suggestedLanguage ?? "Choose on create"}
-            </MetadataListItem>
-            <MetadataListItem label="Slug">
-              {article?.slug ?? "Optional on create"}
-            </MetadataListItem>
-            <MetadataListItem label="Translation group">
-              {translationGroupId}
-            </MetadataListItem>
-            <MetadataListItem label="Category">
-              {article ? getEditorialCategoryLabel("en", article.category) : "Set in form"}
-            </MetadataListItem>
-            <MetadataListItem label="Published">
-              {formatAdminDate(article?.publishedAt)}
-            </MetadataListItem>
-            <MetadataListItem label="Updated">
-              {formatAdminDate(article?.updatedAt)}
-            </MetadataListItem>
-          </MetadataList>
+        <Card>
+          <CardContent className="pt-6">
+            <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="flex justify-between gap-4 sm:flex-col">
+                <dt className="text-sm text-muted-foreground">Language</dt>
+                <dd className="text-sm">
+                  {article?.language ?? suggestedLanguage ?? "Choose on create"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 sm:flex-col">
+                <dt className="text-sm text-muted-foreground">Slug</dt>
+                <dd className="text-sm">
+                  {article?.slug ?? "Optional on create"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 sm:flex-col">
+                <dt className="text-sm text-muted-foreground">Translation group</dt>
+                <dd className="text-sm">{translationGroupId}</dd>
+              </div>
+              <div className="flex justify-between gap-4 sm:flex-col">
+                <dt className="text-sm text-muted-foreground">Category</dt>
+                <dd className="text-sm">
+                  {article ? getEditorialCategoryLabel("en", article.category) : "Set in form"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 sm:flex-col">
+                <dt className="text-sm text-muted-foreground">Published</dt>
+                <dd className="text-sm">{formatAdminDate(article?.publishedAt)}</dd>
+              </div>
+              <div className="flex justify-between gap-4 sm:flex-col">
+                <dt className="text-sm text-muted-foreground">Updated</dt>
+                <dd className="text-sm">{formatAdminDate(article?.updatedAt)}</dd>
+              </div>
+            </dl>
+          </CardContent>
         </Card>
 
         {/* Editor form */}
@@ -127,7 +135,7 @@ export function EditorialArticleEditorPageView({
           suggestedLanguage={suggestedLanguage}
           translationGroupId={article?.translationGroupId ?? suggestedTranslationGroupId ?? null}
         />
-      </VStack>
+      </div>
     </AdminArticleShell>
   );
 }

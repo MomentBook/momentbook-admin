@@ -1,10 +1,5 @@
 import Link from "next/link";
-import { Card } from "@astryxdesign/core/Card";
-import { VStack } from "@astryxdesign/core/VStack";
-import { Heading } from "@astryxdesign/core/Heading";
-import { Text } from "@astryxdesign/core/Text";
-import { MetadataList, MetadataListItem } from "@astryxdesign/core/MetadataList";
-import { Grid } from "@astryxdesign/core/Grid";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocalizedDate } from "@/components/LocalizedTime";
 import {
   buildAdminWorkspaceHref,
@@ -40,9 +35,6 @@ function buildPercent(count: number, total: number): number {
   return Math.round((count / total) * 100);
 }
 
-// ---------------------------------------------------------------------------
-// KPI metric cards
-// ---------------------------------------------------------------------------
 function OverviewMetricCard({
   label,
   value,
@@ -54,71 +46,68 @@ function OverviewMetricCard({
   hint: string;
   tone?: "default" | "success" | "warning";
 }) {
+  const borderClass =
+    tone === "warning"
+      ? "border-l-amber-500"
+      : tone === "success"
+        ? "border-l-emerald-500"
+        : "border-l-primary";
+
   return (
-    <Card variant={tone === "warning" ? "muted" : "default"} padding={3}>
-      <VStack gap={1}>
-        <Text type="label" size="2xs" color="secondary">
-          {label}
-        </Text>
-        <Heading level={3} color="primary">
-          {value}
-        </Heading>
-        <Text type="supporting" size="xsm">
-          {hint}
-        </Text>
-      </VStack>
+    <Card className={`border-l-4 ${borderClass}`}>
+      <CardHeader className="pb-2">
+        <CardDescription>{label}</CardDescription>
+        <CardTitle className="text-2xl">{value}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      </CardContent>
     </Card>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Queue distribution card (simplified: numbers only, no chart)
-// ---------------------------------------------------------------------------
 function StatusDistributionCard({ overview }: { overview: AdminOverviewData }) {
   const items = [
-    { key: "flagged", label: "Flagged", count: overview.flaggedCount, tone: "warning" as const },
-    { key: "approved", label: "Approved", count: overview.approvedCount, tone: "success" as const },
-    { key: "rejected", label: "Rejected", count: overview.rejectedCount, tone: "error" as const },
-    { key: "pending", label: "Pending", count: overview.pendingCount, tone: "default" as const },
+    { key: "flagged", label: "Flagged", count: overview.flaggedCount, color: "bg-amber-500" as const },
+    { key: "approved", label: "Approved", count: overview.approvedCount, color: "bg-emerald-500" as const },
+    { key: "rejected", label: "Rejected", count: overview.rejectedCount, color: "bg-red-500" as const },
+    { key: "pending", label: "Pending", count: overview.pendingCount, color: "bg-gray-500" as const },
   ] as const;
 
   return (
-    <Card padding={3}>
-      <VStack gap={0.5}>
-        <Text type="label" size="2xs" color="secondary">Snapshot</Text>
-        <Heading level={3}>Queue distribution</Heading>
-      </VStack>
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground">Snapshot</span>
+          <CardTitle className="text-lg">Queue distribution</CardTitle>
+        </div>
+        <CardDescription>{formatCount(overview.totalCount)} total records</CardDescription>
+      </CardHeader>
 
-      <Text type="supporting" size="xsm" style={{ marginTop: 4 }}>
-        {formatCount(overview.totalCount)} total records
-      </Text>
+      <CardContent className="space-y-4">
+        {overview.totalCount > 0 ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {items.map((item) => (
+              <div key={item.key} className="flex flex-col gap-0.5 rounded-md border p-3">
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+                <span className="text-lg font-bold">{formatCount(item.count)}</span>
+                <div className="flex items-center gap-2">
+                  <div className={`h-1.5 rounded-full ${item.color}`} style={{ width: `${Math.max(2, buildPercent(item.count, overview.totalCount))}%` }} />
+                  <span className="text-xs text-muted-foreground">{buildPercent(item.count, overview.totalCount)}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
-      {overview.totalCount > 0 ? (
-        <Grid columns={{ minWidth: 100, repeat: "fit" }} gap={2} style={{ marginTop: "var(--spacing-2)" }}>
-          {items.map((item) => (
-            <VStack key={item.key} gap={0.5} style={{ flex: 1 }}>
-              <Text type="label" size="2xs">{item.label}</Text>
-              <Heading level={4}>{formatCount(item.count)}</Heading>
-              <Text type="supporting" size="xsm">
-                {buildPercent(item.count, overview.totalCount)}%
-              </Text>
-            </VStack>
-          ))}
-        </Grid>
-      ) : null}
-
-      <VStack gap={0} style={{ marginTop: "var(--spacing-2)" }}>
-        <Link href={buildAdminWorkspaceHref("reviews")}>
-          <Text type="body" size="sm" color="accent">Open review queue</Text>
+        <Link href={buildAdminWorkspaceHref("reviews")} className="text-sm text-primary hover:underline">
+          Open review queue
         </Link>
-      </VStack>
+      </CardContent>
     </Card>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Admin context card (without allowed-account display)
-// ---------------------------------------------------------------------------
 function OperationsCard({
   overview,
   session,
@@ -130,77 +119,84 @@ function OperationsCard({
   const oldestPendingAt = readTimestamp(overview.oldestPendingAt);
 
   return (
-    <Card padding={3}>
-      <VStack gap={0.5}>
-        <Text type="label" size="2xs" color="secondary">Operations</Text>
-        <Heading level={3}>Admin context</Heading>
-      </VStack>
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground">Operations</span>
+          <CardTitle className="text-lg">Admin context</CardTitle>
+        </div>
+      </CardHeader>
 
-      <MetadataList columns="single" label={{ position: "start", width: 140 }}>
-        <MetadataListItem label="Signed in">
-          {session.email || session.name || "Admin"}
-        </MetadataListItem>
-        <MetadataListItem label="Oldest pending">
-          {oldestPendingAt ? (
-            <LocalizedDate lang={ADMIN_DISPLAY_LANGUAGE} timestamp={oldestPendingAt} />
-          ) : (
-            "None"
-          )}
-        </MetadataListItem>
-        <MetadataListItem label="Latest submission">
-          {latestSubmissionAt ? (
-            <LocalizedDate lang={ADMIN_DISPLAY_LANGUAGE} timestamp={latestSubmissionAt} />
-          ) : (
-            "None"
-          )}
-        </MetadataListItem>
-      </MetadataList>
+      <CardContent className="space-y-3">
+        <dl className="space-y-3">
+          <div className="flex justify-between gap-4">
+            <dt className="text-sm text-muted-foreground">Signed in</dt>
+            <dd className="text-sm">{session.email || session.name || "Admin"}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-sm text-muted-foreground">Oldest pending</dt>
+            <dd className="text-sm">
+              {oldestPendingAt ? (
+                <LocalizedDate lang={ADMIN_DISPLAY_LANGUAGE} timestamp={oldestPendingAt} />
+              ) : (
+                "None"
+              )}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-sm text-muted-foreground">Latest submission</dt>
+            <dd className="text-sm">
+              {latestSubmissionAt ? (
+                <LocalizedDate lang={ADMIN_DISPLAY_LANGUAGE} timestamp={latestSubmissionAt} />
+              ) : (
+                "None"
+              )}
+            </dd>
+          </div>
+        </dl>
 
-      <Text type="supporting" size="xsm" color="secondary" style={{ marginTop: 8 }}>
-        Based on {formatCount(overview.totalCount)} moderation records.
-      </Text>
+        <p className="text-xs text-muted-foreground">
+          Based on {formatCount(overview.totalCount)} moderation records.
+        </p>
+      </CardContent>
     </Card>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Panel
-// ---------------------------------------------------------------------------
 export function AdminOverviewPanel({
   overview,
   session,
 }: AdminOverviewPanelProps) {
   return (
-    <VStack gap={3}>
+    <div className="flex flex-col gap-3">
       {/* KPI row */}
-      <Grid columns={{ minWidth: 220, repeat: "fit" }} gap={3}>
-          <OverviewMetricCard
-            label="Flagged now"
-            value={formatCount(overview.flaggedCount)}
-            hint="Items flagged by AI review, waiting for human decision"
-            tone="warning"
-          />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <OverviewMetricCard
+          label="Flagged now"
+          value={formatCount(overview.flaggedCount)}
+          hint="Items flagged by AI review, waiting for human decision"
+          tone="warning"
+        />
 
-          <OverviewMetricCard
-            label="Approval rate"
-            value={formatRate(overview.approvalRate)}
-            hint={`Approved out of ${formatCount(overview.reviewedCount)} completed reviews`}
-            tone="success"
-          />
+        <OverviewMetricCard
+          label="Approval rate"
+          value={formatRate(overview.approvalRate)}
+          hint={`Approved out of ${formatCount(overview.reviewedCount)} completed reviews`}
+          tone="success"
+        />
 
-          <OverviewMetricCard
-            label="Total pending"
-            value={formatCount(overview.pendingCount)}
-            hint="All pending items (flagged + awaiting AI review)"
-          />
-      </Grid>
+        <OverviewMetricCard
+          label="Total pending"
+          value={formatCount(overview.pendingCount)}
+          hint="All pending items (flagged + awaiting AI review)"
+        />
+      </div>
 
       {/* Distribution + context */}
-      <Grid columns={{ minWidth: 280, repeat: "fit" }} gap={3} align="start">
-          <StatusDistributionCard overview={overview} />
-
-          <OperationsCard overview={overview} session={session} />
-      </Grid>
-    </VStack>
+      <div className="grid gap-3 md:grid-cols-2">
+        <StatusDistributionCard overview={overview} />
+        <OperationsCard overview={overview} session={session} />
+      </div>
+    </div>
   );
 }

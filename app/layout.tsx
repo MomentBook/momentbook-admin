@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "@/app/globals.scss";
+import "@/app/globals.css";
 import { AdminRootDocument } from "@/app/AdminRootDocument";
 import { resolveSiteUrlObject } from "@/lib/site-url";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";

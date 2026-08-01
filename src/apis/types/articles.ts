@@ -106,9 +106,8 @@ export interface AdminArticlesResponseDto {
 
 // ─── Admin Article Detail ────────────────────
 
-export interface AdminArticleDetailDto extends PublicArticleDetailDto {
-  // All fields from PublicArticleDetailDto plus admin-specific overrides
-}
+// Admin detail currently carries no extra fields over the public contract.
+export type AdminArticleDetailDto = PublicArticleDetailDto;
 
 // ─── Admin Article Mutation Response ─────────
 

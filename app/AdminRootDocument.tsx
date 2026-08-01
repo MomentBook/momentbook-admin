@@ -1,7 +1,7 @@
 import Script from "next/script";
 import { Manrope, Playfair_Display } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { defaultLanguage, toLocaleTag } from "@/lib/i18n/config";
-import { AdminThemeProvider } from "@/app/AdminThemeProvider";
 
 const manrope = Manrope({
   variable: "--font-rounded",
@@ -29,23 +29,38 @@ export function AdminRootDocument({
         <Script id="theme-script" strategy="beforeInteractive">
           {`
             (function() {
-              const stored = localStorage.getItem('theme');
-              let themeValue = stored;
-              if (stored) {
-                try {
-                  themeValue = JSON.parse(stored);
-                } catch (error) {
-                  themeValue = stored;
+              try {
+                const stored = localStorage.getItem('theme');
+                let theme = stored;
+                if (stored) {
+                  try {
+                    theme = JSON.parse(stored);
+                  } catch (_) {
+                    // Legacy Astryx wrote JSON; next-themes writes a raw string.
+                    theme = stored;
+                  }
                 }
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (_) {
+                document.documentElement.classList.remove('dark');
               }
-              const theme = (themeValue === 'light' || themeValue === 'dark') ? themeValue : 'light';
-              document.documentElement.setAttribute('data-theme', theme);
             })();
           `}
         </Script>
       </head>
       <body className={`${manrope.variable} ${playfairDisplay.variable}`}>
-        <AdminThemeProvider>{children}</AdminThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,16 +1,10 @@
 import Link from "next/link";
-import { AppShell } from "@astryxdesign/core/AppShell";
-import { VStack } from "@astryxdesign/core/VStack";
-import { HStack } from "@astryxdesign/core/HStack";
-import { Heading } from "@astryxdesign/core/Heading";
-import { Text } from "@astryxdesign/core/Text";
-import { Badge } from "@astryxdesign/core/Badge";
-import { Banner } from "@astryxdesign/core/Banner";
-import { Button } from "@astryxdesign/core/Button";
-import { Card } from "@astryxdesign/core/Card";
-import { EmptyState } from "@astryxdesign/core/EmptyState";
-import { Grid } from "@astryxdesign/core/Grid";
-import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
+import { AdminSidebar } from "@/components/layout/admin-sidebar";
+import { AdminShell } from "@/components/layout/admin-shell";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   requeueJourneyReviewAction,
   updatePublishedJourneyReviewAction,
@@ -29,7 +23,6 @@ import {
 import type { AdminSession } from "@/lib/admin/session";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { LightboxPhotoTile } from "./LightboxPhotoTile";
-import styles from "./AdminReviewDetailPageView.module.css";
 
 type ReviewMutationSummary = {
   publicId: string;
@@ -46,10 +39,10 @@ type AdminReviewDetailPageViewProps = {
   targetPublicId: string | null;
 };
 
-function resolveBadgeVariant(status: AdminReviewStatus): "warning" | "success" | "error" {
-  if (status === "APPROVED") return "success";
-  if (status === "REJECTED") return "error";
-  return "warning";
+function badgeVariantClass(status: AdminReviewStatus): "default" | "destructive" | "secondary" {
+  if (status === "APPROVED") return "default";
+  if (status === "REJECTED") return "destructive";
+  return "secondary";
 }
 
 function buildTabHref(
@@ -119,28 +112,28 @@ function PageHeader({
   flaggedCount: number;
 }) {
   return (
-    <VStack gap={2}>
-      <HStack gap={2} vAlign="center">
-        <Heading level={2}>Review evidence</Heading>
-        <Badge
-          label={`${flaggedCount} flagged`}
-          variant={flaggedCount > 0 ? "warning" : "neutral"}
-        />
-      </HStack>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <h2 className="text-2xl font-semibold tracking-tight">Review evidence</h2>
+        <Badge variant={flaggedCount > 0 ? "secondary" : "outline"}>
+          {flaggedCount} flagged
+        </Badge>
+      </div>
 
       {banner ? (
-        <Banner
-          status={
+        <Alert
+          variant={
             banner.tone === "error"
-              ? "error"
+              ? "destructive"
               : banner.tone === "success"
-                ? "success"
-                : "info"
+                ? "default"
+                : "default"
           }
-          title={banner.message}
-        />
+        >
+          <AlertTitle>{banner.message}</AlertTitle>
+        </Alert>
       ) : null}
-    </VStack>
+    </div>
   );
 }
 
@@ -183,53 +176,57 @@ function EvidenceSectionCard({
   const title = getSectionHeading(section, index, totalSections);
 
   return (
-    <Card padding={3}>
-      <HStack gap={2} vAlign="center" hAlign="between">
-        <VStack gap={0.5}>
-          <Text type="label" size="2xs" color="secondary">
-            {section.kind === "cluster"
-              ? `Cluster ${String(index + 1).padStart(2, "0")}`
-              : "Remaining"}
-          </Text>
-          <Heading level={3}>{title}</Heading>
-        </VStack>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-muted-foreground">
+              {section.kind === "cluster"
+                ? `Cluster ${String(index + 1).padStart(2, "0")}`
+                : "Remaining"}
+            </span>
+            <CardTitle className="text-lg">{title}</CardTitle>
+          </div>
+          <Badge variant="outline">{section.photoCount} photos</Badge>
+        </div>
+      </CardHeader>
 
-        <Badge label={`${section.photoCount} photos`} variant="neutral" />
-      </HStack>
-
-      {section.photos.length > 0 ? (
-        <Grid columns={{ minWidth: 208, repeat: "fit" }} gap={3}>
-          {section.photos.map((photo, photoIndex) => (
-            <PhotoTile
-              key={photo.key}
-              photo={photo}
-              photoIndex={photoIndex + 1}
-              sectionTitle={title}
-              total={section.photos.length}
-            />
-          ))}
-        </Grid>
-      ) : (
-        <EmptyState
-          title="No photo assets resolved"
-          description="This cluster exists in the moderation payload, but no photo assets were attached to it."
-          isCompact
-        />
-      )}
+      <CardContent>
+        {section.photos.length > 0 ? (
+          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(208px, 1fr))" }}>
+            {section.photos.map((photo, photoIndex) => (
+              <PhotoTile
+                key={photo.key}
+                photo={photo}
+                photoIndex={photoIndex + 1}
+                sectionTitle={title}
+                total={section.photos.length}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <h3 className="text-lg font-semibold">No photo assets resolved</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              This cluster exists in the moderation payload, but no photo assets were attached to it.
+            </p>
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }
 
 function EmptyEvidenceCard({ detail }: { detail: AdminReviewDetail }) {
   return (
-    <Card padding={3}>
-      <EmptyState
-        title="No evidence photos available"
-        description={
-          detail.evidence.unavailableReason ??
-          "The admin detail contract did not return any photo evidence for this journey."
-        }
-      />
+    <Card>
+      <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+        <h3 className="text-lg font-semibold">No evidence photos available</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {detail.evidence.unavailableReason ??
+            "The admin detail contract did not return any photo evidence for this journey."}
+        </p>
+      </CardContent>
     </Card>
   );
 }
@@ -244,52 +241,51 @@ function JourneySummary({
   const review = detail.journey.review;
 
   return (
-    <Card padding={3}>
-      <VStack gap={3}>
-        <HStack gap={2} vAlign="center" hAlign="between">
+    <Card>
+      <CardContent className="space-y-3 pt-6">
+        <div className="flex items-center justify-between gap-2">
           <Link href={backHref}>
-            <Button variant="secondary" size="sm" label="Back to reviews" />
+            <Button variant="outline" size="sm">Back to reviews</Button>
           </Link>
 
-          <Badge
-            label={getAdminReviewStatusLabel(review.status)}
-            variant={resolveBadgeVariant(review.status)}
-          />
-        </HStack>
+          <Badge variant={badgeVariantClass(review.status)}>
+            {getAdminReviewStatusLabel(review.status)}
+          </Badge>
+        </div>
 
-        <VStack gap={1}>
-          <Text type="label" size="2xs" color="secondary">Journey</Text>
-          <Heading level={1}>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Journey</span>
+          <h1 className="text-2xl font-bold">
             {detail.journey.title || "Untitled journey"}
-          </Heading>
+          </h1>
           {detail.journey.description ? (
-            <Text type="body" color="secondary">{detail.journey.description}</Text>
+            <p className="text-sm text-muted-foreground">{detail.journey.description}</p>
           ) : null}
-        </VStack>
+        </div>
 
         {review.flagged ? (
-          <VStack gap={1}>
-            <Text type="label" size="2xs" color="secondary">AI Review Flag</Text>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">AI Review Flag</span>
             {review.flagReasons && review.flagReasons.length > 0 ? (
-              <HStack gap={1} wrap="wrap">
+              <div className="flex flex-wrap gap-1">
                 {review.flagReasons.map((reason) => (
-                  <Badge key={reason} label={reason} variant="warning" />
+                  <Badge key={reason} variant="secondary">{reason}</Badge>
                 ))}
-              </HStack>
+              </div>
             ) : (
-              <Text type="body" size="sm" color="secondary">
+              <p className="text-sm text-muted-foreground">
                 Flagged for manual review
-              </Text>
+              </p>
             )}
             {review.decidedBy && (
-              <Text type="supporting" size="xsm" color="secondary">
+              <p className="text-xs text-muted-foreground">
                 Flagged by {review.decidedBy}
                 {review.decidedAt ? ` · ${new Date(review.decidedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}` : ""}
-              </Text>
+              </p>
             )}
-          </VStack>
+          </div>
         ) : null}
-      </VStack>
+      </CardContent>
     </Card>
   );
 }
@@ -312,26 +308,27 @@ function ReviewUpdatePanel({
     targetPublicId,
   });
   return (
-    <Card padding={3}>
-      <VStack gap={3}>
-        <HStack gap={2} vAlign="center" hAlign="between">
-          <Heading level={3}>Review status</Heading>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-lg">Review status</CardTitle>
           {reviewMutation ? (
-            <Badge
-              label={getAdminReviewStatusLabel(reviewMutation.reviewStatus)}
-              variant={resolveBadgeVariant(reviewMutation.reviewStatus)}
-            />
+            <Badge variant={badgeVariantClass(reviewMutation.reviewStatus)}>
+              {getAdminReviewStatusLabel(reviewMutation.reviewStatus)}
+            </Badge>
           ) : null}
-        </HStack>
+        </div>
+      </CardHeader>
 
+      <CardContent>
         <form action={updatePublishedJourneyReviewAction}>
           <input type="hidden" name="returnTo" value={returnTo} />
           <input type="hidden" name="targetPublicId" value={effectiveTargetPublicId} />
 
-          <VStack gap={3}>
-            <VStack gap={2}>
-              <Text type="label" size="2xs" color="secondary">Review status</Text>
-              <HStack gap={1} wrap="wrap">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              <span className="text-xs text-muted-foreground">Review status</span>
+              <div className="flex flex-wrap gap-3">
                 {(
                   [
                     ["APPROVED", "Approved"],
@@ -340,7 +337,7 @@ function ReviewUpdatePanel({
                 ).map(([value, label]) => (
                   <label
                     key={value}
-                    className={styles.radioOption}
+                    className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
                   >
                     <input
                       type="radio"
@@ -348,16 +345,16 @@ function ReviewUpdatePanel({
                       value={value}
                       defaultChecked={defaultReviewStatus === value}
                     />
-                    <Text type="body" size="sm">{label}</Text>
+                    {label}
                   </label>
                 ))}
-              </HStack>
-            </VStack>
+              </div>
+            </div>
 
-            <Button type="submit" variant="primary" label="Save" />
-          </VStack>
+            <Button type="submit" variant="default">Save</Button>
+          </div>
         </form>
-      </VStack>
+      </CardContent>
     </Card>
   );
 }
@@ -376,20 +373,22 @@ function RequeuePanel({
   }
 
   return (
-    <Card padding={3}>
-      <VStack gap={3}>
-        <Heading level={3}>AI Review</Heading>
-        <Text type="body" size="sm" color="secondary">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">AI Review</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
           This journey was flagged by the AI review pipeline. If you believe the
           flag was incorrect, re-enqueue it for another review cycle.
-        </Text>
+        </p>
 
         <form action={requeueJourneyReviewAction}>
           <input type="hidden" name="returnTo" value={returnTo} />
           <input type="hidden" name="targetPublicId" value={detail.journey.publicId} />
-          <Button type="submit" variant="secondary" label="Re-enqueue for AI review" />
+          <Button type="submit" variant="outline">Re-enqueue for AI review</Button>
         </form>
-      </VStack>
+      </CardContent>
     </Card>
   );
 }
@@ -408,78 +407,76 @@ export function AdminReviewDetailPageView({
     status: queue.status === "flagged" ? null : queue.status,
   });
 
+  const sidebar = (
+    <AdminSidebar
+      activeTab="reviews"
+      navigationItems={[
+        {
+          tab: "overview",
+          href: buildTabHref("overview", {
+            page: queue.page,
+            status: queue.status,
+          }),
+          label: "Overview",
+        },
+        {
+          tab: "reviews",
+          href: buildTabHref("reviews", {
+            page: queue.page,
+            status: queue.status,
+          }),
+          label: "Reviews",
+          badge: String(queue.summary.flaggedCount),
+        },
+        {
+          tab: "articles",
+          href: buildAdminArticleWorkspaceHref(),
+          label: "Articles",
+        },
+      ]}
+      session={session}
+    />
+  );
+
   return (
-    <AppShell
-      height="fill"
-      mobileNav={{ breakpoint: "md" }}
-      sideNav={
-        <AdminSidebar
-          activeTab="reviews"
-          navigationItems={[
-            {
-              tab: "overview",
-              href: buildTabHref("overview", {
-                page: queue.page,
-                status: queue.status,
-              }),
-              label: "Overview",
-            },
-            {
-              tab: "reviews",
-              href: buildTabHref("reviews", {
-                page: queue.page,
-                status: queue.status,
-              }),
-              label: "Reviews",
-              badge: String(queue.summary.flaggedCount),
-            },
-            {
-              tab: "articles",
-              href: buildAdminArticleWorkspaceHref(),
-              label: "Articles",
-            },
-          ]}
-          session={session}
+    <AdminShell sidebar={sidebar}>
+      <div className="flex flex-col gap-4">
+        <PageHeader
+          banner={banner}
+          flaggedCount={queue.summary.flaggedCount}
         />
-      }
-    >
-      <VStack gap={4}>
-          <PageHeader
-            banner={banner}
-            flaggedCount={queue.summary.flaggedCount}
-          />
 
-          <HStack gap={3} vAlign="start" wrap="wrap">
-            <VStack style={{ flex: "1 1 0", minWidth: "18rem" }} gap={4}>
-              <JourneySummary detail={detail} backHref={backHref} />
-              {detail.evidence.sections.length > 0 ? (
-                detail.evidence.sections.map((section, index) => (
-                  <EvidenceSectionCard
-                    key={section.key}
-                    index={index}
-                    section={section}
-                    totalSections={detail.evidence.sections.length}
-                  />
-                ))
-              ) : (
-                <EmptyEvidenceCard detail={detail} />
-              )}
-            </VStack>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+          <div className="flex min-w-0 flex-1 flex-col gap-4">
+            <JourneySummary detail={detail} backHref={backHref} />
+            {detail.evidence.sections.length > 0 ? (
+              detail.evidence.sections.map((section, index) => (
+                <EvidenceSectionCard
+                  key={section.key}
+                  index={index}
+                  section={section}
+                  totalSections={detail.evidence.sections.length}
+                />
+              ))
+            ) : (
+              <EmptyEvidenceCard detail={detail} />
+            )}
+          </div>
 
-            <VStack style={{ flex: "0 1 24rem", minWidth: "18rem", maxWidth: "24rem" }} gap={3}>
-              <ReviewUpdatePanel
-                detail={detail}
-                reviewMutation={reviewMutation}
-                returnTo={returnTo}
-                targetPublicId={targetPublicId}
-              />
-              <RequeuePanel
-                detail={detail}
-                returnTo={returnTo}
-              />
-            </VStack>
-          </HStack>
-      </VStack>
-    </AppShell>
+          <div className="flex w-full flex-col gap-3 lg:w-80 lg:shrink-0">
+            <ReviewUpdatePanel
+              detail={detail}
+              reviewMutation={reviewMutation}
+              returnTo={returnTo}
+              targetPublicId={targetPublicId}
+            />
+            <RequeuePanel
+              detail={detail}
+              returnTo={returnTo}
+            />
+          </div>
+        </div>
+      </div>
+    </AdminShell>
   );
 }

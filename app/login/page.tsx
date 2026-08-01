@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Card } from "@astryxdesign/core/Card";
-import { Center } from "@astryxdesign/core/Center";
-import { VStack } from "@astryxdesign/core/VStack";
-import { Heading } from "@astryxdesign/core/Heading";
-import { Text } from "@astryxdesign/core/Text";
-import { Banner } from "@astryxdesign/core/Banner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import {
   ADMIN_ROOT_PATH,
@@ -32,24 +34,24 @@ function readQueryParam(
 function resolveLoginNotice(
   error: string | null,
   loggedOut: boolean,
-): { status: "error" | "success"; message: string } | null {
+): { variant: "destructive" | "default"; message: string } | null {
   if (loggedOut) {
-    return { status: "success", message: "Signed out." };
+    return { variant: "default", message: "Signed out." };
   }
 
   switch (error) {
     case "missing_fields":
-      return { status: "error", message: "Enter email and password." };
+      return { variant: "destructive", message: "Enter email and password." };
     case "invalid_credentials":
-      return { status: "error", message: "Invalid password." };
+      return { variant: "destructive", message: "Invalid password." };
     case "admin_only":
-      return { status: "error", message: "This account is not authorized for admin access." };
+      return { variant: "destructive", message: "This account is not authorized for admin access." };
     case "admin_access_denied":
-      return { status: "error", message: "This account no longer has admin access." };
+      return { variant: "destructive", message: "This account no longer has admin access." };
     case "session_expired":
-      return { status: "error", message: "Session expired. Sign in again." };
+      return { variant: "destructive", message: "Session expired. Sign in again." };
     case "service_unavailable":
-      return { status: "error", message: "Service unavailable." };
+      return { variant: "destructive", message: "Service unavailable." };
     default:
       return null;
   }
@@ -82,26 +84,25 @@ export default async function AdminLoginPage({
   );
 
   return (
-    <Center height="100vh">
-      <Card maxWidth="32rem" padding={4}>
-        <VStack gap={4}>
-          <VStack gap={1}>
-            <Heading level={1}>Sign in to MomentBook</Heading>
-            <Text type="body" color="secondary">
-              Use the admin account to continue.
-            </Text>
-          </VStack>
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl">Sign in to MomentBook</CardTitle>
+          <CardDescription>
+            Use the admin account to continue.
+          </CardDescription>
+        </CardHeader>
 
+        <CardContent className="space-y-4">
           {notice ? (
-            <Banner
-              status={notice.status}
-              title={notice.message}
-            />
+            <Alert variant={notice.variant}>
+              <AlertDescription>{notice.message}</AlertDescription>
+            </Alert>
           ) : null}
 
           <AdminLoginForm nextPath={nextPath} />
-        </VStack>
+        </CardContent>
       </Card>
-    </Center>
+    </div>
   );
 }

@@ -1,17 +1,12 @@
 import Link from "next/link";
-import { AppShell } from "@astryxdesign/core/AppShell";
-import { VStack } from "@astryxdesign/core/VStack";
-import { Heading } from "@astryxdesign/core/Heading";
-import { Text } from "@astryxdesign/core/Text";
-import { Badge } from "@astryxdesign/core/Badge";
-import { Banner } from "@astryxdesign/core/Banner";
-import { Table, TableCell, TableHeaderCell, TableRow } from "@astryxdesign/core/Table";
-import { Button } from "@astryxdesign/core/Button";
-import { Card } from "@astryxdesign/core/Card";
-import { EmptyState } from "@astryxdesign/core/EmptyState";
-import { HStack } from "@astryxdesign/core/HStack";
+import { AdminSidebar } from "@/components/layout/admin-sidebar";
+import { AdminShell } from "@/components/layout/admin-shell";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LocalizedDate } from "@/components/LocalizedTime";
-import { AdminSidebar } from "@/app/_workspace/AdminSidebar";
 import {
   buildAdminArticleWorkspaceHref,
   buildAdminReviewDetailHref,
@@ -40,10 +35,10 @@ type AdminWorkspaceProps = {
   session: AdminSession;
 };
 
-function resolveBadgeVariant(status: AdminReviewStatus): "warning" | "success" | "error" {
-  if (status === "APPROVED") return "success";
-  if (status === "REJECTED") return "error";
-  return "warning";
+function badgeVariantClass(status: AdminReviewStatus): "default" | "destructive" | "secondary" {
+  if (status === "APPROVED") return "default";
+  if (status === "REJECTED") return "destructive";
+  return "secondary";
 }
 
 function buildReviewFilterHref(status: AdminReviewQueueStatus): string {
@@ -70,7 +65,6 @@ function getActiveTabTitle(tab: AdminWorkspaceTab): string {
   if (tab === "reviews") {
     return "Review Queue";
   }
-
   return "Overview";
 }
 
@@ -78,7 +72,6 @@ function getActiveTabDescription(tab: AdminWorkspaceTab): string {
   if (tab === "reviews") {
     return "Review journeys that the AI review pipeline flagged as unsafe. Decide to approve or reject each flagged item.";
   }
-
   return "Monitor flagged journey volume, review decisions, and submission flow over the past weeks.";
 }
 
@@ -94,24 +87,22 @@ function ContentHeader({
   title: string;
 }) {
   return (
-    <VStack gap={2}>
-      <VStack gap={1}>
-        <Heading level={2}>{title}</Heading>
-        <Text type="body" color="secondary">{description}</Text>
-      </VStack>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
 
-      <Badge
-        label={`${flaggedCount} flagged`}
-        variant={flaggedCount > 0 ? "warning" : "neutral"}
-      />
+      <Badge variant={flaggedCount > 0 ? "secondary" : "outline"}>
+        {flaggedCount} flagged
+      </Badge>
 
       {banner ? (
-        <Banner
-          status={banner.tone === "error" ? "error" : banner.tone === "success" ? "success" : "info"}
-          title={banner.message}
-        />
+        <Alert variant={banner.tone === "error" ? "destructive" : banner.tone === "success" ? "default" : "default"}>
+          <AlertTitle>{banner.message}</AlertTitle>
+        </Alert>
       ) : null}
-    </VStack>
+    </div>
   );
 }
 
@@ -121,150 +112,160 @@ function ReviewTablePanel({
   queue: AdminReviewQueueData;
 }) {
   return (
-    <Card padding={3}>
-      <VStack gap={0.5}>
-        <Text type="label" size="2xs" color="secondary">Queue</Text>
-        <Heading level={3}>Reviews</Heading>
-      </VStack>
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground">Queue</span>
+          <CardTitle className="text-lg">Reviews</CardTitle>
+        </div>
+        <CardDescription>{queue.total} items</CardDescription>
+      </CardHeader>
 
-      <Text type="supporting" size="xsm" color="secondary" style={{ marginTop: 4 }}>
-        {queue.total} items
-      </Text>
+      <CardContent className="space-y-4">
+        {/* Filter chips */}
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["flagged", "Flagged"],
+              ["pending", "All pending"],
+              ["all", "All"],
+            ] as const
+          ).map(([value, label]) => (
+            <Link key={value} href={buildReviewFilterHref(value)}>
+              <Badge variant={queue.status === value ? "default" : "outline"}>
+                {label}
+              </Badge>
+            </Link>
+          ))}
+        </div>
 
-      {/* Filter chips */}
-      <HStack gap={1} wrap="wrap" style={{ marginBlock: "var(--spacing-2)" }}>
-        {(
-          [
-            ["flagged", "Flagged"],
-            ["pending", "All pending"],
-            ["all", "All"],
-          ] as const
-        ).map(([value, label]) => (
-          <Link key={value} href={buildReviewFilterHref(value)}>
-            <Badge
-              label={label}
-              variant={queue.status === value ? "info" : "neutral"}
-            />
-          </Link>
-        ))}
-      </HStack>
+        {queue.items.length > 0 ? (
+          <>
+            <div className="overflow-x-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Flagged</TableHead>
+                    <TableHead>Journey</TableHead>
+                    <TableHead>User ID</TableHead>
+                    <TableHead>Public ID</TableHead>
+                    <TableHead>Visibility</TableHead>
+                    <TableHead>Photos</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Published</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {queue.items.map((item) => (
+                    <TableRow key={item.publicId}>
+                      <TableCell>
+                        <Badge variant={badgeVariantClass(item.review.status)}>
+                          {getAdminReviewStatusLabel(item.review.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {item.review.flagged ? (
+                          <Badge variant="secondary">
+                            {item.review.flagReasons?.length ? item.review.flagReasons.join(", ") : "Flagged"}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={buildReviewDetailTableHref(item.publicId, {
+                            page: queue.page,
+                            status: queue.status,
+                          })}
+                          className="text-primary hover:underline"
+                        >
+                          {item.title || "Untitled journey"}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{item.userId}</TableCell>
+                      <TableCell className="font-mono text-xs">{item.publicId}</TableCell>
+                      <TableCell>{item.visibility}</TableCell>
+                      <TableCell>{item.photoCount}</TableCell>
+                      <TableCell>
+                        <LocalizedDate
+                          lang={ADMIN_DISPLAY_LANGUAGE}
+                          timestamp={Date.parse(item.createdAt)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {item.publishedAt ? (
+                          <LocalizedDate
+                            lang={ADMIN_DISPLAY_LANGUAGE}
+                            timestamp={Date.parse(item.publishedAt)}
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
-      {queue.items.length > 0 ? (
-        <>
-          <Table>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Flagged</TableHeaderCell>
-            <TableHeaderCell>Journey</TableHeaderCell>
-            <TableHeaderCell>User ID</TableHeaderCell>
-            <TableHeaderCell>Public ID</TableHeaderCell>
-            <TableHeaderCell>Visibility</TableHeaderCell>
-            <TableHeaderCell>Photos</TableHeaderCell>
-            <TableHeaderCell>Created</TableHeaderCell>
-            <TableHeaderCell>Published</TableHeaderCell>
-            {queue.items.map((item) => (
-              <TableRow key={item.publicId}>
-                <TableCell>
-                  <Badge
-                    label={getAdminReviewStatusLabel(item.review.status)}
-                    variant={resolveBadgeVariant(item.review.status)}
-                  />
-                </TableCell>
-                <TableCell>
-                  {item.review.flagged ? (
-                    <Badge
-                      label={item.review.flagReasons?.length ? item.review.flagReasons.join(", ") : "Flagged"}
-                      variant="warning"
-                    />
-                  ) : (
-                    "—"
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Link
-                    href={buildReviewDetailTableHref(item.publicId, {
-                      page: queue.page,
-                      status: queue.status,
-                    })}
+            {queue.pages > 1 ? (
+              <div className="flex items-center justify-between gap-2">
+                <Link
+                  href={buildAdminWorkspaceHref("reviews", {
+                    page:
+                      queue.page > 1 ? String(Math.max(1, queue.page - 1)) : null,
+                    status: queue.status === "flagged" ? null : queue.status,
+                  })}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={queue.page <= 1}
                   >
-                    {item.title || "Untitled journey"}
-                  </Link>
-                </TableCell>
-                <TableCell>{item.userId}</TableCell>
-                <TableCell>{item.publicId}</TableCell>
-                <TableCell>{item.visibility}</TableCell>
-                <TableCell>{item.photoCount}</TableCell>
-                <TableCell>
-                  <LocalizedDate
-                    lang={ADMIN_DISPLAY_LANGUAGE}
-                    timestamp={Date.parse(item.createdAt)}
-                  />
-                </TableCell>
-                <TableCell>
-                  {item.publishedAt ? (
-                    <LocalizedDate
-                      lang={ADMIN_DISPLAY_LANGUAGE}
-                      timestamp={Date.parse(item.publishedAt)}
-                    />
-                  ) : (
-                    "—"
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </Table>
-
-          {queue.pages > 1 ? (
-            <HStack gap={1} vAlign="center" hAlign="between" wrap="wrap" style={{ marginTop: "var(--spacing-2)" }}>
-              <Link
-                href={buildAdminWorkspaceHref("reviews", {
-                  page:
-                    queue.page > 1 ? String(Math.max(1, queue.page - 1)) : null,
-                  status: queue.status === "flagged" ? null : queue.status,
-                })}
-              >
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  label="Previous"
-                  isDisabled={queue.page <= 1}
-                />
-              </Link>
-              <Text type="supporting" size="xsm">
-                Page {queue.page} of {queue.pages}
-              </Text>
-              <Link
-                href={buildAdminWorkspaceHref("reviews", {
-                  page:
-                    queue.page < queue.pages
-                      ? String(Math.min(queue.pages, queue.page + 1))
-                      : String(queue.pages),
-                  status: queue.status === "flagged" ? null : queue.status,
-                })}
-              >
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  label="Next"
-                  isDisabled={queue.page >= queue.pages}
-                />
-              </Link>
-            </HStack>
-          ) : null}
-        </>
-      ) : (
-        <EmptyState
-          title="No records in this filter"
-          description="Switch the filter or return to flagged items."
-          isCompact
-          actions={
-            queue.status !== "flagged" ? (
-              <Link href={buildAdminWorkspaceHref("reviews")}>
-                <Button variant="primary" size="sm" label="Show flagged" />
-              </Link>
-            ) : undefined
-          }
-        />
-      )}
+                    Previous
+                  </Button>
+                </Link>
+                <span className="text-xs text-muted-foreground">
+                  Page {queue.page} of {queue.pages}
+                </span>
+                <Link
+                  href={buildAdminWorkspaceHref("reviews", {
+                    page:
+                      queue.page < queue.pages
+                        ? String(Math.min(queue.pages, queue.page + 1))
+                        : String(queue.pages),
+                    status: queue.status === "flagged" ? null : queue.status,
+                  })}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={queue.page >= queue.pages}
+                  >
+                    Next
+                  </Button>
+                </Link>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+              <h3 className="text-lg font-semibold">No records in this filter</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Switch the filter or return to flagged items.
+              </p>
+              {queue.status !== "flagged" ? (
+                <Link href={buildAdminWorkspaceHref("reviews")} className="mt-4">
+                  <Button variant="default" size="sm">Show flagged</Button>
+                </Link>
+              ) : null}
+            </CardContent>
+          </Card>
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -275,9 +276,9 @@ function ReviewsPanel({
   queue: AdminReviewQueueData;
 }) {
   return (
-    <VStack gap={4}>
+    <div className="flex flex-col gap-4">
       <ReviewTablePanel queue={queue} />
-    </VStack>
+    </div>
   );
 }
 
@@ -307,32 +308,30 @@ export function AdminWorkspace({
     },
   ];
 
-  return (
-    <AppShell
-      height="fill"
-      mobileNav={{ breakpoint: "md" }}
-      sideNav={
-        <AdminSidebar
-          activeTab={activeTab}
-          navigationItems={navigationItems}
-          session={session}
-        />
-      }
-    >
-      <VStack gap={4}>
-          <ContentHeader
-            banner={banner}
-            description={getActiveTabDescription(activeTab)}
-            flaggedCount={queue.summary.flaggedCount}
-            title={getActiveTabTitle(activeTab)}
-          />
+  const sidebar = (
+    <AdminSidebar
+      activeTab={activeTab}
+      navigationItems={navigationItems}
+      session={session}
+    />
+  );
 
-          {activeTab === "reviews" ? (
-            <ReviewsPanel queue={queue} />
-          ) : (
-            <AdminOverviewPanel overview={overview} session={session} />
-          )}
-      </VStack>
-    </AppShell>
+  return (
+    <AdminShell sidebar={sidebar}>
+      <div className="flex flex-col gap-4">
+        <ContentHeader
+          banner={banner}
+          description={getActiveTabDescription(activeTab)}
+          flaggedCount={queue.summary.flaggedCount}
+          title={getActiveTabTitle(activeTab)}
+        />
+
+        {activeTab === "reviews" ? (
+          <ReviewsPanel queue={queue} />
+        ) : (
+          <AdminOverviewPanel overview={overview} session={session} />
+        )}
+      </div>
+    </AdminShell>
   );
 }

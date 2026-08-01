@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { useDeferredValue, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Card } from "@astryxdesign/core/Card";
-import { VStack } from "@astryxdesign/core/VStack";
-import { HStack } from "@astryxdesign/core/HStack";
-import { Heading } from "@astryxdesign/core/Heading";
-import { Text } from "@astryxdesign/core/Text";
-import { TextInput } from "@astryxdesign/core/TextInput";
-import { TextArea } from "@astryxdesign/core/TextArea";
-import { Selector } from "@astryxdesign/core/Selector";
-import { Button } from "@astryxdesign/core/Button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EditorialMarkdownContent } from "@/components/editorial/EditorialMarkdownContent";
 import { parseEditorialBody } from "@/lib/editorial/body";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
@@ -21,7 +24,6 @@ import {
   type EditorialArticleRecord,
 } from "@/lib/editorial/types";
 import { languageList } from "@/lib/i18n/config";
-import styles from "./article-admin.module.scss";
 
 type EditorialArticleEditorFormProps = {
   article: EditorialArticleRecord | null;
@@ -47,56 +49,20 @@ function insertSnippet(
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button
-      type="submit"
-      variant="primary"
-      label={pending ? "Saving..." : label}
-      isLoading={pending}
-    />
+    <Button type="submit" disabled={pending}>
+      {pending ? "Saving..." : label}
+    </Button>
   );
 }
 
 function DeleteButton() {
   const { pending } = useFormStatus();
   return (
-    <Button
-      type="submit"
-      variant="ghost"
-      label={pending ? "Deleting..." : "Delete article"}
-      isLoading={pending}
-    />
+    <Button type="submit" variant="ghost" disabled={pending}>
+      {pending ? "Deleting..." : "Delete article"}
+    </Button>
   );
 }
-
-const editorGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(16rem, 21rem)",
-  gap: "1rem",
-  alignItems: "start",
-} as const;
-
-const toolbarStyle = {
-  display: "flex",
-  flexWrap: "wrap" as const,
-  gap: 6,
-};
-
-const previewCardStyle = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr)",
-  gap: "0.75rem",
-  padding: "1rem",
-  border: "1px solid var(--color-border)",
-  borderRadius: "var(--radius-element, 8px)",
-  minHeight: 120,
-};
-
-const formActionsStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "0.75rem",
-};
 
 export function EditorialArticleEditorForm({
   article,
@@ -148,7 +114,7 @@ export function EditorialArticleEditorForm({
   };
 
   return (
-    <div style={editorGridStyle}>
+    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,21rem)]">
       <form id={formId} action={saveAction}>
         <input type="hidden" name="nextPath" value={nextPath} />
         <input type="hidden" name="returnTo" value={returnTo} />
@@ -157,222 +123,245 @@ export function EditorialArticleEditorForm({
           <input type="hidden" name="translationGroupId" value={currentTranslationGroupId} />
         ) : null}
 
-        <VStack gap={4}>
+        <div className="flex flex-col gap-4">
           {/* Article metadata */}
-          <Card padding={3}>
-            <VStack gap={2}>
-              <Text type="label" size="2xs" color="secondary">Writing studio</Text>
-              <Heading level={3}>Article body</Heading>
+          <Card>
+            <CardContent className="flex flex-col gap-2 pt-6">
+              <span className="text-xs text-muted-foreground">Writing studio</span>
+              <h3 className="text-lg font-semibold">Article body</h3>
 
-              <TextInput
-                label="Title"
-                htmlName="title"
-                value={titleText}
-                onChange={setTitleText}
-                placeholder="Guide title"
-                isRequired
-              />
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={titleText}
+                  onChange={(e) => setTitleText(e.target.value)}
+                  placeholder="Guide title"
+                  required
+                />
+              </div>
 
-              <HStack gap={2}>
+              <div className="flex gap-2">
                 {!article ? (
                   <>
-                    <div style={{ flex: 1 }}>
-                      <Selector
-                        label="Language"
-                        htmlName="language"
+                    <div className="flex-1 space-y-2">
+                      <Label htmlFor="language">Language</Label>
+                      <Select
+                        name="language"
                         value={selectedLanguage}
-                        onChange={setSelectedLanguage}
-                        options={languageList.map((lang) => ({
-                          label: lang.toUpperCase(),
-                          value: lang,
-                        }))}
-                      />
+                        onValueChange={setSelectedLanguage}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {languageList.map((lang) => (
+                            <SelectItem key={lang} value={lang}>
+                              {lang.toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <TextInput
-                        label="Slug"
-                        htmlName="slug"
+                    <div className="flex-1 space-y-2">
+                      <Label htmlFor="slug">Slug</Label>
+                      <Input
+                        id="slug"
+                        name="slug"
                         value={slugText}
-                        onChange={setSlugText}
+                        onChange={(e) => setSlugText(e.target.value)}
                         placeholder="Optional slug"
                       />
                     </div>
                   </>
                 ) : (
                   <>
-                    <div style={{ flex: 1 }}>
-                      <VStack gap={0.5}>
-                        <Text type="label" size="2xs">Language</Text>
-                        <Text type="body">{article.language.toUpperCase()}</Text>
-                      </VStack>
+                    <div className="flex-1">
+                      <span className="text-xs text-muted-foreground">Language</span>
+                      <p className="text-sm">{article.language.toUpperCase()}</p>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <VStack gap={0.5}>
-                        <Text type="label" size="2xs">Slug</Text>
-                        <Text type="body">{article.slug}</Text>
-                      </VStack>
+                    <div className="flex-1">
+                      <span className="text-xs text-muted-foreground">Slug</span>
+                      <p className="text-sm">{article.slug}</p>
                     </div>
                   </>
                 )}
-                <div style={{ flex: 1 }}>
-                  <Selector
-                    label="Category"
-                    htmlName="category"
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    name="category"
                     value={selectedCategory}
-                    onChange={(val) => setSelectedCategory(val as EditorialArticleCategory)}
-                    options={editorialArticleCategories.map((cat) => ({
-                      label: cat,
-                      value: cat,
-                    }))}
-                  />
+                    onValueChange={(val) => setSelectedCategory(val as EditorialArticleCategory)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {editorialArticleCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </HStack>
-            </VStack>
+              </div>
+            </CardContent>
           </Card>
 
           {/* Markdown editor */}
-          <Card padding={3}>
-            <VStack gap={2}>
-              <Text type="label" size="2xs" color="secondary">Markdown body</Text>
-              <Heading level={3}>Compose</Heading>
-              <Text type="supporting" size="xsm" color="secondary">
+          <Card>
+            <CardContent className="flex flex-col gap-2 pt-6">
+              <span className="text-xs text-muted-foreground">Markdown body</span>
+              <h3 className="text-lg font-semibold">Compose</h3>
+              <p className="text-xs text-muted-foreground">
                 The first markdown image becomes the cover image. Use{" "}
-                <code>![meaningful alt](https://...)</code>. Image URLs must be absolute.
-              </Text>
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                  ![meaningful alt](https://...)
+                </code>
+                . Image URLs must be absolute.
+              </p>
 
               {/* Toolbar */}
-              <div style={toolbarStyle}>
+              <div className="flex flex-wrap gap-1.5">
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
-                  label="Heading"
                   onClick={() => handleInsert("## Section title\n\n")}
-                />
+                >
+                  Heading
+                </Button>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
-                  label="List"
                   onClick={() => handleInsert("- Bullet point\n- Another point\n")}
-                />
+                >
+                  List
+                </Button>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
-                  label="Image"
                   onClick={() =>
                     handleInsert("![Meaningful alt](https://example.com/guide-cover.jpg)\n")
                   }
+                >
+                  Image
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="body">Body</Label>
+                <Textarea
+                  id="body"
+                  name="body"
+                  value={bodyText}
+                  onChange={(e) => setBodyText(e.target.value)}
+                  placeholder="Write the article in markdown."
+                  rows={18}
+                  required
+                  ref={textareaRef as React.Ref<HTMLTextAreaElement>}
                 />
               </div>
 
-              <TextArea
-                label="Body"
-                htmlName="body"
-                value={bodyText}
-                onChange={setBodyText}
-                placeholder="Write the article in markdown."
-                rows={18}
-                isRequired
-                ref={textareaRef as React.Ref<HTMLTextAreaElement>}
-              />
-
               {/* Live preview */}
-              <div style={previewCardStyle}>
-                <VStack gap={0.5}>
-                  <Text type="label" size="2xs" color="secondary">Live preview</Text>
-                  <Heading level={4}>Rendered body</Heading>
-                </VStack>
+              <div className="min-h-[120px] rounded-lg border p-4">
+                <div className="flex flex-col gap-0.5 mb-3">
+                  <span className="text-xs text-muted-foreground">Live preview</span>
+                  <h4 className="font-semibold">Rendered body</h4>
+                </div>
 
                 {blocks.length > 0 ? (
                   <div>
                     <EditorialMarkdownContent
                       blocks={blocks}
                       classNames={{
-                        heading: styles.previewHeading,
-                        paragraph: styles.previewParagraph,
-                        list: styles.previewList,
-                        imageFigure: styles.previewFigure,
-                        image: styles.previewImage,
-                        imageCaption: styles.previewCaption,
+                        heading: "mb-3 font-[family-name:var(--font-display)] text-foreground leading-tight",
+                        paragraph: "mb-3 text-muted-foreground leading-relaxed",
+                        list: "mb-4 pl-5 text-muted-foreground grid gap-1.5",
+                        imageFigure: "mb-4 grid gap-2",
+                        image: "w-full h-auto rounded-2xl object-cover",
+                        imageCaption: "text-[0.8rem] text-muted-foreground",
                       }}
                     />
                   </div>
                 ) : (
-                  <Text type="body" size="sm" color="secondary">
+                  <p className="text-sm text-muted-foreground">
                     Start typing markdown to preview the article body.
-                  </Text>
+                  </p>
                 )}
               </div>
-            </VStack>
+            </CardContent>
           </Card>
 
           {/* Form actions */}
-          <div style={formActionsStyle}>
+          <div className="flex items-center justify-between gap-3">
             <Link href={returnTo || buildAdminArticleWorkspaceHref()}>
-              <Button variant="secondary" size="sm" label="Cancel" />
+              <Button variant="outline" size="sm">Cancel</Button>
             </Link>
             <SubmitButton label={submitLabel} />
           </div>
-        </VStack>
+        </div>
       </form>
 
       {/* Sidebar rail */}
-      <VStack gap={3}>
+      <div className="flex flex-col gap-3">
         {/* Language siblings */}
         {article && article.alternates.length > 0 ? (
-          <Card padding={3}>
-            <VStack gap={1}>
-              <Text type="label" size="2xs" color="secondary">Published alternates</Text>
-              <Heading level={4}>Language siblings</Heading>
+          <Card>
+            <CardContent className="flex flex-col gap-1 pt-6">
+              <span className="text-xs text-muted-foreground">Published alternates</span>
+              <h4 className="font-semibold">Language siblings</h4>
               {article.alternates.map((alternate) => (
-                <VStack key={`${alternate.language}-${alternate.slug}`} gap={0.5}>
-                  <Text type="body" size="sm">{alternate.title}</Text>
-                  <Text type="body" size="xsm" color="secondary">
+                <div key={`${alternate.language}-${alternate.slug}`} className="flex flex-col gap-0.5">
+                  <p className="text-sm">{alternate.title}</p>
+                  <p className="text-xs text-muted-foreground">
                     {alternate.language.toUpperCase()} · /{alternate.language}/guides/{alternate.slug}
-                  </Text>
-                </VStack>
+                  </p>
+                </div>
               ))}
-            </VStack>
+            </CardContent>
           </Card>
         ) : null}
 
         {/* Route preview */}
-        <Card padding={3}>
-          <VStack gap={1}>
-            <Text type="label" size="2xs" color="secondary">Route preview</Text>
-            <Heading level={4}>Published path</Heading>
-            <Text type="body" size="sm" color="secondary">{routePreview}</Text>
-            <Text type="supporting" size="xsm">
+        <Card>
+          <CardContent className="flex flex-col gap-1 pt-6">
+            <span className="text-xs text-muted-foreground">Route preview</span>
+            <h4 className="font-semibold">Published path</h4>
+            <p className="text-sm text-muted-foreground">{routePreview}</p>
+            <p className="text-xs">
               {routeSlug
                 ? "Uses the current slug."
                 : "Slug will be generated from the title."}
-            </Text>
-          </VStack>
+            </p>
+          </CardContent>
         </Card>
 
         {/* Danger zone */}
         {article && deleteAction ? (
-          <Card padding={3}>
+          <Card className="border-destructive/50">
             <form action={deleteAction}>
               <input type="hidden" name="articleId" value={article.id} />
               <input type="hidden" name="nextPath" value={nextPath} />
               <input type="hidden" name="returnTo" value={returnTo} />
-              <VStack gap={1}>
-                <Text type="label" size="2xs" color="secondary">Danger zone</Text>
-                <Heading level={4}>Delete article</Heading>
-                <Text type="supporting" size="xsm" color="secondary">
+              <CardContent className="flex flex-col gap-1 pt-6">
+                <span className="text-xs text-muted-foreground">Danger zone</span>
+                <h4 className="font-semibold">Delete article</h4>
+                <p className="text-xs text-muted-foreground">
                   This is a hard delete of the article and its published routes.
-                </Text>
-                <div style={{ marginTop: 8 }}>
+                </p>
+                <div className="mt-2">
                   <DeleteButton />
                 </div>
-              </VStack>
+              </CardContent>
             </form>
           </Card>
         ) : null}
-      </VStack>
+      </div>
     </div>
   );
 }

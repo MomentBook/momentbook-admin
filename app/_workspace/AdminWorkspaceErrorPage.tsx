@@ -1,6 +1,3 @@
-import { VStack } from "@astryxdesign/core/VStack";
-import { Text } from "@astryxdesign/core/Text";
-
 export function AdminWorkspaceErrorPage({
   heading,
   message,
@@ -11,16 +8,16 @@ export function AdminWorkspaceErrorPage({
   statusCode: number;
 }) {
   return (
-    <VStack gap={3} hAlign="center" vAlign="center" padding={4}>
-      <Text type="body" size="sm" color="secondary">
+    <div className="flex flex-col items-center justify-center gap-3 p-4 text-center">
+      <p className="text-sm text-muted-foreground">
         {heading ?? "The moderation workspace is temporarily unavailable."}
-      </Text>
-      <Text type="supporting" size="xsm" color="secondary">
+      </p>
+      <p className="text-xs text-muted-foreground">
         Status {statusCode}. Please try again in a moment.
-      </Text>
-      <Text type="supporting" size="2xs" color="secondary">
+      </p>
+      <p className="text-[10px] text-muted-foreground">
         {message}
-      </Text>
-    </VStack>
+      </p>
+    </div>
   );
 }
