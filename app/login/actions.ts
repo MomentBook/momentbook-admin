@@ -6,7 +6,7 @@ import {
   readAccessTokenClaims,
   readTokenExpiryMs,
 } from "@/lib/admin/token";
-import { ADMIN_ALLOWED_EMAIL, isAllowedAdminEmail } from "@/lib/admin/config";
+import { isAllowedAdminEmail } from "@/lib/admin/config";
 import {
   ADMIN_ROOT_PATH,
   sanitizeAdminPath,
@@ -47,16 +47,19 @@ export async function loginAdminAction(
   const next = readText(formData.get("next"));
   const nextPath =
     sanitizeAdminPath(next || null) ?? ADMIN_ROOT_PATH;
+  const email = readText(formData.get("email"));
   const password = readText(formData.get("password"));
+
+  if (!email) {
+    return { error: "Enter email." };
+  }
 
   if (!password) {
     return { error: "Enter password." };
   }
 
-  const allowedEmail = ADMIN_ALLOWED_EMAIL;
-
-  if (!allowedEmail) {
-    return { error: "Server misconfigured." };
+  if (!isAllowedAdminEmail(email)) {
+    return { error: "This account is not authorized for admin access." };
   }
 
   let loginResponse: Response;
@@ -69,7 +72,7 @@ export async function loginAdminAction(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: allowedEmail,
+        email,
         password,
       }),
     });
@@ -113,15 +116,15 @@ export async function loginAdminAction(
     return { error: "Invalid token response." };
   }
 
-  const email =
+  const returnedEmail =
     typeof claims.email === "string"
       ? claims.email
       : typeof user.email === "string"
         ? user.email
         : null;
 
-  if (!isAllowedAdminEmail(email)) {
-    return { error: `Only ${allowedEmail} can sign in.` };
+  if (!isAllowedAdminEmail(returnedEmail)) {
+    return { error: "This account is not authorized for admin access." };
   }
 
   if (claims.role !== "admin") {
@@ -135,7 +138,7 @@ export async function loginAdminAction(
     await createAdminSession(cookieStore, {
       userId,
       role: "admin",
-      email,
+      email: returnedEmail,
       name:
         typeof claims.name === "string"
           ? claims.name

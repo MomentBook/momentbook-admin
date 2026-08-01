@@ -4,7 +4,7 @@ import {
   readAccessTokenClaims,
   readTokenExpiryMs,
 } from "@/lib/admin/token";
-import { ADMIN_ALLOWED_EMAIL, isAllowedAdminEmail, normalizeAdminEmail } from "@/lib/admin/config";
+import { isAllowedAdminEmail, normalizeAdminEmail } from "@/lib/admin/config";
 import { createAdminSession } from "@/lib/admin/session";
 
 type SessionBootstrapRequest = {
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     return buildErrorResponse(
       403,
       "account_not_allowed",
-      `Only ${ADMIN_ALLOWED_EMAIL} can access the admin workspace.`,
+      "This account is not authorized to access the admin workspace.",
     );
   }
 

@@ -23,14 +23,9 @@ function SubmitButton() {
   );
 }
 
-export function AdminLoginForm({
-  nextPath,
-  allowedEmail,
-}: {
-  nextPath: string;
-  allowedEmail: string | null;
-}) {
+export function AdminLoginForm({ nextPath }: { nextPath: string }) {
   const [state, formAction] = useFormState(loginAdminAction, initialState);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   return (
@@ -41,10 +36,11 @@ export function AdminLoginForm({
         <TextInput
           label="Email"
           type="email"
-          value={allowedEmail ?? ""}
-          onChange={() => {}}
-          isDisabled
-          disabledMessage="Admin email is pre-configured."
+          htmlName="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="Enter admin email"
+          isRequired
         />
 
         <TextInput

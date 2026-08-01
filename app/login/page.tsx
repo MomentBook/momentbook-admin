@@ -13,7 +13,6 @@ import {
   sanitizeAdminPath,
 } from "@/lib/admin/paths";
 import { getAdminSession } from "@/lib/admin/session";
-import { ADMIN_ALLOWED_EMAIL } from "@/lib/admin/config";
 import { AdminLoginForm } from "./AdminLoginForm";
 
 function readQueryParam(
@@ -44,7 +43,7 @@ function resolveLoginNotice(
     case "invalid_credentials":
       return { status: "error", message: "Invalid password." };
     case "admin_only":
-      return { status: "error", message: `Only ${ADMIN_ALLOWED_EMAIL} can sign in.` };
+      return { status: "error", message: "This account is not authorized for admin access." };
     case "admin_access_denied":
       return { status: "error", message: "This account no longer has admin access." };
     case "session_expired":
@@ -100,10 +99,7 @@ export default async function AdminLoginPage({
             />
           ) : null}
 
-          <AdminLoginForm
-            nextPath={nextPath}
-            allowedEmail={ADMIN_ALLOWED_EMAIL}
-          />
+          <AdminLoginForm nextPath={nextPath} />
         </VStack>
       </Card>
     </Center>
