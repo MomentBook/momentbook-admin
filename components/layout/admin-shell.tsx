@@ -11,7 +11,7 @@ type AdminShellProps = {
 
 export function AdminShell({ children, sidebar }: AdminShellProps) {
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen={false}>
       {sidebar}
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">

@@ -12,6 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -110,6 +111,7 @@ export function AdminSidebar({
           </form>
         </div>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }
