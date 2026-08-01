@@ -1,6 +1,6 @@
 {
   "name": "momentbook-admin",
-  "version": "2.3.7",
+  "version": "2.3.8",
   "private": true,
   "packageManager": "yarn@3.6.4",
   "scripts": {
