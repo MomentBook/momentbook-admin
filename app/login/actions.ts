@@ -127,7 +127,7 @@ export async function loginAdminAction(
     return { error: "This account is not authorized for admin access." };
   }
 
-  if (claims.role !== "admin") {
+  if (claims.role?.toLowerCase() !== "admin") {
     return { error: "This account does not have admin access." };
   }
 
