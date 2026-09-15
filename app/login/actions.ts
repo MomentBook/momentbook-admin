@@ -6,7 +6,6 @@ import {
   readAccessTokenClaims,
   readTokenExpiryMs,
 } from "@/lib/admin/token";
-import { isAllowedAdminEmail } from "@/lib/admin/config";
 import {
   ADMIN_ROOT_PATH,
   sanitizeAdminPath,
@@ -56,10 +55,6 @@ export async function loginAdminAction(
 
   if (!password) {
     return { error: "Enter password." };
-  }
-
-  if (!isAllowedAdminEmail(email)) {
-    return { error: "This account is not authorized for admin access." };
   }
 
   let loginResponse: Response;
@@ -122,10 +117,6 @@ export async function loginAdminAction(
       : typeof user.email === "string"
         ? user.email
         : null;
-
-  if (!isAllowedAdminEmail(returnedEmail)) {
-    return { error: "This account is not authorized for admin access." };
-  }
 
   if (claims.role?.toLowerCase() !== "admin") {
     return { error: "This account does not have admin access." };

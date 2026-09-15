@@ -21,7 +21,8 @@ ADR during startup.
 | ADR | Status | Area | Read When |
 | --- | --- | --- | --- |
 | [0001](0001-admin-app-ownership-and-runtime.md) | Active | Admin app ownership and runtime | Routes, layouts, metadata, env, deployment, headers, or ownership boundaries change. |
-| [0002](0002-admin-auth-session-boundary.md) | Active | Auth and session boundary | Login, session cookie, refresh, invalidation, logout, allowed email, or RBAC behavior changes. |
+| [0002](0002-admin-auth-session-boundary.md) | Active | Auth and session boundary | Login, session cookie, refresh, invalidation, logout, or RBAC behavior changes. |
+| [0008](0008-backend-rbac-only-admin-login.md) | Active | Backend-RBAC-only admin login | Login authorization, allow-list, session bootstrap, or admin access changes. |
 | [0003](0003-backend-contract-and-api-wrapper.md) | Superseded by [0007](0007-hand-written-api-types-and-service-layer.md) | Backend contract and API wrapper (old) | Historic — code generation approach replaced by ADR 0007. |
 | [0007](0007-hand-written-api-types-and-service-layer.md) | Active | Hand-written API types and service layer | API type changes, API service layer changes, or `lib/api/*` modifications. |
 | [0004](0004-public-web-revalidation-boundary.md) | Active | Public web freshness | Admin mutations affect public journeys, guides, sitemap visibility, or public freshness behavior. |

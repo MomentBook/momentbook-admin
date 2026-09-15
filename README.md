@@ -56,7 +56,6 @@ Set **all** variables from `.env.example` in Vercel Project Settings > Environme
 | `NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN` | CloudFront CDN origin |
 | `NEXT_PUBLIC_APP_ENV` | Set to `production` |
 | `NEXT_PUBLIC_APP_IS_LOCAL` | Set to `false` (disables localhost fallbacks, enforces HTTPS) |
-| `ADMIN_ALLOWED_EMAIL` | Allowed admin email for login |
 | `ADMIN_SESSION_SECRET` | Random 64-char hex string (secret) |
 
 ### Post-Deployment Checklist

@@ -6,13 +6,17 @@ Active.
 
 ## Decision
 
+> **Amended by [0008](0008-backend-rbac-only-admin-login.md):** the local
+> `ADMIN_ALLOWED_EMAIL` allow-list was removed. Backend RBAC (active status and
+> `admin` role claims) is the single authorization source for admin login.
+
 The Nest API is authoritative for authentication, token claims, admin role/RBAC,
 and admin mutations. The local `momentbook_admin_session` cookie is only an
 encrypted web-session wrapper around backend access and refresh tokens.
 
 Login, session bootstrap, refresh, and action/session guards must preserve both:
 
-- normalized `ADMIN_ALLOWED_EMAIL` allow-list enforcement
+- normalized `ADMIN_ALLOWED_EMAIL` allow-list enforcement (removed by [0008](0008-backend-rbac-only-admin-login.md); backend RBAC is authoritative)
 - `role === "admin"` validation from trusted backend token claims
 
 ## Implementation Shape

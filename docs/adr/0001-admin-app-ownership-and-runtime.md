@@ -44,7 +44,6 @@ Required variables are documented in `.env.example` and `AGENTS.md`:
 - `NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN`
 - `NEXT_PUBLIC_APP_ENV`
 - `NEXT_PUBLIC_APP_IS_LOCAL`
-- `ADMIN_ALLOWED_EMAIL`
 - `ADMIN_SESSION_SECRET`
 
 Production must use an absolute HTTPS admin URL unless

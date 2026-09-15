@@ -4,7 +4,7 @@ import {
   readAccessTokenClaims,
   readTokenExpiryMs,
 } from "@/lib/admin/token";
-import { isAllowedAdminEmail, normalizeAdminEmail } from "@/lib/admin/config";
+import { normalizeAdminEmail } from "@/lib/admin/config";
 import { createAdminSession } from "@/lib/admin/session";
 
 type SessionBootstrapRequest = {
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (claims.role !== "admin") {
+  if (claims.role?.toLowerCase() !== "admin") {
     return buildErrorResponse(
       403,
       "admin_only",
@@ -112,14 +112,6 @@ export async function POST(request: Request) {
     claimEmail: typeof claims.email === "string" ? claims.email : null,
     loginEmail: readText(payload.user?.email),
   });
-
-  if (!isAllowedAdminEmail(email)) {
-    return buildErrorResponse(
-      403,
-      "account_not_allowed",
-      "This account is not authorized to access the admin workspace.",
-    );
-  }
 
   try {
     await createAdminSession(cookieStore, {

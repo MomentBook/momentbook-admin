@@ -14,6 +14,5 @@ export const ENV = {
     ADMIN_SITE_URL: process.env.NEXT_PUBLIC_ADMIN_SITE_URL as string,
     API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL as string,
     PUBLIC_IMAGE_ORIGIN: process.env.NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN as string,
-    ADMIN_ALLOWED_EMAIL: process.env.ADMIN_ALLOWED_EMAIL as string,
     ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET as string,
 } as const;

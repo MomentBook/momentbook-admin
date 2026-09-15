@@ -8,7 +8,6 @@ import {
   readTokenExpiryMs,
 } from "@/lib/admin/token";
 import { refreshAdminTokens } from "@/lib/api/auth";
-import { isAllowedAdminEmail } from "@/lib/admin/config";
 import {
   buildAdminLoginHref,
   buildAdminSessionRefreshHref,
@@ -130,10 +129,6 @@ export async function getStoredAdminSession(
     return null;
   }
 
-  if (!isAllowedAdminEmail(session.email)) {
-    return null;
-  }
-
   return session;
 }
 
@@ -161,7 +156,7 @@ async function buildRefreshedAdminSession(
   try {
     const refreshed = await refreshAdminTokens(session.refreshToken);
     const claims = readAccessTokenClaims(refreshed.accessToken);
-    if (claims.role !== "admin") {
+    if (claims.role?.toLowerCase() !== "admin") {
       return null;
     }
 
@@ -176,10 +171,6 @@ async function buildRefreshedAdminSession(
       accessTokenExpiresAt: readTokenExpiryMs(refreshed.accessToken),
       refreshTokenExpiresAt: readTokenExpiryMs(refreshed.refreshToken),
     };
-
-    if (!isAllowedAdminEmail(nextSession.email)) {
-      return null;
-    }
 
     return nextSession;
   } catch {
