@@ -66,6 +66,9 @@ export async function updatePublishedJourneyReviewAction(
     sanitizeAdminPath(readText(formData.get("returnTo"))) ?? ADMIN_ROOT_PATH;
   const targetPublicId = readText(formData.get("targetPublicId"));
   const reviewStatus = readReviewStatus(formData.get("reviewStatus"));
+  // The snapshot the admin was looking at; the API rejects the decision
+  // (400 REVIEW_STATE_CONFLICT) if the owner republished since.
+  const publishOperationId = readText(formData.get("publishOperationId"));
 
   const buildReturnEntries = (
     extra: Record<string, string | null | undefined>,
@@ -103,6 +106,7 @@ export async function updatePublishedJourneyReviewAction(
       accessToken: session.accessToken,
       publicId: targetPublicId,
       status: reviewStatus,
+      ...(publishOperationId ? { publishOperationId } : {}),
     });
   } catch (error) {
     if (isBackendApiError(error)) {
@@ -131,6 +135,19 @@ export async function updatePublishedJourneyReviewAction(
           nextPath,
           buildReturnEntries({
             error: "review_target_not_found",
+          }),
+        );
+      }
+
+      if (
+        error.statusCode === 400 &&
+        "errorCode" in error &&
+        error.errorCode === "REVIEW_STATE_CONFLICT"
+      ) {
+        return buildReviewActionRedirect(
+          nextPath,
+          buildReturnEntries({
+            error: "review_state_conflict",
           }),
         );
       }

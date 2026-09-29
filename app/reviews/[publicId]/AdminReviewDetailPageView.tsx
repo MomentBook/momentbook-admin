@@ -54,7 +54,7 @@ function buildTabHref(
 ): string {
   return buildAdminWorkspaceHref(tab, {
     page: options.page > 1 ? String(options.page) : null,
-    status: options.status === "flagged" ? null : options.status,
+    status: options.status === "pending" ? null : options.status,
   });
 }
 
@@ -106,17 +106,17 @@ function buildPhotoAltText(
 
 function PageHeader({
   banner,
-  flaggedCount,
+  pendingCount,
 }: {
   banner: AdminDashboardBanner | null;
-  flaggedCount: number;
+  pendingCount: number;
 }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <h2 className="text-2xl font-semibold tracking-tight">Review evidence</h2>
-        <Badge variant={flaggedCount > 0 ? "secondary" : "outline"}>
-          {flaggedCount} flagged
+        <Badge variant={pendingCount > 0 ? "secondary" : "outline"}>
+          {pendingCount} pending
         </Badge>
       </div>
 
@@ -263,26 +263,14 @@ function JourneySummary({
           ) : null}
         </div>
 
-        {review.flagged ? (
+        {review.localizationPending || review.enqueueFailed ? (
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">AI Review Flag</span>
-            {review.flagReasons && review.flagReasons.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {review.flagReasons.map((reason) => (
-                  <Badge key={reason} variant="secondary">{reason}</Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Flagged for manual review
-              </p>
-            )}
-            {review.decidedBy && (
-              <p className="text-xs text-muted-foreground">
-                Flagged by {review.decidedBy}
-                {review.decidedAt ? ` · ${new Date(review.decidedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}` : ""}
-              </p>
-            )}
+            <span className="text-xs text-muted-foreground">Translation</span>
+            <p className="text-sm text-muted-foreground">
+              {review.enqueueFailed
+                ? "The translation job could not be queued. Retry it below."
+                : "Translation into all 9 languages has not landed yet. An approved journey goes public once it does."}
+            </p>
           </div>
         ) : null}
       </CardContent>
@@ -324,6 +312,14 @@ function ReviewUpdatePanel({
         <form action={updatePublishedJourneyReviewAction}>
           <input type="hidden" name="returnTo" value={returnTo} />
           <input type="hidden" name="targetPublicId" value={effectiveTargetPublicId} />
+          {detail.journey.publishOperationId &&
+          effectiveTargetPublicId === detail.journey.publicId ? (
+            <input
+              type="hidden"
+              name="publishOperationId"
+              value={detail.journey.publishOperationId}
+            />
+          ) : null}
 
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2">
@@ -366,27 +362,26 @@ function RequeuePanel({
   detail: AdminReviewDetail;
   returnTo: string;
 }) {
-  const isFlagged = detail.journey.review.flagged;
+  const { localizationPending, enqueueFailed } = detail.journey.review;
 
-  if (!isFlagged) {
+  if (!localizationPending && !enqueueFailed) {
     return null;
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">AI Review</CardTitle>
+        <CardTitle className="text-lg">Translation</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          This journey was flagged by the AI review pipeline. If you believe the
-          flag was incorrect, re-enqueue it for another review cycle.
+          If the translation seems stuck, queue it again.
         </p>
 
         <form action={requeueJourneyReviewAction}>
           <input type="hidden" name="returnTo" value={returnTo} />
           <input type="hidden" name="targetPublicId" value={detail.journey.publicId} />
-          <Button type="submit" variant="outline">Re-enqueue for AI review</Button>
+          <Button type="submit" variant="outline">Retry translation</Button>
         </form>
       </CardContent>
     </Card>
@@ -404,7 +399,7 @@ export function AdminReviewDetailPageView({
 }: AdminReviewDetailPageViewProps) {
   const backHref = buildAdminWorkspaceHref("reviews", {
     page: queue.page > 1 ? String(queue.page) : null,
-    status: queue.status === "flagged" ? null : queue.status,
+    status: queue.status === "pending" ? null : queue.status,
   });
 
   const sidebar = (
@@ -426,7 +421,7 @@ export function AdminReviewDetailPageView({
             status: queue.status,
           }),
           label: "Reviews",
-          badge: String(queue.summary.flaggedCount),
+          badge: String(queue.summary.pendingCount),
         },
         {
           tab: "articles",
@@ -443,7 +438,7 @@ export function AdminReviewDetailPageView({
       <div className="flex flex-col gap-4">
         <PageHeader
           banner={banner}
-          flaggedCount={queue.summary.flaggedCount}
+          pendingCount={queue.summary.pendingCount}
         />
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start">

@@ -45,15 +45,11 @@ export function parsePage(value: string | null): number {
 }
 
 export function parseStatus(value: string | null): AdminReviewQueueStatus {
-  if (
-    value === "flagged" ||
-    value === "pending" ||
-    value === "all"
-  ) {
+  if (value === "pending" || value === "all") {
     return value;
   }
 
-  return "flagged";
+  return "pending";
 }
 
 export function parseReviewStatus(value: string | null): AdminReviewStatus | null {
@@ -81,7 +77,7 @@ export function resolveBanner(options: {
   if (options.mutation === "review_requeued" && options.targetPublicId) {
     return {
       tone: "default",
-      message: `${options.targetPublicId} re-enqueued for AI review.`,
+      message: `${options.targetPublicId} translation re-queued.`,
     };
   }
 
@@ -106,6 +102,12 @@ export function resolveBanner(options: {
         tone: "error",
         message: "No published journey matched that public ID.",
       };
+    case "review_state_conflict":
+      return {
+        tone: "error",
+        message:
+          "The owner republished this journey after you opened it. Review the current version and decide again.",
+      };
     case "review_update_failed":
       return {
         tone: "error",
@@ -114,7 +116,7 @@ export function resolveBanner(options: {
     case "review_requeue_failed":
       return {
         tone: "error",
-        message: "Could not re-enqueue journey for AI review. Try again.",
+        message: "Could not re-queue the translation. Try again.",
       };
     default:
       return null;

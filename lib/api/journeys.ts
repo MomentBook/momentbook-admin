@@ -16,7 +16,6 @@ export async function listPublishedJourneys(input: {
   page: number;
   limit: number;
   reviewStatus?: JourneyReviewStatus;
-  flagged?: boolean;
 }): Promise<AdminPublishedJourneysDataDto> {
   const query: Record<string, string | number> = {
     page: input.page,
@@ -25,10 +24,6 @@ export async function listPublishedJourneys(input: {
 
   if (input.reviewStatus) {
     query.reviewStatus = input.reviewStatus;
-  }
-
-  if (input.flagged !== undefined) {
-    query.flagged = input.flagged ? "true" : "false";
   }
 
   const response = await requestEnvelope<AdminPublishedJourneysDataDto>({
@@ -40,13 +35,13 @@ export async function listPublishedJourneys(input: {
   return response.data;
 }
 
-// ─── Requeue Journey for AI Review ───────────
+// ─── Re-dispatch a Journey's Translation ─────
 
 export async function requeueJourneyReview(input: {
   accessToken: string;
   publicId: string;
 }): Promise<void> {
-  await requestEnvelope<Record<string, never>>({
+  await requestEnvelope<{ dispatched: Array<"LOCALIZATION"> }>({
     pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review/requeue`,
     method: "POST",
     accessToken: input.accessToken,
@@ -75,6 +70,7 @@ export async function updateReviewStatus(input: {
   accessToken: string;
   publicId: string;
   status: UpdatePublishedJourneyReviewRequestDto["status"];
+  publishOperationId?: string;
 }): Promise<UpdatePublishedJourneyReviewDataDto> {
   const response = await requestEnvelope<UpdatePublishedJourneyReviewDataDto>({
     pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review`,
@@ -82,6 +78,9 @@ export async function updateReviewStatus(input: {
     accessToken: input.accessToken,
     body: {
       status: input.status,
+      ...(input.publishOperationId
+        ? { publishOperationId: input.publishOperationId }
+        : {}),
     },
   });
 

@@ -30,16 +30,17 @@ const ADMIN_REVIEW_API_PAGE_LIMIT = 50;
 export type AdminReviewStatus = PublishedJourneyReviewDto["status"];
 export type AdminReviewContentStatus = PublishedJourneyDetailDto["contentStatus"];
 export type AdminReviewVisibility = PublishedJourneyDetailDto["visibility"];
-export type AdminReviewQueueStatus =
-  | "flagged"
-  | "pending"
-  | "all";
+export type AdminReviewQueueStatus = "pending" | "all";
 
 export type AdminReviewState = {
   status: AdminReviewStatus;
   approved: boolean;
-  flagged?: boolean;
-  flagReasons?: string[];
+  /** Translation has not landed yet — an APPROVED journey is not public
+   * until it does. */
+  localizationPending?: boolean;
+  /** The translation enqueue after publish failed; retry it from the detail
+   * page. */
+  enqueueFailed?: boolean;
   decidedBy?: "AI" | "ADMIN";
   decidedAt?: string;
 };
@@ -48,7 +49,9 @@ export type AdminReviewSummary = {
   pendingCount: number;
   approvedCount: number;
   rejectedCount: number;
-  flaggedCount: number;
+  /** Non-rejected journeys whose translation is pending or failed to
+   * enqueue. */
+  translationPendingCount: number;
 };
 
 export type AdminReviewQueueItem = {
@@ -64,6 +67,7 @@ export type AdminReviewQueueItem = {
   published: boolean;
   visibility: "public" | "hidden";
   review: AdminReviewState;
+  publishOperationId: string | null;
   startedAt: number;
   endedAt: number | null;
   startedAtLocal: LocalDateTimeContext | null;
@@ -90,7 +94,7 @@ export type AdminOverviewWeeklyIntake = {
 export type AdminOverviewData = {
   totalCount: number;
   pendingCount: number;
-  flaggedCount: number;
+  translationPendingCount: number;
   reviewedCount: number;
   approvedCount: number;
   rejectedCount: number;
@@ -151,6 +155,9 @@ export type AdminReviewJourney = {
   endedAtLocal: LocalDateTimeContext | null;
   visibility: AdminReviewVisibility;
   review: AdminReviewState;
+  /** The snapshot shown; sent back with the decision so a republish
+   * meanwhile is rejected instead of decided unseen. */
+  publishOperationId: string | null;
   contentStatus: AdminReviewContentStatus;
   notice: string | null;
   localizedContent: AdminReviewLocalizedContent | null;
@@ -274,19 +281,26 @@ function normalizeAdminReviewItem(
     publishedAt: readText(item.publishedAt),
     published: item.published,
     visibility: item.visibility,
-    review: {
-      status: item.review.status,
-      approved: item.review.approved,
-      ...(item.review.flagged !== undefined ? { flagged: item.review.flagged } : {}),
-      ...(item.review.flagReasons !== undefined ? { flagReasons: item.review.flagReasons } : {}),
-      ...(item.review.decidedBy !== undefined ? { decidedBy: item.review.decidedBy } : {}),
-      ...(item.review.decidedAt !== undefined ? { decidedAt: item.review.decidedAt } : {}),
-    },
+    review: normalizeReviewState(item.review),
+    publishOperationId: readText(item.publishOperationId),
     startedAt: item.startedAt,
     endedAt: item.endedAt ?? null,
     startedAtLocal: normalizeLocalDateTimeContext(item.startedAtLocal),
     endedAtLocal: normalizeLocalDateTimeContext(item.endedAtLocal ?? null),
     recapStage: item.recapStage,
+  };
+}
+
+function normalizeReviewState(
+  review: PublishedJourneyReviewDto,
+): AdminReviewState {
+  return {
+    status: review.status,
+    approved: review.approved,
+    ...(review.localizationPending === true ? { localizationPending: true } : {}),
+    ...(review.enqueueFailed === true ? { enqueueFailed: true } : {}),
+    ...(review.decidedBy !== undefined ? { decidedBy: review.decidedBy } : {}),
+    ...(review.decidedAt !== undefined ? { decidedAt: review.decidedAt } : {}),
   };
 }
 
@@ -296,10 +310,6 @@ function matchesQueueStatus(
 ): boolean {
   if (status === "all") {
     return true;
-  }
-
-  if (status === "flagged") {
-    return item.review.status === "PENDING" && item.review.flagged === true;
   }
 
   return item.review.status === "PENDING";
@@ -345,22 +355,22 @@ function buildSummary(items: AdminReviewQueueItem[]): AdminReviewSummary {
     pendingCount: 0,
     approvedCount: 0,
     rejectedCount: 0,
-    flaggedCount: 0,
+    translationPendingCount: 0,
   };
 
   for (const item of items) {
-    if (item.review.status === "APPROVED") {
-      summary.approvedCount += 1;
-      continue;
-    }
-
     if (item.review.status === "REJECTED") {
       summary.rejectedCount += 1;
       continue;
     }
 
-    if (item.review.flagged) {
-      summary.flaggedCount += 1;
+    if (item.review.localizationPending || item.review.enqueueFailed) {
+      summary.translationPendingCount += 1;
+    }
+
+    if (item.review.status === "APPROVED") {
+      summary.approvedCount += 1;
+      continue;
     }
 
     summary.pendingCount += 1;
@@ -463,7 +473,7 @@ function buildAdminOverviewData(items: AdminReviewQueueItem[]): AdminOverviewDat
   return {
     totalCount: items.length,
     pendingCount: summary.pendingCount,
-    flaggedCount: summary.flaggedCount,
+    translationPendingCount: summary.translationPendingCount,
     reviewedCount,
     approvedCount: summary.approvedCount,
     rejectedCount: summary.rejectedCount,
@@ -996,10 +1006,11 @@ function buildAdminReviewDetail(options: {
       startedAtLocal: normalizeLocalDateTimeContext(options.detail.startedAtLocal),
       endedAtLocal: normalizeLocalDateTimeContext(options.detail.endedAtLocal ?? null),
       visibility: options.detail.visibility,
-      review: {
-        status: options.detail.review.status,
-        approved: options.detail.review.approved,
-      },
+      review: normalizeReviewState(options.detail.review),
+      publishOperationId:
+        readText(options.detail.publishOperationId) ??
+        options.queueItem?.publishOperationId ??
+        null,
       contentStatus: options.detail.contentStatus,
       notice: readText(options.detail.notice),
       localizedContent: normalizeLocalizedContent(options.detail.localizedContent),

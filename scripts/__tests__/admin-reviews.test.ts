@@ -261,7 +261,7 @@ describe("loadAdminReviewWorkspaceData", () => {
       pendingCount: 1,
       approvedCount: 2,
       rejectedCount: 1,
-      flaggedCount: 0,
+      translationPendingCount: 0,
     });
     expect(result.queue.total).toBe(4);
     expect(result.queue.pages).toBe(4);

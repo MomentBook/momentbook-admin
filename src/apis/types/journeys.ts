@@ -25,8 +25,14 @@ export type PublishedJourneyListSort = "recent" | "oldest" | "discovery";
 export interface PublishedJourneyReviewDto {
   approved: boolean;
   status: JourneyReviewStatus;
-  flagged?: boolean;
-  flagReasons?: string[];
+  /** True while the 9-locale translation has not landed yet — an APPROVED
+   * journey stays out of public surfaces until it does. */
+  localizationPending?: boolean;
+  /** True when the translation enqueue after publish failed; recover with
+   * POST .../review/requeue. */
+  enqueueFailed?: boolean;
+  /** "AI" appears only on journeys decided before the automated reviewer
+   * was removed (momentbook-api ADR-0085). */
   decidedBy?: "AI" | "ADMIN";
   decidedAt?: string;
 }
@@ -193,6 +199,9 @@ export interface PublishedJourneyDetailDto {
   contentStatus: ContentAvailability;
   visibility: JourneyVisibility;
   notice?: string;
+  /** Admin detail only: identifies the snapshot under review. Send it back
+   * on the review decision so a republish meanwhile is rejected. */
+  publishOperationId?: string;
 }
 
 export interface PublishedJourneyDetailResponseDto {
@@ -216,13 +225,15 @@ export interface AdminPublishedJourneysQueryDto {
   page?: number;
   limit?: number;
   reviewStatus?: JourneyReviewStatus;
-  flagged?: boolean;
+  localizationPending?: boolean;
+  enqueueFailed?: boolean;
 }
 
 // ─── Admin Journey List Item ─────────────────
 
 export interface AdminPublishedJourneyItemDto extends PublishedJourneyItemDto {
   published: boolean;
+  publishOperationId?: string;
 }
 
 // ─── Admin Journey List Response ─────────────
@@ -252,6 +263,9 @@ export interface AdminPublishedJourneyDetailResponseDto {
 
 export interface UpdatePublishedJourneyReviewRequestDto {
   status: JourneyReviewStatus;
+  /** The snapshot the admin reviewed; a mismatch (owner republished) is a
+   * 400 REVIEW_STATE_CONFLICT. */
+  publishOperationId?: string;
 }
 
 export interface UpdatePublishedJourneyReviewDataDto {
@@ -272,5 +286,5 @@ export interface UpdatePublishedJourneyReviewResponseDto {
 
 export interface RequeueJourneyReviewResponseDto {
   status: string;
-  data: Record<string, never>;
+  data: { dispatched: Array<"LOCALIZATION"> };
 }

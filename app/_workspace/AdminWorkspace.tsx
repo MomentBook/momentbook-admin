@@ -43,7 +43,7 @@ function badgeVariantClass(status: AdminReviewStatus): "default" | "destructive"
 
 function buildReviewFilterHref(status: AdminReviewQueueStatus): string {
   return buildAdminWorkspaceHref("reviews", {
-    status: status === "flagged" ? null : status,
+    status: status === "pending" ? null : status,
     page: null,
   });
 }
@@ -57,7 +57,7 @@ function buildReviewDetailTableHref(
 ): string {
   return buildAdminReviewDetailHref(publicId, {
     page: options.page > 1 ? String(options.page) : null,
-    status: options.status === "flagged" ? null : options.status,
+    status: options.status === "pending" ? null : options.status,
   });
 }
 
@@ -70,20 +70,20 @@ function getActiveTabTitle(tab: AdminWorkspaceTab): string {
 
 function getActiveTabDescription(tab: AdminWorkspaceTab): string {
   if (tab === "reviews") {
-    return "Review journeys that the AI review pipeline flagged as unsafe. Decide to approve or reject each flagged item.";
+    return "Every published journey waits here until you approve or reject it. Approved journeys go public once their translation has landed.";
   }
-  return "Monitor flagged journey volume, review decisions, and submission flow over the past weeks.";
+  return "Monitor pending journey volume, review decisions, and submission flow over the past weeks.";
 }
 
 function ContentHeader({
   banner,
   description,
-  flaggedCount,
+  pendingCount,
   title,
 }: {
   banner: AdminDashboardBanner | null;
   description: string;
-  flaggedCount: number;
+  pendingCount: number;
   title: string;
 }) {
   return (
@@ -93,8 +93,8 @@ function ContentHeader({
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
-      <Badge variant={flaggedCount > 0 ? "secondary" : "outline"}>
-        {flaggedCount} flagged
+      <Badge variant={pendingCount > 0 ? "secondary" : "outline"}>
+        {pendingCount} pending
       </Badge>
 
       {banner ? (
@@ -126,8 +126,7 @@ function ReviewTablePanel({
         <div className="flex flex-wrap gap-2">
           {(
             [
-              ["flagged", "Flagged"],
-              ["pending", "All pending"],
+              ["pending", "Pending"],
               ["all", "All"],
             ] as const
           ).map(([value, label]) => (
@@ -146,7 +145,7 @@ function ReviewTablePanel({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Status</TableHead>
-                    <TableHead>Flagged</TableHead>
+                    <TableHead>Translation</TableHead>
                     <TableHead>Journey</TableHead>
                     <TableHead>User ID</TableHead>
                     <TableHead>Public ID</TableHead>
@@ -165,10 +164,10 @@ function ReviewTablePanel({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {item.review.flagged ? (
-                          <Badge variant="secondary">
-                            {item.review.flagReasons?.length ? item.review.flagReasons.join(", ") : "Flagged"}
-                          </Badge>
+                        {item.review.enqueueFailed ? (
+                          <Badge variant="destructive">Enqueue failed</Badge>
+                        ) : item.review.localizationPending ? (
+                          <Badge variant="secondary">Pending</Badge>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
@@ -216,7 +215,7 @@ function ReviewTablePanel({
                   href={buildAdminWorkspaceHref("reviews", {
                     page:
                       queue.page > 1 ? String(Math.max(1, queue.page - 1)) : null,
-                    status: queue.status === "flagged" ? null : queue.status,
+                    status: queue.status === "pending" ? null : queue.status,
                   })}
                 >
                   <Button
@@ -236,7 +235,7 @@ function ReviewTablePanel({
                       queue.page < queue.pages
                         ? String(Math.min(queue.pages, queue.page + 1))
                         : String(queue.pages),
-                    status: queue.status === "flagged" ? null : queue.status,
+                    status: queue.status === "pending" ? null : queue.status,
                   })}
                 >
                   <Button
@@ -255,11 +254,11 @@ function ReviewTablePanel({
             <CardContent className="flex flex-col items-center justify-center py-10 text-center">
               <h3 className="text-lg font-semibold">No records in this filter</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Switch the filter or return to flagged items.
+                Switch the filter or return to pending items.
               </p>
-              {queue.status !== "flagged" ? (
+              {queue.status !== "pending" ? (
                 <Link href={buildAdminWorkspaceHref("reviews")} className="mt-4">
-                  <Button variant="default" size="sm">Show flagged</Button>
+                  <Button variant="default" size="sm">Show pending</Button>
                 </Link>
               ) : null}
             </CardContent>
@@ -299,7 +298,7 @@ export function AdminWorkspace({
       tab: "reviews" as const,
       href: buildAdminWorkspaceHref("reviews"),
       label: "Reviews",
-      badge: String(queue.summary.flaggedCount),
+      badge: String(queue.summary.pendingCount),
     },
     {
       tab: "articles" as const,
@@ -322,7 +321,7 @@ export function AdminWorkspace({
         <ContentHeader
           banner={banner}
           description={getActiveTabDescription(activeTab)}
-          flaggedCount={queue.summary.flaggedCount}
+          pendingCount={queue.summary.pendingCount}
           title={getActiveTabTitle(activeTab)}
         />
 

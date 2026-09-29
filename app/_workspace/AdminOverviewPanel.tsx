@@ -68,7 +68,6 @@ function OverviewMetricCard({
 
 function StatusDistributionCard({ overview }: { overview: AdminOverviewData }) {
   const items = [
-    { key: "flagged", label: "Flagged", count: overview.flaggedCount, color: "bg-amber-500" as const },
     { key: "approved", label: "Approved", count: overview.approvedCount, color: "bg-emerald-500" as const },
     { key: "rejected", label: "Rejected", count: overview.rejectedCount, color: "bg-red-500" as const },
     { key: "pending", label: "Pending", count: overview.pendingCount, color: "bg-gray-500" as const },
@@ -172,9 +171,9 @@ export function AdminOverviewPanel({
       {/* KPI row */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <OverviewMetricCard
-          label="Flagged now"
-          value={formatCount(overview.flaggedCount)}
-          hint="Items flagged by AI review, waiting for human decision"
+          label="Awaiting review"
+          value={formatCount(overview.pendingCount)}
+          hint="Published journeys waiting for your approve/reject decision"
           tone="warning"
         />
 
@@ -186,9 +185,9 @@ export function AdminOverviewPanel({
         />
 
         <OverviewMetricCard
-          label="Total pending"
-          value={formatCount(overview.pendingCount)}
-          hint="All pending items (flagged + awaiting AI review)"
+          label="Translation pending"
+          value={formatCount(overview.translationPendingCount)}
+          hint="Not yet translated into all 9 languages — approved ones go public once it lands"
         />
       </div>
 

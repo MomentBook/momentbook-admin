@@ -16,6 +16,9 @@ export class BackendApiError extends Error {
   constructor(
     message: string,
     public readonly statusCode: number,
+    /** The API's machine-readable `errorCode`, when the error body has one
+     * (e.g. `REVIEW_STATE_CONFLICT`). */
+    public readonly errorCode?: string,
   ) {
     super(message);
     this.name = "BackendApiError";
@@ -73,7 +76,7 @@ function buildApiUrl(pathname: string, query?: Record<string, string | number>):
 export async function parseEnvelope<T>(response: Response): Promise<Envelope<T>> {
   const payload = (await response.json().catch(() => null)) as
     | Envelope<T>
-    | { message?: string }
+    | { message?: string; errorCode?: string }
     | null;
 
   if (!response.ok) {
@@ -90,7 +93,12 @@ export async function parseEnvelope<T>(response: Response): Promise<Envelope<T>>
       throw new AdminAccessDeniedError(message);
     }
 
-    throw new BackendApiError(message, response.status);
+    const errorCode =
+      payload && "errorCode" in payload && typeof payload.errorCode === "string"
+        ? payload.errorCode
+        : undefined;
+
+    throw new BackendApiError(message, response.status, errorCode);
   }
 
   if (!payload || typeof payload !== "object" || !("data" in payload)) {
