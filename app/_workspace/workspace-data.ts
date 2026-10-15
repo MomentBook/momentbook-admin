@@ -163,6 +163,9 @@ export async function withAdminWorkspaceSession<T>(options: {
   }
 }
 
+import { getAdminReportStats } from "@/lib/api/reports";
+import type { AdminReportStatsDataDto } from "@/src/apis/types";
+
 export async function loadAdminWorkspaceShell(options: {
   page: number;
   returnTo: string;
@@ -170,21 +173,34 @@ export async function loadAdminWorkspaceShell(options: {
 }): Promise<{
   overview: AdminOverviewData;
   queue: AdminReviewQueueData;
+  reportStats: AdminReportStatsDataDto | null;
   session: AdminSession;
 }> {
   const { data, session } = await withAdminWorkspaceSession({
     returnTo: options.returnTo,
-    load: (accessToken) => loadAdminReviewWorkspaceData({
-      accessToken,
-      page: options.page,
-      status: options.status,
-      limit: ADMIN_REVIEW_PAGE_SIZE,
-    }),
+    load: async (accessToken) => {
+      const [reviewData, reportStats] = await Promise.all([
+        loadAdminReviewWorkspaceData({
+          accessToken,
+          page: options.page,
+          status: options.status,
+          limit: ADMIN_REVIEW_PAGE_SIZE,
+        }),
+        getAdminReportStats({ accessToken }).catch(() => null),
+      ]);
+
+      return {
+        overview: reviewData.overview,
+        queue: reviewData.queue,
+        reportStats,
+      };
+    },
   });
 
   return {
     overview: data.overview,
     queue: data.queue,
+    reportStats: data.reportStats,
     session,
   };
 }

@@ -2,12 +2,18 @@ export const ADMIN_ROOT_PATH = "/";
 export const ADMIN_LOGIN_PATH = "/login";
 export const ADMIN_REVIEWS_PATH = "/reviews";
 export const ADMIN_ARTICLES_PATH = "/articles";
+export const ADMIN_REPORTS_PATH = "/reports";
 export const ADMIN_SESSION_PATH = "/session";
 export const ADMIN_SESSION_REFRESH_PATH = "/session/refresh";
 export const ADMIN_SESSION_INVALIDATE_PATH = "/session/invalidate";
 export const ADMIN_DEFAULT_WORKSPACE_TAB = "overview";
 
-export type AdminWorkspaceTab = "overview" | "reviews" | "published" | "articles";
+export type AdminWorkspaceTab =
+  | "overview"
+  | "reviews"
+  | "published"
+  | "articles"
+  | "reports";
 export type AdminSessionRedirectError =
   | "session_expired"
   | "admin_access_denied";
@@ -178,6 +184,10 @@ export function parseAdminWorkspaceTab(
     return "articles";
   }
 
+  if (value === "reports") {
+    return "reports";
+  }
+
   if (value === "overview") {
     return value;
   }
@@ -258,3 +268,38 @@ export function buildAdminArticleTableDetailHref(options: {
     }),
   });
 }
+
+export type AdminReportsHrefOptions = {
+  page?: number | string | null;
+  status?: string | null;
+  targetType?: string | null;
+  reason?: string | null;
+  mutation?: string | null;
+  error?: string | null;
+  message?: string | null;
+};
+
+export function buildAdminReportsHref(
+  options?: AdminReportsHrefOptions,
+): string {
+  return withAdminQuery(ADMIN_REPORTS_PATH, {
+    page: normalizePageQuery(options?.page),
+    status: readOptionalQueryValue(options?.status),
+    targetType: readOptionalQueryValue(options?.targetType),
+    reason: readOptionalQueryValue(options?.reason),
+    mutation: readOptionalQueryValue(options?.mutation),
+    error: readOptionalQueryValue(options?.error),
+    message: readOptionalQueryValue(options?.message),
+  });
+}
+
+export function buildAdminReportDetailHref(
+  reportId: string,
+  entries?: Record<string, string | null | undefined>,
+): string {
+  return withAdminQuery(
+    `${ADMIN_REPORTS_PATH}/${encodeURIComponent(reportId)}`,
+    entries ?? {},
+  );
+}
+

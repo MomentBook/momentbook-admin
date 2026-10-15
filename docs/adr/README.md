@@ -28,12 +28,13 @@ ADR during startup.
 | [0004](0004-public-web-revalidation-boundary.md) | Active | Public web freshness | Admin mutations affect public journeys, guides, sitemap visibility, or public freshness behavior. |
 | [0005](0005-moderation-workspace-and-review-evidence.md) | Active | Moderation workspace and evidence | `/admin`, review queues, review detail, overview metrics, evidence grouping, or review mutations change. |
 | [0006](0006-editorial-articles-and-guide-support.md) | Active | Editorial articles and guide support | `/admin/articles`, article editor/list/actions, markdown parsing, guide sitemap support, or editorial helpers change. |
+| [0009](0009-reports-moderation-and-user-sanction.md) | Active | Reports moderation and user sanctions | `/admin/reports`, reports queues, report detail, user ban/unban, or moderation status changes. |
 
 ## Repository Baseline
 
 - MomentBook Admin is a standalone Next.js admin-only app backed by the Nest API.
 - The app owns `/admin`, `/admin/login`, `/admin/reviews`,
-  `/admin/articles`, and admin session routes only.
+  `/admin/articles`, `/admin/reports`, and admin session routes only.
 - Public journey consumption, public guides, SEO rendering, sitemaps,
   analytics, localized public chrome, marketing, recap, archive, and community
   UX belong to the public MomentBook web app.

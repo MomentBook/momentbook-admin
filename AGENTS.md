@@ -7,8 +7,8 @@ Auth: Nest API role/RBAC-backed, encrypted `momentbook_admin_session` cookie.
 Scripts: `yarn dev`, `yarn build`, `yarn lint`, `yarn vitest run`.
 
 ## Boundary
-Admin-only: `/admin`, `/admin/login`, `/admin/reviews`, `/admin/articles`.
+Admin-only: `/admin`, `/admin/login`, `/admin/reviews`, `/admin/articles`, `/admin/reports`.
 Do not expand into public UX. Ownership transfers require an ADR.
 
 ## Architecture
-Design decisions: `docs/adr/README.md` (8 ADRs).
+Design decisions: `docs/adr/README.md` (9 ADRs).

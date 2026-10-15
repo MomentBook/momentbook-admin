@@ -27,4 +27,15 @@ export {
 } from "./articles";
 export type { AdminArticleCategory } from "./articles";
 
+export {
+  listAdminReports,
+  getAdminReportStats,
+  getAdminReport,
+  updateAdminReport,
+} from "./reports";
+
+export {
+  updateAdminUserStatus,
+} from "./users";
+
 export { fetchPublicApi, appendPublicApiLanguage, getPublicApiBaseCandidates } from "./public";

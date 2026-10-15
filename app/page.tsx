@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {
   buildAdminArticleWorkspaceHref,
+  buildAdminReportsHref,
   buildAdminWorkspaceHref,
   parseAdminWorkspaceTab,
 } from "@/lib/admin/paths";
@@ -47,6 +48,20 @@ export default async function AdminIndexPage({
     );
   }
 
+  if (activeTab === "reports") {
+    redirect(
+      buildAdminReportsHref({
+        page: readQueryParam(resolvedSearchParams.page),
+        status: readQueryParam(resolvedSearchParams.status),
+        targetType: readQueryParam(resolvedSearchParams.targetType),
+        reason: readQueryParam(resolvedSearchParams.reason),
+        mutation: readQueryParam(resolvedSearchParams.mutation),
+        error: readQueryParam(resolvedSearchParams.error),
+        message: readQueryParam(resolvedSearchParams.message),
+      }),
+    );
+  }
+
   const page = parsePage(readQueryParam(resolvedSearchParams.page));
   const status = parseStatus(readQueryParam(resolvedSearchParams.status));
   const targetPublicId = readQueryParam(resolvedSearchParams.targetPublicId);
@@ -65,7 +80,7 @@ export default async function AdminIndexPage({
     targetPublicId,
   });
 
-  let overview, queue, session;
+  let overview, queue, reportStats, session;
 
   try {
     const result = await loadAdminWorkspaceShell({
@@ -75,6 +90,7 @@ export default async function AdminIndexPage({
     });
     overview = result.overview;
     queue = result.queue;
+    reportStats = result.reportStats;
     session = result.session;
   } catch (error) {
     if (isBackendApiError(error)) {
@@ -95,6 +111,7 @@ export default async function AdminIndexPage({
       banner={banner}
       overview={overview}
       queue={queue}
+      reportStats={reportStats}
       session={session}
     />
   );

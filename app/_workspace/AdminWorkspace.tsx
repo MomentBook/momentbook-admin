@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LocalizedDate } from "@/components/LocalizedTime";
 import {
   buildAdminArticleWorkspaceHref,
+  buildAdminReportsHref,
   buildAdminReviewDetailHref,
   buildAdminWorkspaceHref,
   type AdminWorkspaceTab,
@@ -20,6 +21,7 @@ import type {
   AdminReviewQueueStatus,
   AdminReviewStatus,
 } from "@/lib/admin/reviews";
+import type { AdminReportStatsDataDto } from "@/src/apis/types";
 import type { AdminSession } from "@/lib/admin/session";
 import { defaultLanguage } from "@/lib/i18n/config";
 import type { AdminDashboardBanner } from "./workspace-data";
@@ -32,6 +34,7 @@ type AdminWorkspaceProps = {
   banner: AdminDashboardBanner | null;
   overview: AdminOverviewData;
   queue: AdminReviewQueueData;
+  reportStats?: AdminReportStatsDataDto | null;
   session: AdminSession;
 };
 
@@ -286,6 +289,7 @@ export function AdminWorkspace({
   banner,
   overview,
   queue,
+  reportStats,
   session,
 }: AdminWorkspaceProps) {
   const navigationItems = [
@@ -299,6 +303,15 @@ export function AdminWorkspace({
       href: buildAdminWorkspaceHref("reviews"),
       label: "Reviews",
       badge: String(queue.summary.pendingCount),
+    },
+    {
+      tab: "reports" as const,
+      href: buildAdminReportsHref(),
+      label: "Reports",
+      badge:
+        typeof reportStats?.openReports === "number" && reportStats.openReports > 0
+          ? String(reportStats.openReports)
+          : undefined,
     },
     {
       tab: "articles" as const,
@@ -328,7 +341,7 @@ export function AdminWorkspace({
         {activeTab === "reviews" ? (
           <ReviewsPanel queue={queue} />
         ) : (
-          <AdminOverviewPanel overview={overview} session={session} />
+          <AdminOverviewPanel overview={overview} reportStats={reportStats} session={session} />
         )}
       </div>
     </AdminShell>

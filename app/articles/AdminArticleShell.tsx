@@ -4,6 +4,7 @@ import { AdminShell } from "@/components/layout/admin-shell";
 import type { AdminSession } from "@/lib/admin/session";
 import {
   buildAdminArticleWorkspaceHref,
+  buildAdminReportsHref,
   buildAdminWorkspaceHref,
 } from "@/lib/admin/paths";
 
@@ -36,6 +37,11 @@ export function AdminArticleShell({
             typeof pendingReviews === "number" && pendingReviews > 0
               ? String(pendingReviews)
               : undefined,
+        },
+        {
+          tab: "reports",
+          href: buildAdminReportsHref(),
+          label: "Reports",
         },
         {
           tab: "articles",

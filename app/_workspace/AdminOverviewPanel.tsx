@@ -11,10 +11,6 @@ import { defaultLanguage } from "@/lib/i18n/config";
 const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
 const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
 
-type AdminOverviewPanelProps = {
-  overview: AdminOverviewData;
-  session: AdminSession;
-};
 
 function formatCount(value: number): string {
   return COUNT_FORMATTER.format(value);
@@ -162,18 +158,102 @@ function OperationsCard({
   );
 }
 
+import type { AdminReportStatsDataDto } from "@/src/apis/types";
+import { buildAdminReportsHref } from "@/lib/admin/paths";
+
+type AdminOverviewPanelProps = {
+  overview: AdminOverviewData;
+  reportStats?: AdminReportStatsDataDto | null;
+  session: AdminSession;
+};
+
+function ReportsSummaryCard({
+  stats,
+}: {
+  stats: AdminReportStatsDataDto;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-muted-foreground">Moderation Queue</span>
+            <CardTitle className="text-lg">User & Journey Reports</CardTitle>
+          </div>
+          <Link
+            href={buildAdminReportsHref()}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            View all reports &rarr;
+          </Link>
+        </div>
+        <CardDescription>
+          {formatCount(stats.totalReports)} total reports filed ({formatCount(stats.openReports)} open)
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="flex flex-col gap-0.5 rounded-md border p-3 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
+            <span className="text-xs text-muted-foreground">Pending</span>
+            <span className="text-lg font-bold text-amber-700 dark:text-amber-400">
+              {formatCount(stats.pendingReports)}
+            </span>
+            <span className="text-xs text-muted-foreground">Needs review</span>
+          </div>
+
+          <div className="flex flex-col gap-0.5 rounded-md border p-3">
+            <span className="text-xs text-muted-foreground">Reviewed</span>
+            <span className="text-lg font-bold">
+              {formatCount(stats.reviewedReports)}
+            </span>
+            <span className="text-xs text-muted-foreground">In progress</span>
+          </div>
+
+          <div className="flex flex-col gap-0.5 rounded-md border p-3 border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20">
+            <span className="text-xs text-muted-foreground">Resolved</span>
+            <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+              {formatCount(stats.resolvedReports)}
+            </span>
+            <span className="text-xs text-muted-foreground">Action taken</span>
+          </div>
+
+          <div className="flex flex-col gap-0.5 rounded-md border p-3">
+            <span className="text-xs text-muted-foreground">Rejected</span>
+            <span className="text-lg font-bold">
+              {formatCount(stats.rejectedReports)}
+            </span>
+            <span className="text-xs text-muted-foreground">Dismissed</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+          <span>By target: {formatCount(stats.byTargetType.publishedJourneyReports)} journeys, {formatCount(stats.byTargetType.userReports)} user accounts</span>
+          <Link
+            href={buildAdminReportsHref({ status: "PENDING" })}
+            className="text-primary hover:underline font-medium"
+          >
+            Filter pending ({stats.pendingReports})
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AdminOverviewPanel({
   overview,
+  reportStats,
   session,
 }: AdminOverviewPanelProps) {
   return (
     <div className="flex flex-col gap-3">
       {/* KPI row */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <OverviewMetricCard
           label="Awaiting review"
           value={formatCount(overview.pendingCount)}
-          hint="Published journeys waiting for your approve/reject decision"
+          hint="Published journeys waiting for your decision"
           tone="warning"
         />
 
@@ -185,11 +265,25 @@ export function AdminOverviewPanel({
         />
 
         <OverviewMetricCard
+          label="Open reports"
+          value={reportStats ? formatCount(reportStats.openReports) : "—"}
+          hint={
+            reportStats
+              ? `${formatCount(reportStats.pendingReports)} pending, ${formatCount(reportStats.reviewedReports)} reviewed`
+              : "Reports queue status"
+          }
+          tone={reportStats && reportStats.openReports > 0 ? "warning" : "default"}
+        />
+
+        <OverviewMetricCard
           label="Translation pending"
           value={formatCount(overview.translationPendingCount)}
-          hint="Not yet translated into all 9 languages — approved ones go public once it lands"
+          hint="Journeys awaiting 9-language translation"
         />
       </div>
+
+      {/* Reports Summary if available */}
+      {reportStats ? <ReportsSummaryCard stats={reportStats} /> : null}
 
       {/* Distribution + context */}
       <div className="grid gap-3 md:grid-cols-2">
