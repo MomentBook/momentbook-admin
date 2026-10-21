@@ -9,9 +9,10 @@ import type { JourneyReviewStatus } from "./journeys";
 export type ReportTargetType = "USER" | "PUBLISHED_JOURNEY";
 export type ReportReason =
   | "SPAM"
-  | "HARASSMENT"
-  | "INAPPROPRIATE_CONTENT"
-  | "COPYRIGHT"
+  | "ABUSE"
+  | "HATE"
+  | "SEXUAL"
+  | "INAPPROPRIATE"
   | "OTHER";
 export type ReportStatus = "PENDING" | "REVIEWED" | "RESOLVED" | "REJECTED";
 
@@ -23,7 +24,7 @@ export interface AdminReportUserSummaryDto {
   email?: string | null;
   providerEmail?: string | null;
   picture?: string | null;
-  status?: "ACTIVE" | "INACTIVE" | "BANNED" | "DELETED" | string | null;
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
 }
 
 // ─── Target Journey Summary ───────────────────
@@ -38,7 +39,7 @@ export interface AdminReportPublishedJourneySummaryDto {
   journeyId: string;
   userId: string;
   published: boolean;
-  visibility: string;
+  visibility: "PUBLIC" | "HIDDEN";
   review: AdminReportJourneyReviewDto;
   publishedAt?: string | null;
   owner?: AdminReportUserSummaryDto | null;

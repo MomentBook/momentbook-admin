@@ -16,6 +16,8 @@ export async function listPublishedJourneys(input: {
   page: number;
   limit: number;
   reviewStatus?: JourneyReviewStatus;
+  localizationPending?: boolean;
+  enqueueFailed?: boolean;
 }): Promise<AdminPublishedJourneysDataDto> {
   const query: Record<string, string | number> = {
     page: input.page,
@@ -24,6 +26,14 @@ export async function listPublishedJourneys(input: {
 
   if (input.reviewStatus) {
     query.reviewStatus = input.reviewStatus;
+  }
+
+  if (input.localizationPending !== undefined) {
+    query.localizationPending = String(input.localizationPending);
+  }
+
+  if (input.enqueueFailed !== undefined) {
+    query.enqueueFailed = String(input.enqueueFailed);
   }
 
   const response = await requestEnvelope<AdminPublishedJourneysDataDto>({
@@ -71,6 +81,7 @@ export async function updateReviewStatus(input: {
   publicId: string;
   status: UpdatePublishedJourneyReviewRequestDto["status"];
   publishOperationId?: string;
+  acceptUntranslated?: boolean;
 }): Promise<UpdatePublishedJourneyReviewDataDto> {
   const response = await requestEnvelope<UpdatePublishedJourneyReviewDataDto>({
     pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review`,
@@ -81,6 +92,7 @@ export async function updateReviewStatus(input: {
       ...(input.publishOperationId
         ? { publishOperationId: input.publishOperationId }
         : {}),
+      ...(input.acceptUntranslated === true ? { acceptUntranslated: true } : {}),
     },
   });
 

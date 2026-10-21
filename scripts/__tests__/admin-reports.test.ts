@@ -8,6 +8,7 @@ import {
   getReportReasonLabel,
   getReportStatusLabel,
   getReportTargetTypeLabel,
+  parseReportReason,
 } from "@/lib/admin/reports-shared";
 import { resolveReportBanner } from "@/app/reports/report-banner";
 
@@ -49,10 +50,19 @@ describe("admin reports paths and helpers", () => {
   it("returns human-readable labels for report statuses and reasons", () => {
     expect(getReportStatusLabel("PENDING")).toBe("Pending");
     expect(getReportStatusLabel("RESOLVED")).toBe("Resolved");
-    expect(getReportReasonLabel("SPAM")).toBe("Spam / Ads");
-    expect(getReportReasonLabel("HARASSMENT")).toBe("Harassment");
+    expect(getReportReasonLabel("SPAM")).toBe("Spam");
+    expect(getReportReasonLabel("ABUSE")).toBe("Abuse");
+    expect(getReportReasonLabel("HATE")).toBe("Hate speech");
+    expect(getReportReasonLabel("SEXUAL")).toBe("Sexual content");
+    expect(getReportReasonLabel("INAPPROPRIATE")).toBe("Inappropriate");
     expect(getReportTargetTypeLabel("USER")).toBe("User Account");
     expect(getReportTargetTypeLabel("PUBLISHED_JOURNEY")).toBe("Published Journey");
+  });
+
+  it("parseReportReason drops unknown values", () => {
+    expect(parseReportReason("HARASSMENT")).toBeUndefined();
+    expect(parseReportReason("HATE")).toBe("HATE");
+    expect(parseReportReason(null)).toBeUndefined();
   });
 
   it("resolves banner messages for report mutations and errors", () => {

@@ -269,12 +269,12 @@ export function AdminReportDetailPageView({
                   </div>
                   <Badge
                     variant={
-                      report.targetPublishedJourney.visibility === "hidden"
+                      report.targetPublishedJourney.visibility === "HIDDEN"
                         ? "destructive"
                         : "default"
                     }
                   >
-                    {report.targetPublishedJourney.visibility}
+                    {report.targetPublishedJourney.visibility === "HIDDEN" ? "Hidden" : "Public"}
                   </Badge>
                 </div>
               </CardHeader>

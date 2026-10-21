@@ -174,6 +174,7 @@ export interface PublishedJourneysResponseDto {
 
 export interface PublishedJourneyDetailDto {
   publicId: string;
+  journeyId?: string;
   userId: string;
   author: JourneyAuthorDto;
   startedAt: number;
@@ -191,10 +192,14 @@ export interface PublishedJourneyDetailDto {
   timeline: TimelineBlockDto[];
   recapDraft: RecapDraftSummaryDto;
   localizedContent?: PublishedJourneyLocalizedContentDto;
+  /** Model that produced `localizedContent`, when known. */
+  localizationModel?: string;
+  /** True when the admin approved without waiting for translations. */
+  publishedWithoutTranslation?: boolean;
   seoImages?: PublishedJourneySeoImageDto[];
   publishedAt: string;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
   review: PublishedJourneyReviewDto;
   contentStatus: ContentAvailability;
   visibility: JourneyVisibility;
@@ -266,6 +271,9 @@ export interface UpdatePublishedJourneyReviewRequestDto {
   /** The snapshot the admin reviewed; a mismatch (owner republished) is a
    * 400 REVIEW_STATE_CONFLICT. */
   publishOperationId?: string;
+  /** Approve without waiting for translations: publishes the original text to
+   * every locale and posts an audit message to Slack. */
+  acceptUntranslated?: boolean;
 }
 
 export interface UpdatePublishedJourneyReviewDataDto {

@@ -9,7 +9,11 @@ export interface UpdateAdminUserStatusDto {
   reason?: string;
 }
 
+/** `inactive`: the ban was lifted but the account still owes required
+ * consents, so it stays inactive until it accepts them. */
+export type AdminUserStatusResult = "banned" | "active" | "inactive";
+
 export interface AdminUserStatusResponseDataDto {
   userId: string;
-  status: string;
+  status: AdminUserStatusResult;
 }
