@@ -551,3 +551,48 @@ describe("loadAdminReviewWorkspaceData", () => {
     expect(result.detail).toBeNull();
   });
 });
+
+describe("loadAdminReviewDetail", () => {
+  it("reads journey fields from the detail only", async () => {
+    getPublishedJourneyDetail.mockResolvedValueOnce(
+      createAdminDetail({
+        journeyId: "journey-9",
+        photoCount: 3,
+        publishOperationId: "op-9",
+        updatedAt: "2026-04-03T00:00:00.000Z",
+        localizationModel: "gpt-test",
+        review: { status: "APPROVED", approved: true, localizationPending: true },
+      }),
+    );
+
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const detail = await loadAdminReviewDetail({
+      accessToken: "admin-token",
+      publicId: "public-1",
+    });
+
+    expect(listPublishedJourneys).not.toHaveBeenCalled();
+    expect(detail?.journey).toMatchObject({
+      publicId: "public-1",
+      journeyId: "journey-9",
+      title: "Journey title",
+      description: "Journey description",
+      publishOperationId: "op-9",
+      updatedAt: "2026-04-03T00:00:00.000Z",
+      localizationModel: "gpt-test",
+      publishedWithoutTranslation: false,
+      review: { status: "APPROVED", localizationPending: true },
+    });
+    expect(detail?.evidence.expectedCount).toBe(3);
+  });
+
+  it("returns null when the detail endpoint responds with 404", async () => {
+    getPublishedJourneyDetail.mockRejectedValueOnce(new BackendApiError("Not found", 404));
+
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+
+    await expect(
+      loadAdminReviewDetail({ accessToken: "admin-token", publicId: "missing-1" }),
+    ).resolves.toBeNull();
+  });
+});

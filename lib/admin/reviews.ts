@@ -12,6 +12,11 @@ import {
   type LocalDateTimeContext,
 } from "@/lib/local-time-context";
 import { type Language, toLocaleTag } from "@/lib/i18n/config";
+import {
+  formatUtcWeekLabel,
+  OVERVIEW_WEEK_BUCKETS,
+  startOfUtcWeek,
+} from "@/lib/admin/overview";
 import { readText, resolveJourneyListCoverUrl } from "@/lib/view-helpers";
 import type {
   AdminPublishedJourneyItemDto,
@@ -149,6 +154,9 @@ export type AdminReviewJourney = {
   shareUrl: string | null;
   createdAt: string;
   publishedAt: string | null;
+  /** Last change to the published record; while a translation is pending
+   * this is when it started waiting. */
+  updatedAt: string;
   startedAt: number;
   endedAt: number | null;
   startedAtLocal: LocalDateTimeContext | null;
@@ -161,6 +169,8 @@ export type AdminReviewJourney = {
   contentStatus: AdminReviewContentStatus;
   notice: string | null;
   localizedContent: AdminReviewLocalizedContent | null;
+  localizationModel: string | null;
+  publishedWithoutTranslation: boolean;
   requestedLocale: string | null;
 };
 
@@ -232,13 +242,6 @@ export function getAdminReviewStatusLabel(status: AdminReviewStatus): string {
   return ADMIN_REVIEW_STATUS_LABELS[status];
 }
 
-const OVERVIEW_WEEK_BUCKETS = 6;
-const UTC_WEEK_LABEL_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-});
-
 function normalizeJourneyMetadata(
   value: AdminPublishedJourneyItemDto["metadata"],
 ): {
@@ -261,7 +264,7 @@ function normalizeJourneyMetadata(
   };
 }
 
-function normalizeAdminReviewItem(
+export function normalizeAdminReviewItem(
   item: AdminPublishedJourneyItemDto,
 ): AdminReviewQueueItem {
   const metadata = normalizeJourneyMetadata(item.metadata);
@@ -377,21 +380,6 @@ function buildSummary(items: AdminReviewQueueItem[]): AdminReviewSummary {
   }
 
   return summary;
-}
-
-function startOfUtcWeek(timestampMs: number): number {
-  const date = new Date(timestampMs);
-  const day = date.getUTCDay();
-  const offset = day === 0 ? 6 : day - 1;
-
-  date.setUTCDate(date.getUTCDate() - offset);
-  date.setUTCHours(0, 0, 0, 0);
-
-  return date.getTime();
-}
-
-function formatUtcWeekLabel(timestampMs: number): string {
-  return UTC_WEEK_LABEL_FORMATTER.format(new Date(timestampMs));
 }
 
 function buildRecentIntake(
@@ -993,7 +981,7 @@ function buildAdminReviewDetail(options: {
   return {
     journey: {
       publicId: options.detail.publicId,
-      journeyId: options.queueItem?.journeyId ?? null,
+      journeyId: readText(options.detail.journeyId) ?? options.queueItem?.journeyId ?? null,
       userId: options.detail.userId,
       authorName: readText(options.detail.author?.name),
       title,
@@ -1001,6 +989,7 @@ function buildAdminReviewDetail(options: {
       shareUrl: readText(options.detail.shareUrl),
       createdAt: readText(options.detail.createdAt) ?? "",
       publishedAt: readText(options.detail.publishedAt),
+      updatedAt: readText(options.detail.updatedAt) ?? "",
       startedAt: options.detail.startedAt,
       endedAt: options.detail.endedAt ?? null,
       startedAtLocal: normalizeLocalDateTimeContext(options.detail.startedAtLocal),
@@ -1014,6 +1003,8 @@ function buildAdminReviewDetail(options: {
       contentStatus: options.detail.contentStatus,
       notice: readText(options.detail.notice),
       localizedContent: normalizeLocalizedContent(options.detail.localizedContent),
+      localizationModel: readText(options.detail.localizationModel),
+      publishedWithoutTranslation: options.detail.publishedWithoutTranslation === true,
       requestedLocale: options.lang ? toLocaleTag(options.lang) : null,
     },
     evidence: buildEvidenceFromDetail({
@@ -1021,6 +1012,18 @@ function buildAdminReviewDetail(options: {
       expectedCount: photoCount,
     }),
   };
+}
+
+/** One journey for the review screen, from the admin detail endpoint only.
+ * Returns null when the journey no longer exists (404). */
+export async function loadAdminReviewDetail(input: {
+  accessToken: string;
+  publicId: string;
+  lang?: Language | null;
+}): Promise<AdminReviewDetail | null> {
+  const detail = await fetchAdminReviewDetailPayload(input);
+
+  return detail ? buildAdminReviewDetail({ detail, queueItem: null, lang: input.lang }) : null;
 }
 
 export async function loadAdminReviewWorkspaceData(options: {
