@@ -138,7 +138,7 @@ describe("updatePublishedJourneyReviewAction queue flow", () => {
         decisionForm({ reviewStatus: "APPROVED", queueStatus: "pending", publishOperationId: "op-1" }),
       ),
     ).rejects.toThrow(
-      "REDIRECT:/reviews/public-456?targetPublicId=public-123&mutation=review_updated&reviewStatus=APPROVED",
+      "REDIRECT:/reviews/public-456?status=pending&targetPublicId=public-123&mutation=review_updated&reviewStatus=APPROVED",
     );
     expect(updateReviewStatus).toHaveBeenCalledWith({
       accessToken: "admin-access-token",

@@ -36,8 +36,9 @@ type AdminReviewDetailPageViewProps = {
   detail: AdminReviewDetail;
   journeyReports: ReportHistory;
   authorReports: ReportHistory;
-  /** The queue tab the admin came from; "pending" enables auto-advance. */
-  queueStatus: ReviewQueueTab;
+  /** The queue tab the admin came from (null outside the queue); "pending"
+   * enables auto-advance. */
+  queueStatus: ReviewQueueTab | null;
   returnTo: string;
 };
 
@@ -318,7 +319,7 @@ function DecisionPanel({
   returnTo,
 }: {
   detail: AdminReviewDetail;
-  queueStatus: ReviewQueueTab;
+  queueStatus: ReviewQueueTab | null;
   returnTo: string;
 }) {
   const { journey } = detail;
@@ -339,7 +340,7 @@ function DecisionPanel({
         <form action={updatePublishedJourneyReviewAction} className="flex flex-col gap-3">
           <input type="hidden" name="returnTo" value={returnTo} />
           <input type="hidden" name="targetPublicId" value={journey.publicId} />
-          <input type="hidden" name="queueStatus" value={queueStatus} />
+          {queueStatus ? <input type="hidden" name="queueStatus" value={queueStatus} /> : null}
           {journey.publishOperationId ? (
             <input type="hidden" name="publishOperationId" value={journey.publishOperationId} />
           ) : null}

@@ -134,8 +134,10 @@ export function ReviewQueuePageView({
   queue: ReviewQueuePage;
   returnTo: string;
 }) {
+  // The explicit status is the queue context; it turns on auto-advance for
+  // the pending tab (see parseReviewQueueContext).
   const detailQuery = {
-    status: queue.tab === "pending" ? null : queue.tab,
+    status: queue.tab,
     page: queue.page > 1 ? String(queue.page) : null,
   };
 

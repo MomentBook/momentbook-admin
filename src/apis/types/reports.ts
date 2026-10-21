@@ -24,7 +24,8 @@ export interface AdminReportUserSummaryDto {
   email?: string | null;
   providerEmail?: string | null;
   picture?: string | null;
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  // Optional and nullable in the API (AdminReportUserSummaryDto).
+  status?: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | null;
 }
 
 // ─── Target Journey Summary ───────────────────

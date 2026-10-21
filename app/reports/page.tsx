@@ -13,7 +13,7 @@ import {
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { buildAdminReportsHref } from "@/lib/admin/paths";
-import { parseReportReason } from "@/lib/admin/reports-shared";
+import { parseReportReason, parseReporterId } from "@/lib/admin/reports-shared";
 import type { ReportStatus, ReportTargetType } from "@/src/apis/types";
 import { resolveReportBanner } from "./report-banner";
 import { AdminReportsListPageView } from "./AdminReportsListPageView";
@@ -59,7 +59,7 @@ export default async function AdminReportsPage({
   );
   const reason = parseReportReason(readQueryParam(resolvedSearchParams.reason));
   const targetId = readQueryParam(resolvedSearchParams.targetId)?.trim() || undefined;
-  const reporterId = readQueryParam(resolvedSearchParams.reporterId)?.trim() || undefined;
+  const reporterId = parseReporterId(readQueryParam(resolvedSearchParams.reporterId));
   const mutation = readQueryParam(resolvedSearchParams.mutation);
   const error = readQueryParam(resolvedSearchParams.error);
   const message = readQueryParam(resolvedSearchParams.message);

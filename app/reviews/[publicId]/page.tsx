@@ -6,7 +6,7 @@ import {
   buildAdminReviewQueueHref,
 } from "@/lib/admin/paths";
 import { isBackendApiError } from "@/lib/api/client";
-import { parseReviewQueuePage, parseReviewQueueTab } from "@/lib/admin/review-queue";
+import { parseReviewQueueContext, parseReviewQueuePage } from "@/lib/admin/review-queue";
 import { loadReportHistoryOrNull } from "@/lib/admin/reports";
 import { loadAdminReviewDetail, parseAdminReviewStatus } from "@/lib/admin/reviews";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
@@ -33,7 +33,9 @@ export default async function AdminReviewDetailPage({
   const resolvedSearchParams = await searchParams;
   const publicId = decodeURIComponent(resolvedParams.publicId);
   const page = parseReviewQueuePage(readQueryParam(resolvedSearchParams.page));
-  const status = parseReviewQueueTab(readQueryParam(resolvedSearchParams.status));
+  // Null when opened from outside the queue (e.g. report detail): no auto-advance.
+  const queueContext = parseReviewQueueContext(readQueryParam(resolvedSearchParams.status));
+  const status = queueContext ?? "pending";
   const detailLanguage = resolveSupportedLanguage(
     readQueryParam(resolvedSearchParams.lang),
   );
@@ -41,7 +43,7 @@ export default async function AdminReviewDetailPage({
   const returnTo = buildAdminReviewDetailHref(publicId, {
     lang: detailLocale,
     page: page > 1 ? String(page) : null,
-    status: status === "pending" ? null : status,
+    status: queueContext,
   });
   const read = (key: string) => readQueryParam(resolvedSearchParams[key]);
   const banner =
@@ -124,7 +126,7 @@ export default async function AdminReviewDetailPage({
         banner={banner}
         detail={result.data.detail}
         journeyReports={result.data.journeyReports}
-        queueStatus={status}
+        queueStatus={queueContext}
         returnTo={returnTo}
       />
     </WorkspaceShell>

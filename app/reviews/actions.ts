@@ -172,7 +172,8 @@ export async function updatePublishedJourneyReviewAction(
 
     redirect(
       nextPublicId
-        ? buildAdminReviewDetailHref(nextPublicId, successEntries)
+        ? // Keep the pending context so the next decision advances too.
+          buildAdminReviewDetailHref(nextPublicId, { status: "pending", ...successEntries })
         : buildAdminReviewQueueHref({ entries: successEntries }),
     );
   }

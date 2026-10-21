@@ -9,6 +9,7 @@ import {
   getReportStatusLabel,
   getReportTargetTypeLabel,
   parseReportReason,
+  parseReporterId,
 } from "@/lib/admin/reports-shared";
 import { resolveReportBanner } from "@/app/reports/report-banner";
 
@@ -73,6 +74,15 @@ describe("admin reports paths and helpers", () => {
     expect(parseReportReason("HARASSMENT")).toBeUndefined();
     expect(parseReportReason("HATE")).toBe("HATE");
     expect(parseReportReason(null)).toBeUndefined();
+  });
+
+  it("reporterId must be a UUID or is dropped", () => {
+    // The API validates reporterId with @IsUUID() and answers 400 otherwise.
+    expect(parseReporterId("abc")).toBeUndefined();
+    expect(parseReporterId(null)).toBeUndefined();
+    expect(parseReporterId(" 00000000-0000-7000-8000-00000000de01 ")).toBe(
+      "00000000-0000-7000-8000-00000000de01",
+    );
   });
 
   it("resolves banner messages for report mutations and errors", () => {

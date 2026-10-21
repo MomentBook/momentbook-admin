@@ -37,6 +37,18 @@ afterEach(() => {
 });
 
 describe("review queue tabs", () => {
+  it("queue context needs an explicit valid status", async () => {
+    const { parseReviewQueueContext } = await loadModule();
+
+    // A detail link from outside the queue (e.g. report detail) has no status,
+    // so a decision there must not auto-advance.
+    expect(parseReviewQueueContext(null)).toBeNull();
+    expect(parseReviewQueueContext("")).toBeNull();
+    expect(parseReviewQueueContext("garbage")).toBeNull();
+    expect(parseReviewQueueContext("pending")).toBe("pending");
+    expect(parseReviewQueueContext("all")).toBe("all");
+  });
+
   it("maps every tab to its API filter", async () => {
     const { REVIEW_QUEUE_TABS, reviewQueueTabFilter } = await loadModule();
     const expected = {

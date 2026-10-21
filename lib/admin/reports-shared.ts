@@ -15,6 +15,17 @@ export const REPORT_REASONS: readonly ReportReason[] = [
   "OTHER",
 ];
 
+// validator.js `isUUID(str, "all")`, which the API's @IsUUID() applies.
+const UUID_PATTERN =
+  /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/i;
+
+/** A reporter filter the API accepts, or `undefined` (it answers 400 for a
+ * non-UUID `reporterId`). */
+export function parseReporterId(value: string | null): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed && UUID_PATTERN.test(trimmed) ? trimmed : undefined;
+}
+
 export function parseReportReason(value: string | null): ReportReason | undefined {
   return REPORT_REASONS.find((reason) => reason === value);
 }

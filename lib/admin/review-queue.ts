@@ -24,6 +24,13 @@ export function parseReviewQueueTab(value: string | null): ReviewQueueTab {
   return REVIEW_QUEUE_TABS.find((tab) => tab === value) ?? "pending";
 }
 
+/** The queue tab a detail page was opened from, or `null` when the link came
+ * from outside the queue (or names no tab) — only an explicit `pending`
+ * context auto-advances after a decision. */
+export function parseReviewQueueContext(value: string | null): ReviewQueueTab | null {
+  return REVIEW_QUEUE_TABS.find((tab) => tab === value) ?? null;
+}
+
 export function parseReviewQueuePage(value: string | null): number {
   if (!value || !/^-?\d+$/.test(value.trim())) {
     return 1;
