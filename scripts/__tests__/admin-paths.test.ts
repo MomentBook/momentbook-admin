@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildAdminArticleTableDetailHref,
   buildAdminArticleWorkspaceHref,
+  buildAdminReportsHref,
+  buildAdminReviewQueueHref,
   buildAdminSessionInvalidateHref,
   buildAdminSessionRefreshHref,
 } from "@/lib/admin/paths";
@@ -57,5 +59,28 @@ describe("admin session paths", () => {
     ).toBe(
       "/articles/article-1?returnTo=%2Farticles%3Fpage%3D3%26status%3Dpublished%26lang%3Dko%26category%3Dfestival",
     );
+  });
+});
+
+describe("admin review and report paths", () => {
+  it("buildAdminReviewQueueHref omits defaults", () => {
+    expect(buildAdminReviewQueueHref()).toBe("/reviews");
+    expect(buildAdminReviewQueueHref({})).toBe("/reviews");
+    expect(buildAdminReviewQueueHref({ status: "approved", page: 2 })).toBe(
+      "/reviews?status=approved&page=2",
+    );
+    expect(buildAdminReviewQueueHref({ status: "pending", page: 1 })).toBe("/reviews");
+    expect(buildAdminReviewQueueHref({ page: "3" })).toBe("/reviews?page=3");
+    expect(
+      buildAdminReviewQueueHref({
+        entries: { targetPublicId: "p1", mutation: "review_updated", error: null },
+      }),
+    ).toBe("/reviews?targetPublicId=p1&mutation=review_updated");
+  });
+
+  it("buildAdminReportsHref keeps targetId and reporterId", () => {
+    expect(
+      buildAdminReportsHref({ targetType: "USER", targetId: "user-1", reporterId: "user-2" }),
+    ).toBe("/reports?targetType=USER&targetId=user-1&reporterId=user-2");
   });
 });

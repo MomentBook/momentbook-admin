@@ -1,10 +1,7 @@
 import "server-only";
 
 import { isBackendApiError } from "@/lib/api/client";
-import {
-  getPublishedJourneyDetail,
-  listPublishedJourneys,
-} from "@/lib/api/journeys";
+import { getPublishedJourneyDetail } from "@/lib/api/journeys";
 import {
   normalizeCaptureTimeContext,
   normalizeLocalDateTimeContext,
@@ -12,11 +9,6 @@ import {
   type LocalDateTimeContext,
 } from "@/lib/local-time-context";
 import { type Language, toLocaleTag } from "@/lib/i18n/config";
-import {
-  formatUtcWeekLabel,
-  OVERVIEW_WEEK_BUCKETS,
-  startOfUtcWeek,
-} from "@/lib/admin/overview";
 import { readText, resolveJourneyListCoverUrl } from "@/lib/view-helpers";
 import type {
   AdminPublishedJourneyItemDto,
@@ -29,13 +21,9 @@ import type {
   PublishedJourneyReviewDto,
 } from "@/src/apis/types";
 
-export const ADMIN_REVIEW_PAGE_SIZE = 20;
-const ADMIN_REVIEW_API_PAGE_LIMIT = 50;
-
 export type AdminReviewStatus = PublishedJourneyReviewDto["status"];
 export type AdminReviewContentStatus = PublishedJourneyDetailDto["contentStatus"];
 export type AdminReviewVisibility = PublishedJourneyDetailDto["visibility"];
-export type AdminReviewQueueStatus = "pending" | "all";
 
 export type AdminReviewState = {
   status: AdminReviewStatus;
@@ -48,15 +36,6 @@ export type AdminReviewState = {
   enqueueFailed?: boolean;
   decidedBy?: "AI" | "ADMIN";
   decidedAt?: string;
-};
-
-export type AdminReviewSummary = {
-  pendingCount: number;
-  approvedCount: number;
-  rejectedCount: number;
-  /** Non-rejected journeys whose translation is pending or failed to
-   * enqueue. */
-  translationPendingCount: number;
 };
 
 export type AdminReviewQueueItem = {
@@ -78,40 +57,6 @@ export type AdminReviewQueueItem = {
   startedAtLocal: LocalDateTimeContext | null;
   endedAtLocal: LocalDateTimeContext | null;
   recapStage: "NONE" | "FINALIZED";
-};
-
-export type AdminReviewQueueData = {
-  summary: AdminReviewSummary;
-  items: AdminReviewQueueItem[];
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-  status: AdminReviewQueueStatus;
-};
-
-export type AdminOverviewWeeklyIntake = {
-  key: string;
-  label: string;
-  count: number;
-};
-
-export type AdminOverviewData = {
-  totalCount: number;
-  pendingCount: number;
-  translationPendingCount: number;
-  reviewedCount: number;
-  approvedCount: number;
-  rejectedCount: number;
-  approvalRate: number | null;
-  rejectionRate: number | null;
-  latestSubmissionAt: string | null;
-  oldestPendingAt: string | null;
-  recentIntake: {
-    totalCount: number;
-    maxCount: number;
-    weeks: AdminOverviewWeeklyIntake[];
-  };
 };
 
 export type AdminReviewLocalizedEntry = {
@@ -304,197 +249,6 @@ function normalizeReviewState(
     ...(review.enqueueFailed === true ? { enqueueFailed: true } : {}),
     ...(review.decidedBy !== undefined ? { decidedBy: review.decidedBy } : {}),
     ...(review.decidedAt !== undefined ? { decidedAt: review.decidedAt } : {}),
-  };
-}
-
-function matchesQueueStatus(
-  item: AdminReviewQueueItem,
-  status: AdminReviewQueueStatus,
-): boolean {
-  if (status === "all") {
-    return true;
-  }
-
-  return item.review.status === "PENDING";
-}
-
-async function readAllAdminReviewItems(
-  accessToken: string,
-): Promise<AdminReviewQueueItem[]> {
-  const seenPublicIds = new Set<string>();
-  const items: AdminReviewQueueItem[] = [];
-
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const response = await listPublishedJourneys({
-      accessToken,
-      page,
-      limit: ADMIN_REVIEW_API_PAGE_LIMIT,
-    });
-
-    totalPages = Math.max(1, response.pages);
-
-    for (const journey of response.journeys) {
-      const normalized = normalizeAdminReviewItem(journey);
-
-      if (seenPublicIds.has(normalized.publicId)) {
-        continue;
-      }
-
-      seenPublicIds.add(normalized.publicId);
-      items.push(normalized);
-    }
-
-    page += 1;
-  } while (page <= totalPages);
-
-  return items;
-}
-
-function buildSummary(items: AdminReviewQueueItem[]): AdminReviewSummary {
-  const summary: AdminReviewSummary = {
-    pendingCount: 0,
-    approvedCount: 0,
-    rejectedCount: 0,
-    translationPendingCount: 0,
-  };
-
-  for (const item of items) {
-    if (item.review.status === "REJECTED") {
-      summary.rejectedCount += 1;
-      continue;
-    }
-
-    if (item.review.localizationPending || item.review.enqueueFailed) {
-      summary.translationPendingCount += 1;
-    }
-
-    if (item.review.status === "APPROVED") {
-      summary.approvedCount += 1;
-      continue;
-    }
-
-    summary.pendingCount += 1;
-  }
-
-  return summary;
-}
-
-function buildRecentIntake(
-  items: AdminReviewQueueItem[],
-): AdminOverviewData["recentIntake"] {
-  const currentWeekStart = startOfUtcWeek(Date.now());
-  const bucketStarts = Array.from({ length: OVERVIEW_WEEK_BUCKETS }, (_, index) => {
-    const offset = OVERVIEW_WEEK_BUCKETS - index - 1;
-    return currentWeekStart - offset * 7 * 24 * 60 * 60 * 1000;
-  });
-  const counts = new Map<number, number>(
-    bucketStarts.map((bucketStart) => [bucketStart, 0]),
-  );
-  const firstBucketStart = bucketStarts[0] ?? currentWeekStart;
-
-  for (const item of items) {
-    const createdAt = Date.parse(item.createdAt);
-    if (!Number.isFinite(createdAt) || createdAt < firstBucketStart) {
-      continue;
-    }
-
-    const bucketStart = startOfUtcWeek(createdAt);
-    if (!counts.has(bucketStart)) {
-      continue;
-    }
-
-    counts.set(bucketStart, (counts.get(bucketStart) ?? 0) + 1);
-  }
-
-  const weeks = bucketStarts.map((bucketStart) => ({
-    key: String(bucketStart),
-    label: formatUtcWeekLabel(bucketStart),
-    count: counts.get(bucketStart) ?? 0,
-  }));
-  const totalCount = weeks.reduce((sum, week) => sum + week.count, 0);
-  const maxCount = Math.max(0, ...weeks.map((week) => week.count));
-
-  return {
-    totalCount,
-    maxCount,
-    weeks,
-  };
-}
-
-function buildAdminOverviewData(items: AdminReviewQueueItem[]): AdminOverviewData {
-  const summary = buildSummary(items);
-  const reviewedCount = summary.approvedCount + summary.rejectedCount;
-  const approvalRate =
-    reviewedCount > 0
-      ? Math.round((summary.approvedCount / reviewedCount) * 100)
-      : null;
-  const rejectionRate =
-    reviewedCount > 0
-      ? Math.round((summary.rejectedCount / reviewedCount) * 100)
-      : null;
-
-  let latestSubmissionAt: string | null = null;
-  let latestSubmissionMs = Number.NEGATIVE_INFINITY;
-  let oldestPendingAt: string | null = null;
-  let oldestPendingMs = Number.POSITIVE_INFINITY;
-
-  for (const item of items) {
-    const createdAt = Date.parse(item.createdAt);
-    if (Number.isFinite(createdAt) && createdAt > latestSubmissionMs) {
-      latestSubmissionMs = createdAt;
-      latestSubmissionAt = item.createdAt;
-    }
-
-    if (
-      item.review.status === "PENDING" &&
-      Number.isFinite(createdAt) &&
-      createdAt < oldestPendingMs
-    ) {
-      oldestPendingMs = createdAt;
-      oldestPendingAt = item.createdAt;
-    }
-  }
-
-  return {
-    totalCount: items.length,
-    pendingCount: summary.pendingCount,
-    translationPendingCount: summary.translationPendingCount,
-    reviewedCount,
-    approvedCount: summary.approvedCount,
-    rejectedCount: summary.rejectedCount,
-    approvalRate,
-    rejectionRate,
-    latestSubmissionAt,
-    oldestPendingAt,
-    recentIntake: buildRecentIntake(items),
-  };
-}
-
-function buildQueue(options: {
-  allItems: AdminReviewQueueItem[];
-  page: number;
-  limit: number;
-  status: AdminReviewQueueStatus;
-}): AdminReviewQueueData {
-  const filteredItems = options.allItems.filter((item) =>
-    matchesQueueStatus(item, options.status),
-  );
-  const total = filteredItems.length;
-  const pages = Math.max(1, Math.ceil(total / options.limit));
-  const page = Math.min(Math.max(1, options.page), pages);
-  const startIndex = (page - 1) * options.limit;
-
-  return {
-    summary: buildSummary(options.allItems),
-    items: filteredItems.slice(startIndex, startIndex + options.limit),
-    total,
-    page,
-    pages,
-    limit: options.limit,
-    status: options.status,
   };
 }
 
@@ -967,21 +721,16 @@ async function fetchAdminReviewDetailPayload(options: {
 
 function buildAdminReviewDetail(options: {
   detail: PublishedJourneyDetailDto;
-  queueItem: AdminReviewQueueItem | null;
   lang?: Language | null;
 }): AdminReviewDetail {
-  const title = readText(options.detail.title) ?? options.queueItem?.title ?? null;
-  const description =
-    readText(options.detail.description) ?? options.queueItem?.description ?? null;
-  const photoCount = Math.max(
-    options.detail.photoCount,
-    options.queueItem?.photoCount ?? 0,
-  );
+  const title = readText(options.detail.title);
+  const description = readText(options.detail.description);
+  const photoCount = options.detail.photoCount;
 
   return {
     journey: {
       publicId: options.detail.publicId,
-      journeyId: readText(options.detail.journeyId) ?? options.queueItem?.journeyId ?? null,
+      journeyId: readText(options.detail.journeyId),
       userId: options.detail.userId,
       authorName: readText(options.detail.author?.name),
       title,
@@ -996,10 +745,7 @@ function buildAdminReviewDetail(options: {
       endedAtLocal: normalizeLocalDateTimeContext(options.detail.endedAtLocal ?? null),
       visibility: options.detail.visibility,
       review: normalizeReviewState(options.detail.review),
-      publishOperationId:
-        readText(options.detail.publishOperationId) ??
-        options.queueItem?.publishOperationId ??
-        null,
+      publishOperationId: readText(options.detail.publishOperationId),
       contentStatus: options.detail.contentStatus,
       notice: readText(options.detail.notice),
       localizedContent: normalizeLocalizedContent(options.detail.localizedContent),
@@ -1023,50 +769,5 @@ export async function loadAdminReviewDetail(input: {
 }): Promise<AdminReviewDetail | null> {
   const detail = await fetchAdminReviewDetailPayload(input);
 
-  return detail ? buildAdminReviewDetail({ detail, queueItem: null, lang: input.lang }) : null;
-}
-
-export async function loadAdminReviewWorkspaceData(options: {
-  accessToken: string;
-  page: number;
-  status: AdminReviewQueueStatus;
-  limit?: number;
-  publicId?: string | null;
-  lang?: Language | null;
-}): Promise<{
-  queue: AdminReviewQueueData;
-  detail: AdminReviewDetail | null;
-  overview: AdminOverviewData;
-}> {
-  const limit = Math.max(1, options.limit ?? ADMIN_REVIEW_PAGE_SIZE);
-  const [allItems, detailPayload] = await Promise.all([
-    readAllAdminReviewItems(options.accessToken),
-    options.publicId
-      ? fetchAdminReviewDetailPayload({
-          accessToken: options.accessToken,
-          publicId: options.publicId,
-          lang: options.lang,
-        })
-      : Promise.resolve(null),
-  ]);
-  const queueItem = options.publicId
-    ? allItems.find((item) => item.publicId === options.publicId) ?? null
-    : null;
-
-  return {
-    queue: buildQueue({
-      allItems,
-      page: options.page,
-      limit,
-      status: options.status,
-    }),
-    overview: buildAdminOverviewData(allItems),
-    detail: detailPayload
-      ? buildAdminReviewDetail({
-          detail: detailPayload,
-          queueItem,
-          lang: options.lang,
-        })
-      : null,
-  };
+  return detail ? buildAdminReviewDetail({ detail, lang: input.lang }) : null;
 }

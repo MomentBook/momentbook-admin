@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { AdminSidebar } from "@/components/layout/admin-sidebar";
-import { AdminShell } from "@/components/layout/admin-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,16 +7,13 @@ import {
   requeueJourneyReviewAction,
   updatePublishedJourneyReviewAction,
 } from "@/app/_workspace/actions";
-import { buildAdminWorkspaceHref } from "@/lib/admin/paths";
 import {
   getAdminReviewStatusLabel,
   type AdminReviewDetail,
   type AdminReviewEvidenceSection,
   type AdminReviewPhoto,
-  type AdminReviewQueueData,
   type AdminReviewStatus,
 } from "@/lib/admin/reviews";
-import type { AdminSession } from "@/lib/admin/session";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { LightboxPhotoTile } from "./LightboxPhotoTile";
 
@@ -28,12 +23,12 @@ type ReviewMutationSummary = {
 };
 
 type AdminReviewDetailPageViewProps = {
+  backHref: string;
   banner: AdminDashboardBanner | null;
   detail: AdminReviewDetail;
-  queue: AdminReviewQueueData;
+  pendingCount: number;
   reviewMutation: ReviewMutationSummary | null;
   returnTo: string;
-  session: AdminSession;
   targetPublicId: string | null;
 };
 
@@ -374,33 +369,19 @@ function RequeuePanel({
 }
 
 export function AdminReviewDetailPageView({
+  backHref,
   banner,
   detail,
-  queue,
+  pendingCount,
   reviewMutation,
   returnTo,
-  session,
   targetPublicId,
 }: AdminReviewDetailPageViewProps) {
-  const backHref = buildAdminWorkspaceHref("reviews", {
-    page: queue.page > 1 ? String(queue.page) : null,
-    status: queue.status === "pending" ? null : queue.status,
-  });
-
-  const sidebar = (
-    <AdminSidebar
-      active="reviews"
-      badges={{ reviews: queue.summary.pendingCount }}
-      session={session}
-    />
-  );
-
   return (
-    <AdminShell sidebar={sidebar}>
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
         <PageHeader
           banner={banner}
-          pendingCount={queue.summary.pendingCount}
+          pendingCount={pendingCount}
         />
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
@@ -433,7 +414,6 @@ export function AdminReviewDetailPageView({
             />
           </div>
         </div>
-      </div>
-    </AdminShell>
+    </div>
   );
 }

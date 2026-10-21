@@ -3,13 +3,9 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isBackendApiError } from "@/lib/api/client";
+import { loadAttentionCounts, type AttentionCounts } from "@/lib/admin/attention";
 import {
-  ADMIN_REVIEW_PAGE_SIZE,
   getAdminReviewStatusLabel,
-  loadAdminReviewWorkspaceData,
-  type AdminOverviewData,
-  type AdminReviewQueueData,
-  type AdminReviewQueueStatus,
   type AdminReviewStatus,
   parseAdminReviewStatus,
 } from "@/lib/admin/reviews";
@@ -18,7 +14,6 @@ import {
   type AdminSession,
   requireAdminApiSession,
 } from "@/lib/admin/session";
-import type { Language } from "@/lib/i18n/config";
 
 export type AdminDashboardBanner = {
   tone: "default" | "error" | "success";
@@ -42,14 +37,6 @@ export function readQueryParam(
 export function parsePage(value: string | null): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1;
-}
-
-export function parseStatus(value: string | null): AdminReviewQueueStatus {
-  if (value === "pending" || value === "all") {
-    return value;
-  }
-
-  return "pending";
 }
 
 export function parseReviewStatus(value: string | null): AdminReviewStatus | null {
@@ -123,23 +110,32 @@ export function resolveBanner(options: {
   }
 }
 
-export async function withAdminWorkspaceSession<T>(options: {
+/**
+ * Loads a workspace page: the page's own data and the attention counts for
+ * the sidebar run in parallel under one admin session. `load` receives the
+ * in-flight counts for pages that also show them. Backend 401/403 from
+ * either invalidate the session and return the admin to `returnTo` after
+ * signing in again.
+ */
+export async function loadWorkspacePage<T>(options: {
   returnTo: string;
-  load: (accessToken: string) => Promise<T>;
+  load: (accessToken: string, counts: Promise<AttentionCounts>) => Promise<T>;
 }): Promise<{
   data: T;
+  counts: AttentionCounts;
   session: AdminSession;
 }> {
   const cookieStore = await cookies();
   const session = await requireAdminApiSession(cookieStore, options.returnTo);
 
   try {
-    const data = await options.load(session.accessToken);
+    const countsPromise = loadAttentionCounts(session.accessToken);
+    const [data, counts] = await Promise.all([
+      options.load(session.accessToken, countsPromise),
+      countsPromise,
+    ]);
 
-    return {
-      data,
-      session,
-    };
+    return { data, counts, session };
   } catch (error) {
     if (isBackendApiError(error) && error.statusCode === 401) {
       redirect(
@@ -161,72 +157,4 @@ export async function withAdminWorkspaceSession<T>(options: {
 
     throw error;
   }
-}
-
-import { getAdminReportStats } from "@/lib/api/reports";
-import type { AdminReportStatsDataDto } from "@/src/apis/types";
-
-export async function loadAdminWorkspaceShell(options: {
-  page: number;
-  returnTo: string;
-  status: AdminReviewQueueStatus;
-}): Promise<{
-  overview: AdminOverviewData;
-  queue: AdminReviewQueueData;
-  reportStats: AdminReportStatsDataDto | null;
-  session: AdminSession;
-}> {
-  const { data, session } = await withAdminWorkspaceSession({
-    returnTo: options.returnTo,
-    load: async (accessToken) => {
-      const [reviewData, reportStats] = await Promise.all([
-        loadAdminReviewWorkspaceData({
-          accessToken,
-          page: options.page,
-          status: options.status,
-          limit: ADMIN_REVIEW_PAGE_SIZE,
-        }),
-        getAdminReportStats({ accessToken }).catch(() => null),
-      ]);
-
-      return {
-        overview: reviewData.overview,
-        queue: reviewData.queue,
-        reportStats,
-      };
-    },
-  });
-
-  return {
-    overview: data.overview,
-    queue: data.queue,
-    reportStats: data.reportStats,
-    session,
-  };
-}
-
-export async function loadAdminReviewDetailShell(options: {
-  page: number;
-  publicId: string;
-  returnTo: string;
-  status: AdminReviewQueueStatus;
-  lang?: Language | null;
-}) {
-  const { data, session } = await withAdminWorkspaceSession({
-    returnTo: options.returnTo,
-    load: (accessToken) => loadAdminReviewWorkspaceData({
-      accessToken,
-      page: options.page,
-      status: options.status,
-      limit: ADMIN_REVIEW_PAGE_SIZE,
-      publicId: options.publicId,
-      lang: options.lang,
-    }),
-  });
-
-  return {
-    detail: data.detail,
-    queue: data.queue,
-    session,
-  };
 }

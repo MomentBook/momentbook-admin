@@ -3,16 +3,17 @@ import { redirect } from "next/navigation";
 import { AdminReviewDetailPageView } from "./AdminReviewDetailPageView";
 import {
   buildAdminReviewDetailHref,
-  buildAdminWorkspaceHref,
+  buildAdminReviewQueueHref,
 } from "@/lib/admin/paths";
 import { isBackendApiError } from "@/lib/api/client";
+import { parseReviewQueuePage, parseReviewQueueTab } from "@/lib/admin/review-queue";
+import { loadAdminReviewDetail } from "@/lib/admin/reviews";
+import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { resolveSupportedLanguage, toLocaleTag } from "@/lib/i18n/config";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import {
-  loadAdminReviewDetailShell,
-  parsePage,
+  loadWorkspacePage,
   parseReviewStatus,
-  parseStatus,
   readQueryParam,
   resolveBanner,
 } from "@/app/_workspace/workspace-data";
@@ -33,8 +34,8 @@ export default async function AdminReviewDetailPage({
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const publicId = decodeURIComponent(resolvedParams.publicId);
-  const page = parsePage(readQueryParam(resolvedSearchParams.page));
-  const status = parseStatus(readQueryParam(resolvedSearchParams.status));
+  const page = parseReviewQueuePage(readQueryParam(resolvedSearchParams.page));
+  const status = parseReviewQueueTab(readQueryParam(resolvedSearchParams.status));
   const detailLanguage = resolveSupportedLanguage(
     readQueryParam(resolvedSearchParams.lang),
   );
@@ -65,19 +66,14 @@ export default async function AdminReviewDetailPage({
         }
       : null;
 
-  let detail, queue, session;
+  let result;
 
   try {
-    const result = await loadAdminReviewDetailShell({
-      page,
-      publicId,
+    result = await loadWorkspacePage({
       returnTo,
-      status,
-      lang: detailLanguage,
+      load: (accessToken) =>
+        loadAdminReviewDetail({ accessToken, publicId, lang: detailLanguage }),
     });
-    detail = result.detail;
-    queue = result.queue;
-    session = result.session;
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
@@ -92,25 +88,29 @@ export default async function AdminReviewDetailPage({
     throw error;
   }
 
-  if (!detail) {
+  const backHref = buildAdminReviewQueueHref({ status, page });
+
+  if (!result.data) {
     redirect(
-      buildAdminWorkspaceHref("reviews", {
-        error: "review_target_not_found",
-        page: page > 1 ? String(page) : null,
-        status: status === "pending" ? null : status,
+      buildAdminReviewQueueHref({
+        status,
+        page,
+        entries: { error: "review_target_not_found" },
       }),
     );
   }
 
   return (
-    <AdminReviewDetailPageView
-      banner={banner}
-      detail={detail}
-      queue={queue}
-      reviewMutation={reviewMutation}
-      returnTo={returnTo}
-      session={session}
-      targetPublicId={targetPublicId}
-    />
+    <WorkspaceShell active="reviews" counts={result.counts} session={result.session}>
+      <AdminReviewDetailPageView
+        backHref={backHref}
+        banner={banner}
+        detail={result.data}
+        pendingCount={result.counts.pendingReviews}
+        reviewMutation={reviewMutation}
+        returnTo={returnTo}
+        targetPublicId={targetPublicId}
+      />
+    </WorkspaceShell>
   );
 }

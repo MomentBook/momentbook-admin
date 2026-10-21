@@ -1,118 +1,114 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import {
+  ADMIN_ROOT_PATH,
   buildAdminArticleWorkspaceHref,
   buildAdminReportsHref,
-  buildAdminWorkspaceHref,
+  buildAdminReviewQueueHref,
   parseAdminWorkspaceTab,
 } from "@/lib/admin/paths";
-import { redirect } from "next/navigation";
 import { isBackendApiError } from "@/lib/api/client";
+import { loadAdminOverview } from "@/lib/admin/overview";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
-import { AdminWorkspace } from "@/app/_workspace/AdminWorkspace";
+import { WorkspaceShell } from "@/components/layout/workspace-shell";
+import { AttentionOverview } from "@/app/_workspace/AttentionOverview";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import {
-  loadAdminWorkspaceShell,
-  parsePage,
+  loadWorkspacePage,
   parseReviewStatus,
-  parseStatus,
   readQueryParam,
   resolveBanner,
 } from "@/app/_workspace/workspace-data";
 
 export const metadata: Metadata = {
-  title: "Moderation Workspace",
+  title: "Attention",
   robots: buildNoIndexRobots(),
 };
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+/** Bookmarks from when every workspace screen lived at `/?tab=…`. */
+function redirectLegacyTab(searchParams: SearchParams): void {
+  const tab = parseAdminWorkspaceTab(readQueryParam(searchParams.tab));
+  const read = (key: string) => readQueryParam(searchParams[key]);
+
+  if (tab === "reviews") {
+    redirect(
+      buildAdminReviewQueueHref({
+        status: read("status"),
+        page: read("page"),
+        entries: {
+          targetPublicId: read("targetPublicId"),
+          mutation: read("mutation"),
+          reviewStatus: read("reviewStatus"),
+          error: read("error"),
+        },
+      }),
+    );
+  }
+
+  if (tab === "reports") {
+    redirect(
+      buildAdminReportsHref({
+        page: read("page"),
+        status: read("status"),
+        targetType: read("targetType"),
+        reason: read("reason"),
+        mutation: read("mutation"),
+        error: read("error"),
+        message: read("message"),
+      }),
+    );
+  }
+
+  if (tab === "articles") {
+    redirect(
+      buildAdminArticleWorkspaceHref({
+        page: read("page"),
+        lang: read("lang"),
+        category: read("category"),
+        articleSlug: read("articleSlug"),
+        mutation: read("mutation"),
+        error: read("error"),
+        message: read("message"),
+      }),
+    );
+  }
+}
 
 export default async function AdminIndexPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<SearchParams>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const activeTab = parseAdminWorkspaceTab(
-    readQueryParam(resolvedSearchParams.tab),
-  );
+  redirectLegacyTab(resolvedSearchParams);
 
-  if (activeTab === "articles") {
-    redirect(
-      buildAdminArticleWorkspaceHref({
-        page: readQueryParam(resolvedSearchParams.page),
-        lang: readQueryParam(resolvedSearchParams.lang),
-        category: readQueryParam(resolvedSearchParams.category),
-        articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
-        mutation: readQueryParam(resolvedSearchParams.mutation),
-        error: readQueryParam(resolvedSearchParams.error),
-        message: readQueryParam(resolvedSearchParams.message),
-      }),
-    );
-  }
-
-  if (activeTab === "reports") {
-    redirect(
-      buildAdminReportsHref({
-        page: readQueryParam(resolvedSearchParams.page),
-        status: readQueryParam(resolvedSearchParams.status),
-        targetType: readQueryParam(resolvedSearchParams.targetType),
-        reason: readQueryParam(resolvedSearchParams.reason),
-        mutation: readQueryParam(resolvedSearchParams.mutation),
-        error: readQueryParam(resolvedSearchParams.error),
-        message: readQueryParam(resolvedSearchParams.message),
-      }),
-    );
-  }
-
-  const page = parsePage(readQueryParam(resolvedSearchParams.page));
-  const status = parseStatus(readQueryParam(resolvedSearchParams.status));
-  const targetPublicId = readQueryParam(resolvedSearchParams.targetPublicId);
-  const mutation = readQueryParam(resolvedSearchParams.mutation);
-  const reviewStatus = parseReviewStatus(
-    readQueryParam(resolvedSearchParams.reviewStatus),
-  );
-  const returnTo = buildAdminWorkspaceHref(activeTab, {
-    page: page > 1 ? String(page) : null,
-    status: status === "pending" ? null : status,
-  });
   const banner = resolveBanner({
     error: readQueryParam(resolvedSearchParams.error),
-    mutation,
-    reviewStatus,
-    targetPublicId,
+    mutation: readQueryParam(resolvedSearchParams.mutation),
+    reviewStatus: parseReviewStatus(readQueryParam(resolvedSearchParams.reviewStatus)),
+    targetPublicId: readQueryParam(resolvedSearchParams.targetPublicId),
   });
 
-  let overview, queue, reportStats, session;
+  let page;
 
   try {
-    const result = await loadAdminWorkspaceShell({
-      page,
-      returnTo,
-      status,
+    page = await loadWorkspacePage({
+      returnTo: ADMIN_ROOT_PATH,
+      load: (accessToken) => loadAdminOverview({ accessToken }),
     });
-    overview = result.overview;
-    queue = result.queue;
-    reportStats = result.reportStats;
-    session = result.session;
   } catch (error) {
     if (isBackendApiError(error)) {
-      return (
-        <AdminWorkspaceErrorPage
-          message={error.message}
-          statusCode={error.statusCode}
-        />
-      );
+      return <AdminWorkspaceErrorPage message={error.message} statusCode={error.statusCode} />;
     }
 
     throw error;
   }
 
   return (
-    <AdminWorkspace
-      activeTab={activeTab}
-      banner={banner}
-      overview={overview}
-      queue={queue}
-      reportStats={reportStats}
-      session={session}
-    />
+    <WorkspaceShell active="attention" counts={page.counts} session={page.session}>
+      <AttentionOverview banner={banner} counts={page.counts} overview={page.data} />
+    </WorkspaceShell>
   );
 }

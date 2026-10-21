@@ -2,10 +2,6 @@ import type { Metadata } from "next";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
 import { isBackendApiError } from "@/lib/api/client";
 import {
-  ADMIN_REVIEW_PAGE_SIZE,
-  loadAdminReviewWorkspaceData,
-} from "@/lib/admin/reviews";
-import {
   ADMIN_ARTICLE_PAGE_SIZE,
   loadAdminEditorialArticleDashboard,
   parseAdminArticleFilterCategory,
@@ -13,10 +9,11 @@ import {
 } from "@/lib/editorial/admin";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import {
+  loadWorkspacePage,
   parsePage,
   readQueryParam,
-  withAdminWorkspaceSession,
 } from "@/app/_workspace/workspace-data";
+import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { resolveArticleBanner } from "./article-banner";
 import { AdminArticleListPageView } from "./AdminArticleListPageView";
@@ -51,36 +48,20 @@ export default async function AdminArticlesPage({
     articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
   });
 
-  let data, session;
+  let result;
 
   try {
-    const result = await withAdminWorkspaceSession({
+    result = await loadWorkspacePage({
       returnTo,
-      load: async (accessToken) => {
-        const [dashboard, queue] = await Promise.all([
-          loadAdminEditorialArticleDashboard({
-            accessToken,
-            page,
-            limit: ADMIN_ARTICLE_PAGE_SIZE,
-            language,
-            category,
-          }),
-          loadAdminReviewWorkspaceData({
-            accessToken,
-            page: 1,
-            status: "pending",
-            limit: ADMIN_REVIEW_PAGE_SIZE,
-          }),
-        ]);
-
-        return {
-          dashboard,
-          queue,
-        };
-      },
+      load: (accessToken) =>
+        loadAdminEditorialArticleDashboard({
+          accessToken,
+          page,
+          limit: ADMIN_ARTICLE_PAGE_SIZE,
+          language,
+          category,
+        }),
     });
-    data = result.data;
-    session = result.session;
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
@@ -96,11 +77,8 @@ export default async function AdminArticlesPage({
   }
 
   return (
-    <AdminArticleListPageView
-      banner={banner}
-      dashboard={data.dashboard}
-      pendingReviews={data.queue.queue.summary.pendingCount}
-      session={session}
-    />
+    <WorkspaceShell active="articles" counts={result.counts} session={result.session}>
+      <AdminArticleListPageView banner={banner} dashboard={result.data} />
+    </WorkspaceShell>
   );
 }

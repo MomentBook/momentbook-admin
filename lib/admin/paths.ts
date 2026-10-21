@@ -195,13 +195,19 @@ export function parseAdminWorkspaceTab(
   return ADMIN_DEFAULT_WORKSPACE_TAB;
 }
 
-export function buildAdminWorkspaceHref(
-  tab: AdminWorkspaceTab,
-  entries?: Record<string, string | null | undefined>,
-): string {
-  return withAdminQuery(ADMIN_ROOT_PATH, {
-    ...entries,
-    tab: tab === ADMIN_DEFAULT_WORKSPACE_TAB ? null : tab,
+/** The review queue; `pending` and page 1 are the defaults and stay out of
+ * the URL. */
+export function buildAdminReviewQueueHref(options?: {
+  status?: string | null;
+  page?: number | string | null;
+  entries?: Record<string, string | null | undefined>;
+}): string {
+  const status = readOptionalQueryValue(options?.status);
+
+  return withAdminQuery(ADMIN_REVIEWS_PATH, {
+    status: status === "pending" ? null : status,
+    page: normalizePageQuery(options?.page),
+    ...options?.entries,
   });
 }
 
@@ -274,6 +280,8 @@ export type AdminReportsHrefOptions = {
   status?: string | null;
   targetType?: string | null;
   reason?: string | null;
+  targetId?: string | null;
+  reporterId?: string | null;
   mutation?: string | null;
   error?: string | null;
   message?: string | null;
@@ -287,6 +295,8 @@ export function buildAdminReportsHref(
     status: readOptionalQueryValue(options?.status),
     targetType: readOptionalQueryValue(options?.targetType),
     reason: readOptionalQueryValue(options?.reason),
+    targetId: readOptionalQueryValue(options?.targetId),
+    reporterId: readOptionalQueryValue(options?.reporterId),
     mutation: readOptionalQueryValue(options?.mutation),
     error: readOptionalQueryValue(options?.error),
     message: readOptionalQueryValue(options?.message),

@@ -7,7 +7,8 @@ import {
 import { isBackendApiError } from "@/lib/api/client";
 import { resolveSupportedLanguage } from "@/lib/i18n/config";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
-import { loadAdminWorkspaceShell, readQueryParam } from "@/app/_workspace/workspace-data";
+import { loadWorkspacePage, readQueryParam } from "@/app/_workspace/workspace-data";
+import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { resolveArticleBanner } from "../article-banner";
 import { createEditorialArticleAction } from "../actions";
@@ -44,16 +45,13 @@ export default async function AdminNewArticlePage({
     mutation: readQueryParam(resolvedSearchParams.mutation),
     articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
   });
-  let queue, session;
+  let result;
 
   try {
-    const result = await loadAdminWorkspaceShell({
-      page: 1,
+    result = await loadWorkspacePage({
       returnTo: nextPath,
-      status: "pending",
+      load: async () => null,
     });
-    queue = result.queue;
-    session = result.session;
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
@@ -69,17 +67,17 @@ export default async function AdminNewArticlePage({
   }
 
   return (
-    <EditorialArticleEditorPageView
-      article={null}
-      banner={banner}
-      nextPath={nextPath}
-      queue={queue}
-      returnTo={returnTo}
-      saveAction={createEditorialArticleAction}
-      session={session}
-      suggestedLanguage={suggestedLanguage}
-      suggestedTranslationGroupId={suggestedTranslationGroupId}
-      title="Create article"
-    />
+    <WorkspaceShell active="articles" counts={result.counts} session={result.session}>
+      <EditorialArticleEditorPageView
+        article={null}
+        banner={banner}
+        nextPath={nextPath}
+        returnTo={returnTo}
+        saveAction={createEditorialArticleAction}
+        suggestedLanguage={suggestedLanguage}
+        suggestedTranslationGroupId={suggestedTranslationGroupId}
+        title="Create article"
+      />
+    </WorkspaceShell>
   );
 }

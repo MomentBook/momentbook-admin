@@ -142,48 +142,59 @@ afterEach(() => {
   vi.resetModules();
 });
 
-describe("loadAdminReviewWorkspaceData", () => {
-  it("normalizes legacy metadata aliases and keeps detail lookup independent from the active filter", async () => {
-    listPublishedJourneys
-      .mockResolvedValueOnce(
-        createAdminPage(1, 2, [
-          createAdminJourney({
-            publicId: "pending-1",
-            thumbnailUrl: "",
-            metadata: {
-              journeyTitle: "Legacy title",
-              summary: "Legacy summary",
-              thumbnailUri: "https://images.example.com/legacy.jpg",
-            },
-          }),
-          createAdminJourney({
-            publicId: "approved-1",
-            journeyId: "journey-2",
-            userId: "user-2",
-            metadata: {
-              title: "Approved title",
-              description: "Approved description",
-            },
-            review: {
-              status: "APPROVED",
-              approved: true,
-            },
-          }),
-        ]),
-      )
-      .mockResolvedValueOnce(
-        createAdminPage(2, 2, [
-          createAdminJourney({
-            publicId: "rejected-1",
-            journeyId: "journey-3",
-            userId: "user-3",
-            review: {
-              status: "REJECTED",
-              approved: false,
-            },
-          }),
-        ]),
-      );
+const attentionCounts = {
+  pendingReviews: 1,
+  translationPending: 0,
+  translationEnqueueFailed: 0,
+  openReports: 0,
+  pendingReports: 0,
+  reviewedReports: 0,
+  asOf: "2026-04-03T00:00:00.000Z",
+};
+
+async function loadReviewQueueModule() {
+  return import("@/lib/admin/review-queue");
+}
+
+describe("review queue and detail loaders", () => {
+  it("normalizes legacy metadata aliases", async () => {
+    listPublishedJourneys.mockImplementation(async (input: { limit: number }) =>
+      input.limit === 1
+        ? createAdminPage(1, 1, [])
+        : createAdminPage(1, 1, [
+            createAdminJourney({
+              publicId: "pending-1",
+              thumbnailUrl: "",
+              metadata: {
+                journeyTitle: "Legacy title",
+                summary: "Legacy summary",
+                thumbnailUri: "https://images.example.com/legacy.jpg",
+              },
+            }),
+          ]),
+    );
+
+    const { loadReviewQueue } = await loadReviewQueueModule();
+    const queue = await loadReviewQueue({
+      accessToken: "admin-token",
+      tab: "pending",
+      page: 1,
+      counts: attentionCounts,
+    });
+
+    // One filtered page plus the approved/rejected/all tab totals.
+    expect(listPublishedJourneys).toHaveBeenCalledTimes(4);
+    expect(queue.total).toBe(1);
+    expect(queue.items).toHaveLength(1);
+    expect(queue.items[0]).toMatchObject({
+      publicId: "pending-1",
+      title: "Legacy title",
+      description: "Legacy summary",
+      thumbnailUrl: "https://images.example.com/legacy.jpg",
+    });
+  });
+
+  it("detail lookup is independent from the active filter", async () => {
     getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "approved-1",
@@ -197,100 +208,55 @@ describe("loadAdminReviewWorkspaceData", () => {
       }),
     );
 
-    const { loadAdminReviewWorkspaceData } = await loadAdminReviewsModule();
-    const result = await loadAdminReviewWorkspaceData({
-      accessToken: "admin-token",
-      page: 1,
-      status: "pending",
-      limit: 20,
-      publicId: "approved-1",
-    });
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const result = {
+      detail: await loadAdminReviewDetail({
+        accessToken: "admin-token",
+        publicId: "approved-1",
+      }),
+    };
 
-    expect(listPublishedJourneys).toHaveBeenCalledTimes(2);
-    expect(result.queue.total).toBe(1);
-    expect(result.queue.items).toHaveLength(1);
-    expect(result.queue.items[0]).toMatchObject({
-      publicId: "pending-1",
-      title: "Legacy title",
-      description: "Legacy summary",
-      thumbnailUrl: "https://images.example.com/legacy.jpg",
-    });
     expect(result.detail?.journey.publicId).toBe("approved-1");
     expect(result.detail?.journey.review.status).toBe("APPROVED");
     expect(result.detail?.evidence.loadedCount).toBe(1);
   });
 
-  it("builds summary counts from the full dataset and paginates the filtered queue", async () => {
-    listPublishedJourneys
-      .mockResolvedValueOnce(
-        createAdminPage(1, 2, [
-          createAdminJourney({
-            publicId: "pending-1",
-          }),
-          createAdminJourney({
-            publicId: "approved-1",
-            review: {
-              status: "APPROVED",
-              approved: true,
-            },
-          }),
-        ]),
-      )
-      .mockResolvedValueOnce(
-        createAdminPage(2, 2, [
-          createAdminJourney({
-            publicId: "approved-2",
-            journeyId: "journey-3",
-            review: {
-              status: "APPROVED",
-              approved: true,
-            },
-          }),
-          createAdminJourney({
-            publicId: "rejected-1",
-            journeyId: "journey-4",
-            review: {
-              status: "REJECTED",
-              approved: false,
-            },
-          }),
-        ]),
-      );
+  it("queue items come from the server-filtered list", async () => {
+    listPublishedJourneys.mockImplementation(async (input: { limit: number }) =>
+      input.limit === 1
+        ? { ...createAdminPage(1, 1, []), total: 9 }
+        : {
+            ...createAdminPage(1, 3, [
+              createAdminJourney({ publicId: "pending-1" }),
+              createAdminJourney({ publicId: "pending-2", journeyId: "journey-2" }),
+            ]),
+            total: 41,
+            limit: 20,
+          },
+    );
 
-    const { loadAdminReviewWorkspaceData } = await loadAdminReviewsModule();
-    const result = await loadAdminReviewWorkspaceData({
+    const { loadReviewQueue } = await loadReviewQueueModule();
+    const queue = await loadReviewQueue({
       accessToken: "admin-token",
-      page: 2,
-      status: "all",
-      limit: 1,
+      tab: "pending",
+      page: 1,
+      counts: attentionCounts,
     });
 
-    expect(result.queue.summary).toEqual({
-      pendingCount: 1,
-      approvedCount: 2,
-      rejectedCount: 1,
-      translationPendingCount: 0,
+    expect(listPublishedJourneys).toHaveBeenCalledWith({
+      accessToken: "admin-token",
+      page: 1,
+      limit: 20,
+      reviewStatus: "PENDING",
     });
-    expect(result.queue.total).toBe(4);
-    expect(result.queue.pages).toBe(4);
-    expect(result.queue.page).toBe(2);
-    expect(result.queue.items).toHaveLength(1);
-    expect(result.queue.items[0]?.publicId).toBe("approved-1");
+    expect(listPublishedJourneys.mock.calls.every(([input]) => input.page === 1)).toBe(true);
+    expect(queue.total).toBe(41);
+    expect(queue.pages).toBe(3);
+    expect(queue.tabTotals.pending).toBe(41);
+    expect(queue.items.map((item) => item.publicId)).toEqual(["pending-1", "pending-2"]);
   });
 
   it("keeps photos that exist only in timeline media references and merges them into cluster evidence", async () => {
-    listPublishedJourneys.mockResolvedValueOnce(
-      createAdminPage(1, 1, [
-        createAdminJourney({
-          publicId: "approved-1",
-          review: {
-            status: "APPROVED",
-            approved: true,
-          },
-          photoCount: 3,
-        }),
-      ]),
-    );
     getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "approved-1",
@@ -360,14 +326,13 @@ describe("loadAdminReviewWorkspaceData", () => {
       }),
     );
 
-    const { loadAdminReviewWorkspaceData } = await loadAdminReviewsModule();
-    const result = await loadAdminReviewWorkspaceData({
-      accessToken: "admin-token",
-      page: 1,
-      status: "all",
-      limit: 20,
-      publicId: "approved-1",
-    });
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const result = {
+      detail: await loadAdminReviewDetail({
+        accessToken: "admin-token",
+        publicId: "approved-1",
+      }),
+    };
 
     expect(result.detail?.evidence.loadedCount).toBe(3);
     expect(result.detail?.evidence.photos.map((photo) => photo.photoId)).toEqual([
@@ -398,14 +363,6 @@ describe("loadAdminReviewWorkspaceData", () => {
   });
 
   it("adds a remaining-photos section for assets that are not attached to any cluster", async () => {
-    listPublishedJourneys.mockResolvedValueOnce(
-      createAdminPage(1, 1, [
-        createAdminJourney({
-          publicId: "pending-1",
-          photoCount: 2,
-        }),
-      ]),
-    );
     getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "pending-1",
@@ -439,14 +396,13 @@ describe("loadAdminReviewWorkspaceData", () => {
       }),
     );
 
-    const { loadAdminReviewWorkspaceData } = await loadAdminReviewsModule();
-    const result = await loadAdminReviewWorkspaceData({
-      accessToken: "admin-token",
-      page: 1,
-      status: "pending",
-      limit: 20,
-      publicId: "pending-1",
-    });
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const result = {
+      detail: await loadAdminReviewDetail({
+        accessToken: "admin-token",
+        publicId: "pending-1",
+      }),
+    };
 
     expect(result.detail?.evidence.loadedCount).toBe(2);
     expect(result.detail?.evidence.sections).toHaveLength(2);
@@ -460,18 +416,6 @@ describe("loadAdminReviewWorkspaceData", () => {
   });
 
   it("passes locale-tagged lang to admin detail and prefers detail moderation fields", async () => {
-    listPublishedJourneys.mockResolvedValueOnce(
-      createAdminPage(1, 1, [
-        createAdminJourney({
-          publicId: "pending-1",
-          review: {
-            status: "PENDING",
-            approved: false,
-          },
-          visibility: "public",
-        }),
-      ]),
-    );
     getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "pending-1",
@@ -502,15 +446,14 @@ describe("loadAdminReviewWorkspaceData", () => {
       }),
     );
 
-    const { loadAdminReviewWorkspaceData } = await loadAdminReviewsModule();
-    const result = await loadAdminReviewWorkspaceData({
-      accessToken: "admin-token",
-      page: 1,
-      status: "pending",
-      limit: 20,
-      publicId: "pending-1",
-      lang: "ko",
-    });
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const result = {
+      detail: await loadAdminReviewDetail({
+        accessToken: "admin-token",
+        publicId: "pending-1",
+        lang: "ko",
+      }),
+    };
 
     expect(getPublishedJourneyDetail).toHaveBeenCalledWith({
       accessToken: "admin-token",
@@ -527,27 +470,18 @@ describe("loadAdminReviewWorkspaceData", () => {
   });
 
   it("returns null detail when the admin detail endpoint responds with 404", async () => {
-    listPublishedJourneys.mockResolvedValueOnce(
-      createAdminPage(1, 1, [
-        createAdminJourney({
-          publicId: "missing-1",
-        }),
-      ]),
-    );
     getPublishedJourneyDetail.mockRejectedValueOnce(
       new BackendApiError("Not found", 404),
     );
 
-    const { loadAdminReviewWorkspaceData } = await loadAdminReviewsModule();
-    const result = await loadAdminReviewWorkspaceData({
-      accessToken: "admin-token",
-      page: 1,
-      status: "pending",
-      limit: 20,
-      publicId: "missing-1",
-    });
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const result = {
+      detail: await loadAdminReviewDetail({
+        accessToken: "admin-token",
+        publicId: "missing-1",
+      }),
+    };
 
-    expect(result.queue.items[0]?.publicId).toBe("missing-1");
     expect(result.detail).toBeNull();
   });
 });

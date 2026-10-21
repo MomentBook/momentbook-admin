@@ -5,6 +5,11 @@ import { listPublishedJourneys } from "@/lib/api/journeys";
 import { getAdminReportStats } from "@/lib/api/reports";
 import type { AdminReportStatsDataDto } from "@/src/apis/types";
 
+/** Why the translation count can be higher than the Slack alert's: the list
+ * cannot tell how long a translation has been pending. */
+export const SLACK_TRANSLATION_NOTE =
+  "Slack alerts on translations pending for more than 6 hours.";
+
 /**
  * What needs the admin's attention, from the same backend filters the Slack
  * alerts use. Each journey number is the API `total` of a `limit=1` list, so

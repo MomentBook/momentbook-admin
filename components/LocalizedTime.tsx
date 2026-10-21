@@ -274,6 +274,57 @@ export function LocalizedDate({
   );
 }
 
+function formatDateTime(
+  lang: Language,
+  timestamp: number | null,
+  fallback: string,
+  timeZone?: string,
+) {
+  if (timestamp === null) {
+    return fallback;
+  }
+
+  try {
+    return new Intl.DateTimeFormat(toLocaleTag(lang), {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      ...(timeZone ? { timeZone, timeZoneName: "short" } : {}),
+    }).format(timestamp);
+  } catch {
+    return fallback;
+  }
+}
+
+/** Date and time in the viewer's time zone (UTC during server render). */
+export function LocalizedDateTime({
+  lang,
+  timestamp,
+  className,
+  fallback = "",
+}: BaseProps & {
+  timestamp?: number | null;
+  fallback?: string;
+}) {
+  const normalized = normalizeTimestamp(timestamp);
+  const value = useSyncExternalStore(
+    noopSubscribe,
+    () => formatDateTime(lang, normalized, fallback),
+    () => formatDateTime(lang, normalized, fallback, "UTC"),
+  );
+
+  return (
+    <time
+      className={className}
+      dateTime={normalized === null ? undefined : new Date(normalized).toISOString()}
+    >
+      {value}
+    </time>
+  );
+}
+
 export function LocalizedDateRange({
   lang,
   start,

@@ -6,19 +6,15 @@ import {
   loadAdminReportsWorkspaceData,
 } from "@/lib/admin/reports";
 import {
-  ADMIN_REVIEW_PAGE_SIZE,
-  loadAdminReviewWorkspaceData,
-} from "@/lib/admin/reviews";
-import {
+  loadWorkspacePage,
   parsePage,
   readQueryParam,
-  withAdminWorkspaceSession,
 } from "@/app/_workspace/workspace-data";
+import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { buildAdminReportsHref } from "@/lib/admin/paths";
 import type { ReportStatus, ReportTargetType } from "@/src/apis/types";
 import { resolveReportBanner } from "./report-banner";
-import { AdminReportsShell } from "./AdminReportsShell";
 import { AdminReportsListPageView } from "./AdminReportsListPageView";
 
 export const metadata: Metadata = {
@@ -78,39 +74,22 @@ export default async function AdminReportsPage({
     userStatus: readQueryParam(resolvedSearchParams.userStatus),
   });
 
-  let data, session;
+  let result;
 
   try {
-    const result = await withAdminWorkspaceSession({
+    result = await loadWorkspacePage({
       returnTo,
-      load: async (accessToken) => {
-        const [workspaceData, reviewData] = await Promise.all([
-          loadAdminReportsWorkspaceData({
-            accessToken,
-            query: {
-              page,
-              limit: ADMIN_REPORTS_PAGE_SIZE,
-              status,
-              targetType,
-            },
-          }),
-          loadAdminReviewWorkspaceData({
-            accessToken,
-            page: 1,
-            status: "pending",
-            limit: ADMIN_REVIEW_PAGE_SIZE,
-          }).catch(() => null),
-        ]);
-
-        return {
-          workspaceData,
-          pendingReviews: reviewData?.queue.summary.pendingCount ?? 0,
-        };
-      },
+      load: (accessToken) =>
+        loadAdminReportsWorkspaceData({
+          accessToken,
+          query: {
+            page,
+            limit: ADMIN_REPORTS_PAGE_SIZE,
+            status,
+            targetType,
+          },
+        }),
     });
-
-    data = result.data;
-    session = result.session;
   } catch (err) {
     if (isBackendApiError(err)) {
       return (
@@ -126,18 +105,14 @@ export default async function AdminReportsPage({
   }
 
   return (
-    <AdminReportsShell
-      openReports={data.workspaceData.stats.openReports}
-      pendingReviews={data.pendingReviews}
-      session={session}
-    >
+    <WorkspaceShell active="reports" counts={result.counts} session={result.session}>
       <AdminReportsListPageView
         activeStatus={status}
         activeTargetType={targetType}
         banner={banner}
-        reportsData={data.workspaceData.reports}
-        stats={data.workspaceData.stats}
+        reportsData={result.data.reports}
+        stats={result.data.stats}
       />
-    </AdminReportsShell>
+    </WorkspaceShell>
   );
 }

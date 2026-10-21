@@ -4,20 +4,16 @@ import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminReportDetail } from "@/lib/admin/reports";
 import {
-  ADMIN_REVIEW_PAGE_SIZE,
-  loadAdminReviewWorkspaceData,
-} from "@/lib/admin/reviews";
-import {
+  loadWorkspacePage,
   readQueryParam,
-  withAdminWorkspaceSession,
 } from "@/app/_workspace/workspace-data";
+import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import {
   buildAdminReportDetailHref,
   buildAdminReportsHref,
 } from "@/lib/admin/paths";
 import { resolveReportBanner } from "../report-banner";
-import { AdminReportsShell } from "../AdminReportsShell";
 import { AdminReportDetailPageView } from "./AdminReportDetailPageView";
 
 export const metadata: Metadata = {
@@ -49,34 +45,13 @@ export default async function AdminReportDetailPage({
     userStatus: readQueryParam(resolvedSearchParams.userStatus),
   });
 
-  let data, session;
+  let result;
 
   try {
-    const result = await withAdminWorkspaceSession({
+    result = await loadWorkspacePage({
       returnTo,
-      load: async (accessToken) => {
-        const [report, reviewData] = await Promise.all([
-          loadAdminReportDetail({
-            accessToken,
-            reportId,
-          }),
-          loadAdminReviewWorkspaceData({
-            accessToken,
-            page: 1,
-            status: "pending",
-            limit: ADMIN_REVIEW_PAGE_SIZE,
-          }).catch(() => null),
-        ]);
-
-        return {
-          report,
-          pendingReviews: reviewData?.queue.summary.pendingCount ?? 0,
-        };
-      },
+      load: (accessToken) => loadAdminReportDetail({ accessToken, reportId }),
     });
-
-    data = result.data;
-    session = result.session;
   } catch (err) {
     if (isBackendApiError(err)) {
       if (err.statusCode === 404) {
@@ -99,7 +74,7 @@ export default async function AdminReportDetailPage({
     throw err;
   }
 
-  if (!data?.report) {
+  if (!result.data) {
     redirect(
       buildAdminReportsHref({
         error: "report_not_found",
@@ -108,15 +83,12 @@ export default async function AdminReportDetailPage({
   }
 
   return (
-    <AdminReportsShell
-      pendingReviews={data.pendingReviews}
-      session={session}
-    >
+    <WorkspaceShell active="reports" counts={result.counts} session={result.session}>
       <AdminReportDetailPageView
         banner={banner}
-        report={data.report}
+        report={result.data}
         returnTo={returnTo}
       />
-    </AdminReportsShell>
+    </WorkspaceShell>
   );
 }

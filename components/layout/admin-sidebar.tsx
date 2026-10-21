@@ -17,16 +17,16 @@ import {
 } from "@/components/ui/sidebar";
 import { logoutAdminAction } from "@/app/_workspace/actions";
 import { ADMIN_NAV_ITEMS, type AdminNavKey } from "@/components/layout/admin-nav";
-import type { AdminSession } from "@/lib/admin/session";
 
 type AdminSidebarProps = {
   active: AdminNavKey;
   badges: Partial<Record<AdminNavKey, number | null>>;
-  session: AdminSession;
+  /** Display name only. This is a client component: never pass the session,
+   * whose tokens would be serialized into the page payload. */
+  account: string;
 };
 
-export function AdminSidebar({ active, badges, session }: AdminSidebarProps) {
-  const account = session.email || session.name || "Admin";
+export function AdminSidebar({ active, badges, account }: AdminSidebarProps) {
 
   return (
     <Sidebar collapsible="icon">

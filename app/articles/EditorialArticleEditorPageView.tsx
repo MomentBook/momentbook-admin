@@ -2,13 +2,10 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import type { AdminReviewQueueData } from "@/lib/admin/reviews";
-import type { AdminSession } from "@/lib/admin/session";
 import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
 import { getEditorialCategoryLabel } from "@/lib/editorial/copy";
 import type { EditorialArticleRecord } from "@/lib/editorial/types";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
-import { AdminArticleShell } from "./AdminArticleShell";
 import { EditorialArticleEditorForm } from "./EditorialArticleEditorForm";
 
 function formatAdminDate(value: string | null | undefined): string {
@@ -23,10 +20,8 @@ type EditorialArticleEditorPageViewProps = {
   banner: AdminDashboardBanner | null;
   deleteAction?: (formData: FormData) => Promise<never>;
   nextPath: string;
-  queue: AdminReviewQueueData;
   returnTo: string;
   saveAction: (formData: FormData) => Promise<never>;
-  session: AdminSession;
   suggestedLanguage?: string | null;
   suggestedTranslationGroupId?: string | null;
   title?: string;
@@ -37,10 +32,8 @@ export function EditorialArticleEditorPageView({
   banner,
   deleteAction,
   nextPath,
-  queue,
   returnTo,
   saveAction,
-  session,
   suggestedLanguage,
   suggestedTranslationGroupId,
   title,
@@ -53,8 +46,7 @@ export function EditorialArticleEditorPageView({
   const formId = article ? `article-editor-${article.id}` : "article-editor-new";
 
   return (
-    <AdminArticleShell pendingReviews={queue.summary.pendingCount} session={session}>
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
         {/* Header */}
         <Card>
           <CardContent className="flex items-center justify-between gap-2 pt-6">
@@ -135,7 +127,6 @@ export function EditorialArticleEditorPageView({
           suggestedLanguage={suggestedLanguage}
           translationGroupId={article?.translationGroupId ?? suggestedTranslationGroupId ?? null}
         />
-      </div>
-    </AdminArticleShell>
+    </div>
   );
 }

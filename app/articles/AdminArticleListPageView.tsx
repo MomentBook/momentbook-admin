@@ -4,13 +4,11 @@ import {
   buildAdminArticleNewHref,
   buildAdminArticleWorkspaceHref,
 } from "@/lib/admin/paths";
-import type { AdminSession } from "@/lib/admin/session";
 import { type AdminEditorialArticleDashboardData } from "@/lib/editorial/admin";
 import { getEditorialCategoryLabel } from "@/lib/editorial/copy";
 import { editorialArticleCategories } from "@/lib/editorial/types";
 import { languageList } from "@/lib/i18n/config";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
-import { AdminArticleShell } from "./AdminArticleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,15 +24,11 @@ function formatAdminDate(value: string): string {
 type AdminArticleListPageViewProps = {
   banner: AdminDashboardBanner | null;
   dashboard: AdminEditorialArticleDashboardData;
-  pendingReviews?: number;
-  session: AdminSession;
 };
 
 export function AdminArticleListPageView({
   banner,
   dashboard,
-  pendingReviews,
-  session,
 }: AdminArticleListPageViewProps) {
   const currentWorkspaceHref = buildAdminArticleWorkspaceHref({
     page: dashboard.page,
@@ -43,8 +37,7 @@ export function AdminArticleListPageView({
   });
 
   return (
-    <AdminArticleShell pendingReviews={pendingReviews} session={session}>
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
         {/* Header */}
         <Card>
           <CardContent className="flex items-center justify-between gap-2 pt-6">
@@ -236,7 +229,6 @@ export function AdminArticleListPageView({
             </Link>
           </div>
         ) : null}
-      </div>
-    </AdminArticleShell>
+    </div>
   );
 }

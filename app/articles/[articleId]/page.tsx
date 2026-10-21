@@ -7,16 +7,13 @@ import {
   withAdminQuery,
 } from "@/lib/admin/paths";
 import { isBackendApiError } from "@/lib/api/client";
-import {
-  ADMIN_REVIEW_PAGE_SIZE,
-  loadAdminReviewWorkspaceData,
-} from "@/lib/admin/reviews";
 import { loadAdminEditorialArticle } from "@/lib/editorial/admin";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import {
+  loadWorkspacePage,
   readQueryParam,
-  withAdminWorkspaceSession,
 } from "@/app/_workspace/workspace-data";
+import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { resolveArticleBanner } from "../article-banner";
 import {
@@ -51,33 +48,13 @@ export default async function AdminArticleDetailPage({
     mutation: readQueryParam(resolvedSearchParams.mutation),
     articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
   });
-  let data, session;
+  let result;
 
   try {
-    const result = await withAdminWorkspaceSession({
+    result = await loadWorkspacePage({
       returnTo: nextPath,
-      load: async (accessToken) => {
-        const [reviews, article] = await Promise.all([
-          loadAdminReviewWorkspaceData({
-            accessToken,
-            page: 1,
-            status: "pending",
-            limit: ADMIN_REVIEW_PAGE_SIZE,
-          }),
-          loadAdminEditorialArticle({
-            accessToken,
-            articleId,
-          }),
-        ]);
-
-        return {
-          article,
-          queue: reviews.queue,
-        };
-      },
+      load: (accessToken) => loadAdminEditorialArticle({ accessToken, articleId }),
     });
-    data = result.data;
-    session = result.session;
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
@@ -91,7 +68,7 @@ export default async function AdminArticleDetailPage({
 
     throw error;
   }
-  const article = data.article;
+  const article = result.data;
 
   if (!article) {
     redirect(
@@ -102,16 +79,16 @@ export default async function AdminArticleDetailPage({
   }
 
   return (
-    <EditorialArticleEditorPageView
-      article={article}
-      banner={banner}
-      deleteAction={deleteEditorialArticleAction}
-      nextPath={nextPath}
-      queue={data.queue}
-      returnTo={returnTo}
-      saveAction={updateEditorialArticleAction}
-      session={session}
-      title="Edit article"
-    />
+    <WorkspaceShell active="articles" counts={result.counts} session={result.session}>
+      <EditorialArticleEditorPageView
+        article={article}
+        banner={banner}
+        deleteAction={deleteEditorialArticleAction}
+        nextPath={nextPath}
+        returnTo={returnTo}
+        saveAction={updateEditorialArticleAction}
+        title="Edit article"
+      />
+    </WorkspaceShell>
   );
 }
