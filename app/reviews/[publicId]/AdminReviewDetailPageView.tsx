@@ -1,12 +1,21 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ConfirmActionForm } from "@/components/confirm-action-form";
+import { LocalizedDate, LocalizedDateTime } from "@/components/LocalizedTime";
 import {
   requeueJourneyReviewAction,
   updatePublishedJourneyReviewAction,
-} from "@/app/_workspace/actions";
+} from "@/app/reviews/actions";
+import { updateAdminUserStatusAction } from "@/app/reports/actions";
+import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
+import { buildAdminReportDetailHref, buildAdminReportsHref } from "@/lib/admin/paths";
+import { getReportReasonLabel, getReportStatusLabel } from "@/lib/admin/reports-shared";
+import type { ReviewQueueTab } from "@/lib/admin/review-queue";
 import {
   getAdminReviewStatusLabel,
   type AdminReviewDetail,
@@ -14,50 +23,31 @@ import {
   type AdminReviewPhoto,
   type AdminReviewStatus,
 } from "@/lib/admin/reviews";
-import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
+import { defaultLanguage } from "@/lib/i18n/config";
+import type { AdminReportItemDto } from "@/src/apis/types";
+import { ReviewBanner } from "../ReviewBanner";
+import type { AdminReviewBanner } from "../review-banner";
 import { LightboxPhotoTile } from "./LightboxPhotoTile";
 
-type ReviewMutationSummary = {
-  publicId: string;
-  reviewStatus: AdminReviewStatus;
-};
+const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
+
+export type ReportHistory = { items: AdminReportItemDto[]; total: number } | null;
 
 type AdminReviewDetailPageViewProps = {
   backHref: string;
-  banner: AdminDashboardBanner | null;
+  banner: AdminReviewBanner | AdminDashboardBanner | null;
   detail: AdminReviewDetail;
-  pendingCount: number;
-  reviewMutation: ReviewMutationSummary | null;
+  journeyReports: ReportHistory;
+  authorReports: ReportHistory;
+  /** The queue tab the admin came from; "pending" enables auto-advance. */
+  queueStatus: ReviewQueueTab;
   returnTo: string;
-  targetPublicId: string | null;
 };
 
 function badgeVariantClass(status: AdminReviewStatus): "default" | "destructive" | "secondary" {
   if (status === "APPROVED") return "default";
   if (status === "REJECTED") return "destructive";
   return "secondary";
-}
-
-function resolveDefaultReviewStatus(options: {
-  detail: AdminReviewDetail;
-  reviewMutation: ReviewMutationSummary | null;
-  targetPublicId: string | null;
-}): AdminReviewStatus {
-  const trimmedTarget = options.targetPublicId?.trim() || "";
-  const activeTarget = trimmedTarget || options.detail.journey.publicId;
-
-  if (
-    options.reviewMutation &&
-    options.reviewMutation.publicId === activeTarget
-  ) {
-    return options.reviewMutation.reviewStatus;
-  }
-
-  if (!trimmedTarget || trimmedTarget === options.detail.journey.publicId) {
-    return options.detail.journey.review.status;
-  }
-
-  return "PENDING";
 }
 
 function getSectionHeading(
@@ -82,39 +72,6 @@ function buildPhotoAltText(
   total: number,
 ): string {
   return `${sectionTitle} photo ${index} of ${total}`;
-}
-
-function PageHeader({
-  banner,
-  pendingCount,
-}: {
-  banner: AdminDashboardBanner | null;
-  pendingCount: number;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight">Review evidence</h2>
-        <Badge variant={pendingCount > 0 ? "secondary" : "outline"}>
-          {pendingCount} pending
-        </Badge>
-      </div>
-
-      {banner ? (
-        <Alert
-          variant={
-            banner.tone === "error"
-              ? "destructive"
-              : banner.tone === "success"
-                ? "default"
-                : "default"
-          }
-        >
-          <AlertTitle>{banner.message}</AlertTitle>
-        </Alert>
-      ) : null}
-    </div>
-  );
 }
 
 function PhotoTile({
@@ -211,209 +168,356 @@ function EmptyEvidenceCard({ detail }: { detail: AdminReviewDetail }) {
   );
 }
 
-function JourneySummary({
-  detail,
-  backHref,
-}: {
-  detail: AdminReviewDetail;
-  backHref: string;
-}) {
-  const review = detail.journey.review;
+function JourneyHeader({ backHref, detail }: { backHref: string; detail: AdminReviewDetail }) {
+  const { journey } = detail;
 
   return (
-    <Card>
-      <CardContent className="space-y-3 pt-6">
-        <div className="flex items-center justify-between gap-2">
-          <Link href={backHref}>
-            <Button variant="outline" size="sm">Back to reviews</Button>
-          </Link>
+    <div className="flex flex-col gap-2">
+      <Button asChild variant="ghost" size="sm" className="-ml-2 self-start">
+        <Link href={backHref}>
+          <ChevronLeft />
+          Back to queue
+        </Link>
+      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {journey.title || "Untitled journey"}
+        </h1>
+        <Badge variant={badgeVariantClass(journey.review.status)}>
+          {getAdminReviewStatusLabel(journey.review.status)}
+        </Badge>
+      </div>
+      {journey.description ? (
+        <p className="text-sm text-muted-foreground">{journey.description}</p>
+      ) : null}
+      <p className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+        <span className="font-mono">{journey.publicId}</span>
+        {journey.publishedAt ? (
+          <span>
+            First published{" "}
+            <LocalizedDate
+              lang={ADMIN_DISPLAY_LANGUAGE}
+              timestamp={Date.parse(journey.publishedAt)}
+            />
+          </span>
+        ) : null}
+        <span>{detail.evidence.loadedCount} photos</span>
+      </p>
+    </div>
+  );
+}
 
-          <Badge variant={badgeVariantClass(review.status)}>
-            {getAdminReviewStatusLabel(review.status)}
-          </Badge>
-        </div>
+function TranslationBox({ detail, returnTo }: { detail: AdminReviewDetail; returnTo: string }) {
+  const { journey } = detail;
+  const { review } = journey;
 
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Journey</span>
-          <h1 className="text-2xl font-bold">
-            {detail.journey.title || "Untitled journey"}
-          </h1>
-          {detail.journey.description ? (
-            <p className="text-sm text-muted-foreground">{detail.journey.description}</p>
+  if (!review.localizationPending && !review.enqueueFailed) {
+    return null;
+  }
+
+  const pendingSince = Date.parse(journey.updatedAt);
+
+  return (
+    <Card className="border-amber-300 dark:border-amber-800">
+      <CardHeader>
+        <CardTitle className="text-base">
+          {review.enqueueFailed ? "Translation failed to enqueue" : "Translation pending"}
+        </CardTitle>
+        <CardDescription>
+          {review.enqueueFailed
+            ? "The translation job could not be queued. Retry it, or approve without it."
+            : "An approved journey goes public once its translation lands."}
+          {Number.isFinite(pendingSince) ? (
+            <>
+              {" "}
+              Pending since{" "}
+              <LocalizedDateTime lang={ADMIN_DISPLAY_LANGUAGE} timestamp={pendingSince} />.
+            </>
           ) : null}
-        </div>
-
-        {review.localizationPending || review.enqueueFailed ? (
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Translation</span>
-            <p className="text-sm text-muted-foreground">
-              {review.enqueueFailed
-                ? "The translation job could not be queued. Retry it below."
-                : "Translation into all 9 languages has not landed yet. An approved journey goes public once it does."}
-            </p>
-          </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-wrap gap-2">
+        <form action={requeueJourneyReviewAction}>
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <input type="hidden" name="targetPublicId" value={journey.publicId} />
+          <Button type="submit" variant="outline" size="sm">
+            Retry translation
+          </Button>
+        </form>
+        {review.status !== "REJECTED" ? (
+          <ConfirmActionForm
+            action={updatePublishedJourneyReviewAction}
+            fields={{
+              returnTo,
+              targetPublicId: journey.publicId,
+              reviewStatus: "APPROVED",
+              acceptUntranslated: "true",
+              ...(journey.publishOperationId
+                ? { publishOperationId: journey.publishOperationId }
+                : {}),
+            }}
+            triggerLabel="Approve without translation"
+            title="Approve without translation?"
+            description="Publishes the original text to every language now and posts an audit message to Slack."
+            confirmLabel="Approve without translation"
+          />
         ) : null}
       </CardContent>
     </Card>
   );
 }
 
-function ReviewUpdatePanel({
-  detail,
-  reviewMutation,
-  returnTo,
-  targetPublicId,
-}: {
-  detail: AdminReviewDetail;
-  reviewMutation: ReviewMutationSummary | null;
-  returnTo: string;
-  targetPublicId: string | null;
-}) {
-  const effectiveTargetPublicId = targetPublicId ?? detail.journey.publicId;
-  const defaultReviewStatus = resolveDefaultReviewStatus({
-    detail,
-    reviewMutation,
-    targetPublicId,
-  });
+function TranslationsDetails({ detail }: { detail: AdminReviewDetail }) {
+  const { journey } = detail;
+  const entries = journey.localizedContent?.entries ?? [];
+
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-lg">Review status</CardTitle>
-          {reviewMutation ? (
-            <Badge variant={badgeVariantClass(reviewMutation.reviewStatus)}>
-              {getAdminReviewStatusLabel(reviewMutation.reviewStatus)}
-            </Badge>
-          ) : null}
-        </div>
-      </CardHeader>
-
       <CardContent>
-        <form action={updatePublishedJourneyReviewAction}>
+        <details>
+          <summary className="cursor-pointer text-sm font-medium">
+            Translations ({entries.length})
+          </summary>
+          <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-xs">
+            <dt className="text-muted-foreground">Source language</dt>
+            <dd>{journey.localizedContent?.sourceLanguage ?? "—"}</dd>
+            <dt className="text-muted-foreground">Model</dt>
+            <dd>{journey.localizationModel ?? "—"}</dd>
+            <dt className="text-muted-foreground">Published without translation</dt>
+            <dd>{journey.publishedWithoutTranslation ? "Yes" : "No"}</dd>
+          </dl>
+          {entries.length > 0 ? (
+            <ul className="mt-3 flex flex-col">
+              {entries.map((entry) => (
+                <li key={entry.locale} className="border-t py-2">
+                  <p className="font-mono text-xs text-muted-foreground">
+                    {entry.locale} · {entry.languageName}
+                  </p>
+                  <p className="text-sm font-medium">{entry.title ?? "—"}</p>
+                  {entry.description ? (
+                    <p className="text-sm text-muted-foreground">{entry.description}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">No translations yet.</p>
+          )}
+        </details>
+      </CardContent>
+    </Card>
+  );
+}
+
+const DECISIONS = [
+  { status: "APPROVED", label: "Approve", variant: "default" },
+  { status: "REJECTED", label: "Reject", variant: "destructive" },
+  { status: "PENDING", label: "Move to pending", variant: "outline" },
+] as const;
+
+function DecisionPanel({
+  detail,
+  queueStatus,
+  returnTo,
+}: {
+  detail: AdminReviewDetail;
+  queueStatus: ReviewQueueTab;
+  returnTo: string;
+}) {
+  const { journey } = detail;
+  const autoAdvance = queueStatus === "pending";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Decision</CardTitle>
+        <CardDescription>
+          {autoAdvance
+            ? "Approve and Reject open the next pending journey."
+            : "Decisions keep you on this journey."}{" "}
+          You can change a decision here at any time.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form action={updatePublishedJourneyReviewAction} className="flex flex-col gap-3">
           <input type="hidden" name="returnTo" value={returnTo} />
-          <input type="hidden" name="targetPublicId" value={effectiveTargetPublicId} />
-          {detail.journey.publishOperationId &&
-          effectiveTargetPublicId === detail.journey.publicId ? (
-            <input
-              type="hidden"
-              name="publishOperationId"
-              value={detail.journey.publishOperationId}
-            />
+          <input type="hidden" name="targetPublicId" value={journey.publicId} />
+          <input type="hidden" name="queueStatus" value={queueStatus} />
+          {journey.publishOperationId ? (
+            <input type="hidden" name="publishOperationId" value={journey.publishOperationId} />
           ) : null}
-
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-2">
-              <span className="text-xs text-muted-foreground">Review status</span>
-              <div className="flex flex-wrap gap-3">
-                {(
-                  [
-                    ["APPROVED", "Approved"],
-                    ["REJECTED", "Rejected"],
-                  ] as const
-                ).map(([value, label]) => (
-                  <label
-                    key={value}
-                    className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
-                  >
-                    <input
-                      type="radio"
-                      name="reviewStatus"
-                      value={value}
-                      defaultChecked={defaultReviewStatus === value}
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <Button type="submit" variant="default">Save</Button>
+          <div className="grid gap-2">
+            {DECISIONS.map((decision) => (
+              <Button
+                key={decision.status}
+                type="submit"
+                name="reviewStatus"
+                value={decision.status}
+                variant={decision.variant}
+                disabled={journey.review.status === decision.status}
+              >
+                {decision.label}
+              </Button>
+            ))}
           </div>
+          {autoAdvance ? (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="stay" value="1" className="size-4 accent-primary" />
+              Stay on this journey
+            </label>
+          ) : null}
         </form>
       </CardContent>
     </Card>
   );
 }
 
-function RequeuePanel({
+function ReportHistoryList({
+  title,
+  history,
+  viewAllHref,
+}: {
+  title: string;
+  history: ReportHistory;
+  viewAllHref: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-medium">{title}</h3>
+        {history && history.total > 0 ? (
+          <Link href={viewAllHref} className="text-xs text-primary hover:underline">
+            View all {history.total}
+          </Link>
+        ) : null}
+      </div>
+      {history === null ? (
+        <p className="text-xs text-muted-foreground">Could not load reports.</p>
+      ) : history.items.length > 0 ? (
+        <ul className="flex flex-col">
+          {history.items.map((report) => (
+            <li key={report._id}>
+              <Link
+                href={buildAdminReportDetailHref(report._id)}
+                className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted"
+              >
+                <span>{getReportReasonLabel(report.reason)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {getReportStatusLabel(report.status)}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-muted-foreground">None.</p>
+      )}
+    </div>
+  );
+}
+
+function ContextPanel({
+  authorReports,
   detail,
+  journeyReports,
   returnTo,
 }: {
+  authorReports: ReportHistory;
   detail: AdminReviewDetail;
+  journeyReports: ReportHistory;
   returnTo: string;
 }) {
-  const { localizationPending, enqueueFailed } = detail.journey.review;
-
-  if (!localizationPending && !enqueueFailed) {
-    return null;
-  }
+  const { journey } = detail;
+  const authorLabel = journey.authorName ?? journey.userId;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Translation</CardTitle>
+        <CardTitle className="text-base">Context</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          If the translation seems stuck, queue it again.
-        </p>
-
-        <form action={requeueJourneyReviewAction}>
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <input type="hidden" name="targetPublicId" value={detail.journey.publicId} />
-          <Button type="submit" variant="outline">Retry translation</Button>
-        </form>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground">Author</span>
+          <span className="text-sm font-medium">{journey.authorName ?? "Unnamed"}</span>
+          <span className="break-all font-mono text-xs text-muted-foreground">
+            {journey.userId}
+          </span>
+        </div>
+        <ReportHistoryList
+          title="Reports on this journey"
+          history={journeyReports}
+          viewAllHref={buildAdminReportsHref({
+            targetType: "PUBLISHED_JOURNEY",
+            targetId: journey.publicId,
+          })}
+        />
+        <ReportHistoryList
+          title="Reports on the author"
+          history={authorReports}
+          viewAllHref={buildAdminReportsHref({ targetType: "USER", targetId: journey.userId })}
+        />
+        <ConfirmActionForm
+          action={updateAdminUserStatusAction}
+          fields={{ userId: journey.userId, status: "banned", returnTo }}
+          triggerLabel="Ban author"
+          triggerVariant="destructive"
+          title={`Ban ${authorLabel}?`}
+          description={`Bans ${authorLabel} (${journey.userId}). All of their sessions are revoked immediately.`}
+          confirmLabel="Ban author"
+        >
+          <div className="grid gap-1.5">
+            <Label htmlFor="ban-author-reason">Reason (optional)</Label>
+            <Input id="ban-author-reason" name="reason" />
+            <p className="text-xs text-muted-foreground">Sent to the API; not stored yet.</p>
+          </div>
+        </ConfirmActionForm>
       </CardContent>
     </Card>
   );
 }
 
 export function AdminReviewDetailPageView({
+  authorReports,
   backHref,
   banner,
   detail,
-  pendingCount,
-  reviewMutation,
+  journeyReports,
+  queueStatus,
   returnTo,
-  targetPublicId,
 }: AdminReviewDetailPageViewProps) {
   return (
     <div className="flex flex-col gap-4">
-        <PageHeader
-          banner={banner}
-          pendingCount={pendingCount}
-        />
+      <ReviewBanner banner={banner} returnTo={returnTo} />
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
-          <div className="flex min-w-0 flex-1 flex-col gap-4">
-            <JourneySummary detail={detail} backHref={backHref} />
-            {detail.evidence.sections.length > 0 ? (
-              detail.evidence.sections.map((section, index) => (
-                <EvidenceSectionCard
-                  key={section.key}
-                  index={index}
-                  section={section}
-                  totalSections={detail.evidence.sections.length}
-                />
-              ))
-            ) : (
-              <EmptyEvidenceCard detail={detail} />
-            )}
-          </div>
-
-          <div className="flex w-full flex-col gap-3 lg:w-80 lg:shrink-0">
-            <ReviewUpdatePanel
-              detail={detail}
-              reviewMutation={reviewMutation}
-              returnTo={returnTo}
-              targetPublicId={targetPublicId}
-            />
-            <RequeuePanel
-              detail={detail}
-              returnTo={returnTo}
-            />
-          </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <JourneyHeader backHref={backHref} detail={detail} />
+          <TranslationBox detail={detail} returnTo={returnTo} />
+          {detail.evidence.sections.length > 0 ? (
+            detail.evidence.sections.map((section, index) => (
+              <EvidenceSectionCard
+                key={section.key}
+                index={index}
+                section={section}
+                totalSections={detail.evidence.sections.length}
+              />
+            ))
+          ) : (
+            <EmptyEvidenceCard detail={detail} />
+          )}
+          <TranslationsDetails detail={detail} />
         </div>
+
+        <aside className="flex w-full flex-col gap-4 lg:sticky lg:top-4 lg:w-80 lg:shrink-0">
+          <DecisionPanel detail={detail} queueStatus={queueStatus} returnTo={returnTo} />
+          <ContextPanel
+            authorReports={authorReports}
+            detail={detail}
+            journeyReports={journeyReports}
+            returnTo={returnTo}
+          />
+        </aside>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/api/client", async () => {
+  const fixtures = await import("@/scripts/__fixtures__/admin-journeys");
+  return {
+    BackendApiError: fixtures.TestBackendApiError,
+    isBackendApiError: fixtures.isTestBackendApiError,
+  };
+});
 
 const listAdminReports = vi.fn();
 
@@ -57,5 +64,27 @@ describe("loadReportHistory", () => {
       accessToken: "t",
       query: { page: 1, limit: 3, reporterId: "user-9" },
     });
+  });
+});
+
+describe("loadReportHistoryOrNull", () => {
+  it("returns null when the reports endpoint fails", async () => {
+    const { TestBackendApiError } = await import("@/scripts/__fixtures__/admin-journeys");
+    listAdminReports.mockRejectedValue(new TestBackendApiError("boom", 500));
+    const { loadReportHistoryOrNull } = await import("@/lib/admin/reports");
+
+    await expect(
+      loadReportHistoryOrNull({ accessToken: "t", targetType: "USER", targetId: "u1" }),
+    ).resolves.toBeNull();
+  });
+
+  it("still propagates an expired session", async () => {
+    const { TestBackendApiError } = await import("@/scripts/__fixtures__/admin-journeys");
+    listAdminReports.mockRejectedValue(new TestBackendApiError("expired", 401));
+    const { loadReportHistoryOrNull } = await import("@/lib/admin/reports");
+
+    await expect(
+      loadReportHistoryOrNull({ accessToken: "t", targetType: "USER", targetId: "u1" }),
+    ).rejects.toMatchObject({ statusCode: 401 });
   });
 });

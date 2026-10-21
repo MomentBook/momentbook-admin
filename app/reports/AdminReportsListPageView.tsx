@@ -115,7 +115,7 @@ export function AdminReportsListPageView({
                   : "default"
             }
           >
-            <AlertTitle>{banner.message}</AlertTitle>
+            <AlertTitle className="line-clamp-none">{banner.message}</AlertTitle>
           </Alert>
         ) : null}
       </div>

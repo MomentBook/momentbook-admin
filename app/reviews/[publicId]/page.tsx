@@ -7,17 +7,15 @@ import {
 } from "@/lib/admin/paths";
 import { isBackendApiError } from "@/lib/api/client";
 import { parseReviewQueuePage, parseReviewQueueTab } from "@/lib/admin/review-queue";
-import { loadAdminReviewDetail } from "@/lib/admin/reviews";
+import { loadReportHistoryOrNull } from "@/lib/admin/reports";
+import { loadAdminReviewDetail, parseAdminReviewStatus } from "@/lib/admin/reviews";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { resolveSupportedLanguage, toLocaleTag } from "@/lib/i18n/config";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
-import {
-  loadWorkspacePage,
-  parseReviewStatus,
-  readQueryParam,
-  resolveBanner,
-} from "@/app/_workspace/workspace-data";
+import { loadWorkspacePage, readQueryParam } from "@/app/_workspace/workspace-data";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
+import { resolveUserStatusBanner } from "@/app/_workspace/user-status-banner";
+import { resolveReviewBanner } from "../review-banner";
 
 export const metadata: Metadata = {
   title: "Review Detail",
@@ -40,39 +38,57 @@ export default async function AdminReviewDetailPage({
     readQueryParam(resolvedSearchParams.lang),
   );
   const detailLocale = detailLanguage ? toLocaleTag(detailLanguage) : null;
-  const targetPublicId = readQueryParam(resolvedSearchParams.targetPublicId);
-  const mutation = readQueryParam(resolvedSearchParams.mutation);
-  const reviewStatus = parseReviewStatus(
-    readQueryParam(resolvedSearchParams.reviewStatus),
-  );
   const returnTo = buildAdminReviewDetailHref(publicId, {
     lang: detailLocale,
     page: page > 1 ? String(page) : null,
     status: status === "pending" ? null : status,
   });
-
-  const banner = resolveBanner({
-    error: readQueryParam(resolvedSearchParams.error),
-    mutation,
-    reviewStatus,
-    targetPublicId,
-  });
-
-  const reviewMutation =
-    mutation === "review_updated" && targetPublicId && reviewStatus
-      ? {
-          publicId: targetPublicId,
-          reviewStatus,
-        }
-      : null;
+  const read = (key: string) => readQueryParam(resolvedSearchParams[key]);
+  const banner =
+    resolveReviewBanner({
+      error: read("error"),
+      mutation: read("mutation"),
+      reviewStatus: parseAdminReviewStatus(read("reviewStatus")),
+      targetPublicId: read("targetPublicId"),
+    }) ??
+    resolveUserStatusBanner({
+      error: read("error"),
+      message: read("message"),
+      mutation: read("mutation"),
+      userStatus: read("userStatus"),
+    });
 
   let result;
 
   try {
     result = await loadWorkspacePage({
       returnTo,
-      load: (accessToken) =>
-        loadAdminReviewDetail({ accessToken, publicId, lang: detailLanguage }),
+      load: async (accessToken) => {
+        const detail = await loadAdminReviewDetail({
+          accessToken,
+          publicId,
+          lang: detailLanguage,
+        });
+
+        if (!detail) {
+          return null;
+        }
+
+        const [journeyReports, authorReports] = await Promise.all([
+          loadReportHistoryOrNull({
+            accessToken,
+            targetType: "PUBLISHED_JOURNEY",
+            targetId: detail.journey.publicId,
+          }),
+          loadReportHistoryOrNull({
+            accessToken,
+            targetType: "USER",
+            targetId: detail.journey.userId,
+          }),
+        ]);
+
+        return { detail, journeyReports, authorReports };
+      },
     });
   } catch (error) {
     if (isBackendApiError(error)) {
@@ -103,13 +119,13 @@ export default async function AdminReviewDetailPage({
   return (
     <WorkspaceShell active="reviews" counts={result.counts} session={result.session}>
       <AdminReviewDetailPageView
+        authorReports={result.data.authorReports}
         backHref={backHref}
         banner={banner}
-        detail={result.data}
-        pendingCount={result.counts.pendingReviews}
-        reviewMutation={reviewMutation}
+        detail={result.data.detail}
+        journeyReports={result.data.journeyReports}
+        queueStatus={status}
         returnTo={returnTo}
-        targetPublicId={targetPublicId}
       />
     </WorkspaceShell>
   );

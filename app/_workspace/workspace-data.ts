@@ -4,11 +4,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAttentionCounts, type AttentionCounts } from "@/lib/admin/attention";
-import {
-  getAdminReviewStatusLabel,
-  type AdminReviewStatus,
-  parseAdminReviewStatus,
-} from "@/lib/admin/reviews";
 import { buildAdminSessionInvalidateHref } from "@/lib/admin/paths";
 import {
   type AdminSession,
@@ -37,77 +32,6 @@ export function readQueryParam(
 export function parsePage(value: string | null): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1;
-}
-
-export function parseReviewStatus(value: string | null): AdminReviewStatus | null {
-  return parseAdminReviewStatus(value);
-}
-
-export function resolveBanner(options: {
-  error: string | null;
-  mutation: string | null;
-  reviewStatus: AdminReviewStatus | null;
-  targetPublicId: string | null;
-}): AdminDashboardBanner | null {
-  if (
-    options.mutation === "review_updated" &&
-    options.targetPublicId &&
-    options.reviewStatus
-  ) {
-
-    return {
-      tone: "success",
-      message: `${options.targetPublicId} updated to ${getAdminReviewStatusLabel(options.reviewStatus)}.`,
-    };
-  }
-
-  if (options.mutation === "review_requeued" && options.targetPublicId) {
-    return {
-      tone: "default",
-      message: `${options.targetPublicId} translation re-queued.`,
-    };
-  }
-
-  switch (options.error) {
-    case "missing_public_id":
-      return {
-        tone: "error",
-        message: "Enter a public ID.",
-      };
-    case "invalid_review_status":
-      return {
-        tone: "error",
-        message: "Choose a review status.",
-      };
-    case "admin_access_denied":
-      return {
-        tone: "error",
-        message: "This session cannot update review status.",
-      };
-    case "review_target_not_found":
-      return {
-        tone: "error",
-        message: "No published journey matched that public ID.",
-      };
-    case "review_state_conflict":
-      return {
-        tone: "error",
-        message:
-          "The owner republished this journey after you opened it. Review the current version and decide again.",
-      };
-    case "review_update_failed":
-      return {
-        tone: "error",
-        message: "Could not update review status. Try again.",
-      };
-    case "review_requeue_failed":
-      return {
-        tone: "error",
-        message: "Could not re-queue the translation. Try again.",
-      };
-    default:
-      return null;
-  }
 }
 
 /**

@@ -9,12 +9,9 @@ import {
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
-import {
-  loadWorkspacePage,
-  parseReviewStatus,
-  readQueryParam,
-  resolveBanner,
-} from "@/app/_workspace/workspace-data";
+import { parseAdminReviewStatus } from "@/lib/admin/reviews";
+import { loadWorkspacePage, readQueryParam } from "@/app/_workspace/workspace-data";
+import { resolveReviewBanner } from "./review-banner";
 import { ReviewQueuePageView } from "./ReviewQueuePageView";
 
 export const metadata: Metadata = {
@@ -31,10 +28,10 @@ export default async function AdminReviewsPage({
   const tab = parseReviewQueueTab(readQueryParam(resolvedSearchParams.status));
   const pageNumber = parseReviewQueuePage(readQueryParam(resolvedSearchParams.page));
   const returnTo = buildAdminReviewQueueHref({ status: tab, page: pageNumber });
-  const banner = resolveBanner({
+  const banner = resolveReviewBanner({
     error: readQueryParam(resolvedSearchParams.error),
     mutation: readQueryParam(resolvedSearchParams.mutation),
-    reviewStatus: parseReviewStatus(readQueryParam(resolvedSearchParams.reviewStatus)),
+    reviewStatus: parseAdminReviewStatus(readQueryParam(resolvedSearchParams.reviewStatus)),
     targetPublicId: readQueryParam(resolvedSearchParams.targetPublicId),
   });
 
@@ -62,7 +59,7 @@ export default async function AdminReviewsPage({
 
   return (
     <WorkspaceShell active="reviews" counts={page.counts} session={page.session}>
-      <ReviewQueuePageView banner={banner} queue={page.data} />
+      <ReviewQueuePageView banner={banner} queue={page.data} returnTo={returnTo} />
     </WorkspaceShell>
   );
 }

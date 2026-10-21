@@ -123,7 +123,7 @@ export function AttentionOverview({
 
       {banner ? (
         <Alert variant={banner.tone === "error" ? "destructive" : "default"}>
-          <AlertTitle>{banner.message}</AlertTitle>
+          <AlertTitle className="line-clamp-none">{banner.message}</AlertTitle>
         </Alert>
       ) : null}
 

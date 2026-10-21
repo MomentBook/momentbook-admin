@@ -13,12 +13,9 @@ import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AttentionOverview } from "@/app/_workspace/AttentionOverview";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
-import {
-  loadWorkspacePage,
-  parseReviewStatus,
-  readQueryParam,
-  resolveBanner,
-} from "@/app/_workspace/workspace-data";
+import { parseAdminReviewStatus } from "@/lib/admin/reviews";
+import { loadWorkspacePage, readQueryParam } from "@/app/_workspace/workspace-data";
+import { resolveReviewBanner } from "@/app/reviews/review-banner";
 
 export const metadata: Metadata = {
   title: "Attention",
@@ -84,10 +81,10 @@ export default async function AdminIndexPage({
   const resolvedSearchParams = await searchParams;
   redirectLegacyTab(resolvedSearchParams);
 
-  const banner = resolveBanner({
+  const banner = resolveReviewBanner({
     error: readQueryParam(resolvedSearchParams.error),
     mutation: readQueryParam(resolvedSearchParams.mutation),
-    reviewStatus: parseReviewStatus(readQueryParam(resolvedSearchParams.reviewStatus)),
+    reviewStatus: parseAdminReviewStatus(readQueryParam(resolvedSearchParams.reviewStatus)),
     targetPublicId: readQueryParam(resolvedSearchParams.targetPublicId),
   });
 

@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CircleCheck, ImageOff } from "lucide-react";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +12,8 @@ import { SLACK_TRANSLATION_NOTE } from "@/lib/admin/attention";
 import type { ReviewQueuePage, ReviewQueueTab } from "@/lib/admin/review-queue";
 import { getAdminReviewStatusLabel, type AdminReviewStatus } from "@/lib/admin/reviews";
 import { defaultLanguage } from "@/lib/i18n/config";
-import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
+import type { AdminReviewBanner } from "./review-banner";
+import { ReviewBanner } from "./ReviewBanner";
 
 const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
 
@@ -128,9 +128,11 @@ function Pagination({ queue }: { queue: ReviewQueuePage }) {
 export function ReviewQueuePageView({
   banner,
   queue,
+  returnTo,
 }: {
-  banner: AdminDashboardBanner | null;
+  banner: AdminReviewBanner | null;
   queue: ReviewQueuePage;
+  returnTo: string;
 }) {
   const detailQuery = {
     status: queue.tab === "pending" ? null : queue.tab,
@@ -147,11 +149,7 @@ export function ReviewQueuePageView({
         </p>
       </div>
 
-      {banner ? (
-        <Alert variant={banner.tone === "error" ? "destructive" : "default"}>
-          <AlertTitle>{banner.message}</AlertTitle>
-        </Alert>
-      ) : null}
+      <ReviewBanner banner={banner} returnTo={returnTo} />
 
       <QueueTabs queue={queue} />
 

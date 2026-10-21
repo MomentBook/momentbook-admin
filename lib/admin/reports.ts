@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isBackendApiError } from "@/lib/api/client";
 import {
   getAdminReport,
   getAdminReportStats,
@@ -71,4 +72,21 @@ export async function loadReportHistory(input: {
   });
 
   return { items: reports.reports, total: reports.total };
+}
+
+/** Report history for a secondary panel: a failing reports endpoint shows
+ * "unavailable" instead of taking the page down, but 401/403 still reach the
+ * page's session handling. */
+export async function loadReportHistoryOrNull(
+  input: Parameters<typeof loadReportHistory>[0],
+): Promise<{ items: AdminReportItemDto[]; total: number } | null> {
+  try {
+    return await loadReportHistory(input);
+  } catch (error) {
+    if (isBackendApiError(error) && (error.statusCode === 401 || error.statusCode === 403)) {
+      throw error;
+    }
+
+    return null;
+  }
 }

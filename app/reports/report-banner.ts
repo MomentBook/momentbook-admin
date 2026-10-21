@@ -1,4 +1,5 @@
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
+import { resolveUserStatusBanner } from "@/app/_workspace/user-status-banner";
 
 type ResolveReportBannerOptions = {
   error: string | null;
@@ -20,13 +21,15 @@ export function resolveReportBanner(
     };
   }
 
-  if (options.mutation === "user_status_updated") {
-    return {
-      tone: "success",
-      message: options.userStatus === "banned"
-        ? "User has been banned and all active sessions revoked."
-        : "User ban lifted successfully.",
-    };
+  const userStatusBanner = resolveUserStatusBanner({
+    mutation: options.mutation ?? null,
+    userStatus: options.userStatus ?? null,
+    error: options.error,
+    message: options.message ?? null,
+  });
+
+  if (userStatusBanner) {
+    return userStatusBanner;
   }
 
   switch (options.error) {
@@ -44,11 +47,6 @@ export function resolveReportBanner(
       return {
         tone: "error",
         message: options.message || "Could not update the report. Try again.",
-      };
-    case "user_update_failed":
-      return {
-        tone: "error",
-        message: options.message || "Could not update user status. Try again.",
       };
     case "admin_access_denied":
       return {
