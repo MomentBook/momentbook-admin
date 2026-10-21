@@ -29,15 +29,25 @@ vi.mock("@/lib/admin/session", () => ({
   requireAdminActionSession,
 }));
 
-vi.mock("@/lib/admin/api", () => ({
+vi.mock("@/lib/api/client", () => ({
   BackendApiError: class BackendApiError extends Error {
     statusCode: number;
+    errorCode?: string;
 
-    constructor(message: string, statusCode: number) {
+    constructor(message: string, statusCode: number, errorCode?: string) {
       super(message);
       this.statusCode = statusCode;
+      this.errorCode = errorCode;
     }
   },
+  isBackendApiError: (error: unknown) =>
+    typeof error === "object" &&
+    error !== null &&
+    typeof (error as { statusCode?: unknown }).statusCode === "number" &&
+    typeof (error as { message?: unknown }).message === "string",
+}));
+
+vi.mock("@/lib/api/articles", () => ({
   createAdminArticle,
   deleteAdminArticle,
   updateAdminArticle,

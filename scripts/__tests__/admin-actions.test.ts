@@ -10,8 +10,9 @@ const cookies = vi.fn();
 const requireAdminActionSession = vi.fn();
 const getStoredAdminSession = vi.fn();
 const clearAdminSession = vi.fn();
-const logoutAdminFromBackend = vi.fn();
-const updatePublishedJourneyReviewStatus = vi.fn();
+const logoutAdmin = vi.fn();
+const updateReviewStatus = vi.fn();
+const requeueJourneyReview = vi.fn();
 
 vi.mock("next/navigation", () => ({
   redirect,
@@ -27,19 +28,31 @@ vi.mock("@/lib/admin/session", () => ({
   getStoredAdminSession,
 }));
 
-vi.mock("@/lib/admin/api", () => ({
-  AdminAccessDeniedError: class AdminAccessDeniedError extends Error {},
-  AdminSessionExpiredError: class AdminSessionExpiredError extends Error {},
+vi.mock("@/lib/api/client", () => ({
   BackendApiError: class BackendApiError extends Error {
     statusCode: number;
+    errorCode?: string;
 
-    constructor(message: string, statusCode: number) {
+    constructor(message: string, statusCode: number, errorCode?: string) {
       super(message);
       this.statusCode = statusCode;
+      this.errorCode = errorCode;
     }
   },
-  logoutAdminFromBackend,
-  updatePublishedJourneyReviewStatus,
+  isBackendApiError: (error: unknown) =>
+    typeof error === "object" &&
+    error !== null &&
+    typeof (error as { statusCode?: unknown }).statusCode === "number" &&
+    typeof (error as { message?: unknown }).message === "string",
+}));
+
+vi.mock("@/lib/api/auth", () => ({
+  logoutAdmin,
+}));
+
+vi.mock("@/lib/api/journeys", () => ({
+  requeueJourneyReview,
+  updateReviewStatus,
 }));
 
 async function loadActionsModule() {
@@ -57,7 +70,7 @@ describe("updatePublishedJourneyReviewAction", () => {
     requireAdminActionSession.mockResolvedValue({
       accessToken: "admin-access-token",
     });
-    updatePublishedJourneyReviewStatus.mockResolvedValue({
+    updateReviewStatus.mockResolvedValue({
       publicId: "public-123",
       review: {
         status: "APPROVED",
@@ -73,7 +86,7 @@ describe("updatePublishedJourneyReviewAction", () => {
     await expect(updatePublishedJourneyReviewAction(formData)).rejects.toThrow(
       "REDIRECT:/reviews/public-123?targetPublicId=public-123&mutation=review_updated&reviewStatus=APPROVED",
     );
-    expect(updatePublishedJourneyReviewStatus).toHaveBeenCalledWith({
+    expect(updateReviewStatus).toHaveBeenCalledWith({
       accessToken: "admin-access-token",
       publicId: "public-123",
       status: "APPROVED",

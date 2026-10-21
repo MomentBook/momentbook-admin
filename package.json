@@ -7,7 +7,10 @@
     "dev": "NODE_ENV=development next dev -p 3200",
     "build": "NODE_ENV=production next build",
     "start": "NODE_ENV=production next start -p 3200",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc --noEmit",
+    "verify": "yarn typecheck && yarn lint && yarn test"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",

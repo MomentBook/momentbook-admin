@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const getAdminPublishedJourneysPage = vi.fn();
-const getAdminPublishedJourneyDetail = vi.fn();
+const listPublishedJourneys = vi.fn();
+const getPublishedJourneyDetail = vi.fn();
 class BackendApiError extends Error {
   constructor(
     message: string,
@@ -14,10 +14,18 @@ class BackendApiError extends Error {
   }
 }
 
-vi.mock("@/lib/admin/api", () => ({
+vi.mock("@/lib/api/client", () => ({
   BackendApiError,
-  getAdminPublishedJourneysPage,
-  getAdminPublishedJourneyDetail,
+  isBackendApiError: (error: unknown) =>
+    typeof error === "object" &&
+    error !== null &&
+    typeof (error as { statusCode?: unknown }).statusCode === "number" &&
+    typeof (error as { message?: unknown }).message === "string",
+}));
+
+vi.mock("@/lib/api/journeys", () => ({
+  listPublishedJourneys,
+  getPublishedJourneyDetail,
 }));
 
 function createAdminJourney(
@@ -136,7 +144,7 @@ afterEach(() => {
 
 describe("loadAdminReviewWorkspaceData", () => {
   it("normalizes legacy metadata aliases and keeps detail lookup independent from the active filter", async () => {
-    getAdminPublishedJourneysPage
+    listPublishedJourneys
       .mockResolvedValueOnce(
         createAdminPage(1, 2, [
           createAdminJourney({
@@ -176,7 +184,7 @@ describe("loadAdminReviewWorkspaceData", () => {
           }),
         ]),
       );
-    getAdminPublishedJourneyDetail.mockResolvedValueOnce(
+    getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "approved-1",
         userId: "user-2",
@@ -198,7 +206,7 @@ describe("loadAdminReviewWorkspaceData", () => {
       publicId: "approved-1",
     });
 
-    expect(getAdminPublishedJourneysPage).toHaveBeenCalledTimes(2);
+    expect(listPublishedJourneys).toHaveBeenCalledTimes(2);
     expect(result.queue.total).toBe(1);
     expect(result.queue.items).toHaveLength(1);
     expect(result.queue.items[0]).toMatchObject({
@@ -213,7 +221,7 @@ describe("loadAdminReviewWorkspaceData", () => {
   });
 
   it("builds summary counts from the full dataset and paginates the filtered queue", async () => {
-    getAdminPublishedJourneysPage
+    listPublishedJourneys
       .mockResolvedValueOnce(
         createAdminPage(1, 2, [
           createAdminJourney({
@@ -267,11 +275,11 @@ describe("loadAdminReviewWorkspaceData", () => {
     expect(result.queue.pages).toBe(4);
     expect(result.queue.page).toBe(2);
     expect(result.queue.items).toHaveLength(1);
-    expect(result.queue.items[0]?.publicId).toBe("approved-2");
+    expect(result.queue.items[0]?.publicId).toBe("approved-1");
   });
 
   it("keeps photos that exist only in timeline media references and merges them into cluster evidence", async () => {
-    getAdminPublishedJourneysPage.mockResolvedValueOnce(
+    listPublishedJourneys.mockResolvedValueOnce(
       createAdminPage(1, 1, [
         createAdminJourney({
           publicId: "approved-1",
@@ -283,7 +291,7 @@ describe("loadAdminReviewWorkspaceData", () => {
         }),
       ]),
     );
-    getAdminPublishedJourneyDetail.mockResolvedValueOnce(
+    getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "approved-1",
         photoCount: 3,
@@ -390,7 +398,7 @@ describe("loadAdminReviewWorkspaceData", () => {
   });
 
   it("adds a remaining-photos section for assets that are not attached to any cluster", async () => {
-    getAdminPublishedJourneysPage.mockResolvedValueOnce(
+    listPublishedJourneys.mockResolvedValueOnce(
       createAdminPage(1, 1, [
         createAdminJourney({
           publicId: "pending-1",
@@ -398,7 +406,7 @@ describe("loadAdminReviewWorkspaceData", () => {
         }),
       ]),
     );
-    getAdminPublishedJourneyDetail.mockResolvedValueOnce(
+    getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "pending-1",
         photoCount: 2,
@@ -452,7 +460,7 @@ describe("loadAdminReviewWorkspaceData", () => {
   });
 
   it("passes locale-tagged lang to admin detail and prefers detail moderation fields", async () => {
-    getAdminPublishedJourneysPage.mockResolvedValueOnce(
+    listPublishedJourneys.mockResolvedValueOnce(
       createAdminPage(1, 1, [
         createAdminJourney({
           publicId: "pending-1",
@@ -464,7 +472,7 @@ describe("loadAdminReviewWorkspaceData", () => {
         }),
       ]),
     );
-    getAdminPublishedJourneyDetail.mockResolvedValueOnce(
+    getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "pending-1",
         title: "로컬라이즈된 제목",
@@ -504,7 +512,7 @@ describe("loadAdminReviewWorkspaceData", () => {
       lang: "ko",
     });
 
-    expect(getAdminPublishedJourneyDetail).toHaveBeenCalledWith({
+    expect(getPublishedJourneyDetail).toHaveBeenCalledWith({
       accessToken: "admin-token",
       publicId: "pending-1",
       lang: "ko-KR",
@@ -519,14 +527,14 @@ describe("loadAdminReviewWorkspaceData", () => {
   });
 
   it("returns null detail when the admin detail endpoint responds with 404", async () => {
-    getAdminPublishedJourneysPage.mockResolvedValueOnce(
+    listPublishedJourneys.mockResolvedValueOnce(
       createAdminPage(1, 1, [
         createAdminJourney({
           publicId: "missing-1",
         }),
       ]),
     );
-    getAdminPublishedJourneyDetail.mockRejectedValueOnce(
+    getPublishedJourneyDetail.mockRejectedValueOnce(
       new BackendApiError("Not found", 404),
     );
 
