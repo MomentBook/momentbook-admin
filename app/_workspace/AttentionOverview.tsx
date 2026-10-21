@@ -71,7 +71,7 @@ function RecentIntakeCard({ intake }: { intake: AdminOverview["recentIntake"] })
         <CardDescription>{total} in the last 6 weeks (UTC weeks)</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex h-32 items-end gap-2">
+        <div className="flex h-32 gap-2">
           {intake.weeks.map((week) => {
             const height =
               intake.maxCount > 0 ? Math.max(4, Math.round((week.count / intake.maxCount) * 100)) : 4;
@@ -79,11 +79,14 @@ function RecentIntakeCard({ intake }: { intake: AdminOverview["recentIntake"] })
             return (
               <div key={week.key} className="flex flex-1 flex-col items-center gap-1">
                 <span className="text-xs tabular-nums">{week.count}</span>
-                <div
-                  className="w-full rounded-sm bg-primary/70"
-                  style={{ height: `${height}%` }}
-                  aria-hidden
-                />
+                {/* The bar's percentage height needs a definite-height parent. */}
+                <div className="flex w-full flex-1 items-end">
+                  <div
+                    className="w-full rounded-sm bg-primary/70"
+                    style={{ height: `${height}%` }}
+                    aria-hidden
+                  />
+                </div>
                 <span className="text-[11px] text-muted-foreground">{week.label}</span>
               </div>
             );
