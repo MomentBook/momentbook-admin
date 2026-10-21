@@ -23,9 +23,15 @@ Previously, `momentbook-admin` only implemented interfaces for journeys (Reviews
 ### API Contract and Service Layer
 - Hand-written types defined in `src/apis/types/reports.ts` and `src/apis/types/users.ts` matching NestJS DTOs.
 - Domain-organized API services in `lib/api/reports.ts` (`listAdminReports`, `getAdminReportStats`, `getAdminReport`, `updateAdminReport`) and `lib/api/users.ts` (`updateAdminUserStatus`).
-- Re-exported via `src/apis/types/index.ts` and `lib/api/index.ts`.
+- Types are re-exported via `src/apis/types/index.ts`; callers import services
+  from their domain module (`lib/api/reports`, `lib/api/users`).
 
 ### Routing and Navigation
+
+> **Amended by [0010](0010-server-side-review-counts-and-workspace-shell.md):**
+> one `AdminSidebar` rendered by the per-page `WorkspaceShell` replaces the
+> per-screen sidebars named below, and the overview is the attention overview
+> at `/`.
 - Tab: `"reports"` added to `AdminWorkspaceTab`.
 - Paths: `/reports` (queue list) and `/reports/[reportId]` (detail & mutation).
 - Sidebar: Navigation item added across `AdminSidebar`, `AdminWorkspace`, and `AdminArticleShell`, displaying a badge with the current open report count.

@@ -4,8 +4,8 @@ Standalone Next.js admin app for MomentBook moderation and editorial operations.
 
 ## Scope
 
-- Owns `/admin`, `/admin/login`, `/admin/reviews`, `/admin/articles`, and admin session routes.
-- Talks to the Nest API for authentication, role/RBAC enforcement, review mutations, and article mutations.
+- Owns, at the root of the admin origin: `/` (attention overview), `/reviews`, `/reports`, `/articles`, `/login`, and the `/session*` routes.
+- Talks to the Nest API for authentication, role/RBAC enforcement, review, report, user-status, and article mutations.
 - Completes public-surface mutations through the Nest API; `momentbook-web` serves fresh public content with its no-cache policy.
 - Does not own public journeys, guides, sitemaps, analytics, public chrome, or app marketing pages.
 
@@ -77,13 +77,6 @@ The Nest API must allow the production admin origin and selected Vercel preview 
 ## Verification
 
 ```bash
-yarn eslint
-yarn tsc --noEmit
-yarn vitest run \
-  scripts/__tests__/admin-session-routes.test.ts \
-  scripts/__tests__/admin-actions.test.ts \
-  scripts/__tests__/admin-article-actions.test.ts \
-  scripts/__tests__/admin-paths.test.ts \
-  scripts/__tests__/admin-reviews.test.ts
+yarn verify   # typecheck + lint + test
 yarn build
 ```

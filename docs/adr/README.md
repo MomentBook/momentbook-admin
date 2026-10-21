@@ -12,8 +12,7 @@ ADR during startup.
 4. This index plus relevant ADRs for architecture, ownership, data, and
    operations decisions.
 5. `docs/DESIGN.md` for product and UX intent.
-6. `docs/CODEX.md` for repository-specific Codex workflow.
-7. Local code, tests, generated types, and environment templates for
+6. Local code, tests, hand-written API types, and environment templates for
    implementation truth.
 
 ## ADR Records
@@ -26,28 +25,28 @@ ADR during startup.
 | [0003](0003-backend-contract-and-api-wrapper.md) | Superseded by [0007](0007-hand-written-api-types-and-service-layer.md) | Backend contract and API wrapper (old) | Historic — code generation approach replaced by ADR 0007. |
 | [0007](0007-hand-written-api-types-and-service-layer.md) | Active | Hand-written API types and service layer | API type changes, API service layer changes, or `lib/api/*` modifications. |
 | [0004](0004-public-web-revalidation-boundary.md) | Active | Public web freshness | Admin mutations affect public journeys, guides, sitemap visibility, or public freshness behavior. |
-| [0005](0005-moderation-workspace-and-review-evidence.md) | Active | Moderation workspace and evidence | `/admin`, review queues, review detail, overview metrics, evidence grouping, or review mutations change. |
-| [0006](0006-editorial-articles-and-guide-support.md) | Active | Editorial articles and guide support | `/admin/articles`, article editor/list/actions, markdown parsing, guide sitemap support, or editorial helpers change. |
-| [0009](0009-reports-moderation-and-user-sanction.md) | Active | Reports moderation and user sanctions | `/admin/reports`, reports queues, report detail, user ban/unban, or moderation status changes. |
+| [0005](0005-moderation-workspace-and-review-evidence.md) | Active, amended by [0010](0010-server-side-review-counts-and-workspace-shell.md) | Moderation workspace and evidence | `/`, `/reviews`, review detail, evidence grouping, or review mutations change. |
+| [0010](0010-server-side-review-counts-and-workspace-shell.md) | Active | Server-side review counts and workspace shell | Attention counts, sidebar badges, queue tabs/totals, overview loading, `WorkspaceShell`, or backend call budget change. |
+| [0006](0006-editorial-articles-and-guide-support.md) | Active | Editorial articles and guide support | `/articles`, article editor/list/actions, markdown parsing, or editorial helpers change. |
+| [0009](0009-reports-moderation-and-user-sanction.md) | Active, amended by [0010](0010-server-side-review-counts-and-workspace-shell.md) | Reports moderation and user sanctions | `/reports`, reports queues, report detail, user ban/unban, or moderation status changes. |
 
 ## Repository Baseline
 
 - MomentBook Admin is a standalone Next.js admin-only app backed by the Nest API.
-- The app owns `/admin`, `/admin/login`, `/admin/reviews`,
-  `/admin/articles`, `/admin/reports`, and admin session routes only.
+- The app owns `/` (attention overview), `/reviews`, `/reports`, `/articles`,
+  `/login`, and the `/session*` routes only, at the root of the admin origin.
 - Public journey consumption, public guides, SEO rendering, sitemaps,
   analytics, localized public chrome, marketing, recap, archive, and community
   UX belong to the public MomentBook web app.
-- Existing public/editorial helpers in this repo support admin split
-  compatibility. They are not permission
-  to add public product surfaces here.
+- The remaining editorial helpers in this repo serve the admin article
+  workflow. They are not permission to add public product surfaces here.
 - The Nest API contract is represented by hand-written types in `src/apis/types/`.
   API calls use the domain-organized service layer in `lib/api/`.
 
 ## Default Change Policy
 
 - Keep changes narrow and follow existing admin route, path, session, action,
-  banner, and SCSS patterns.
+  banner, and shadcn/Tailwind patterns.
 - Preserve backend contract compatibility unless the task explicitly includes
   backend/API contract work.
 - For auth, security, data, public visibility, environment, or deployment

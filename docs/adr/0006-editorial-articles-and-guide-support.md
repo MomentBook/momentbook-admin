@@ -7,7 +7,7 @@ Active.
 ## Decision
 
 Admin articles are published-only editorial guide records managed from
-`/admin/articles`. This repository owns the admin CRUD workflow, not public
+`/articles`. This repository owns the admin CRUD workflow, not public
 guide consumption or public SEO rendering.
 
 Markdown body is the canonical authored content source. The backend derives
@@ -17,11 +17,10 @@ from that body and article metadata.
 ## Implementation Shape
 
 - `lib/editorial/admin.ts` loads admin article list/detail data through
-  `lib/admin/api.ts` and normalizes it into local editorial types.
-- `app/admin/articles/page.tsx` loads the article dashboard and pending review
-  count in the admin session shell.
-- `app/admin/articles/new/page.tsx` and
-  `app/admin/articles/[articleId]/page.tsx` render the editor page.
+  `lib/api/articles.ts` and normalizes it into local editorial types.
+- `app/articles/page.tsx` loads the article dashboard in the workspace shell.
+- `app/articles/new/page.tsx` and `app/articles/[articleId]/page.tsx` render
+  the editor page.
 - `EditorialArticleEditorForm` keeps a live markdown preview using
   `parseEditorialBody` and `EditorialMarkdownContent`.
 - Create accepts language, category, title, body, optional slug, and optional
@@ -29,7 +28,7 @@ from that body and article metadata.
 - Update sends only mutable fields: category, title, and body. Language, slug,
   and translation group are create-time identity and remain immutable in edit
   state.
-- Delete is a hard delete of the article record.
+- Delete is a hard delete of the article record, behind a confirmation dialog.
 
 ## Markdown Rules
 
@@ -43,9 +42,10 @@ from that body and article metadata.
 
 ## Public Guide Support Code
 
-- `lib/editorial/public.ts`, `lib/editorial/records.ts`,
-  `lib/sitemap/editorial-guides.ts`, and related helpers provide
-  admin-compatible guide metadata where required.
+- `lib/editorial/records.ts` and related helpers provide admin-compatible
+  guide metadata where required. The public guide and sitemap helpers
+  (`lib/editorial/public.ts`, `lib/sitemap/*`) were removed on 2026-10-22 as
+  unreachable from any admin route.
 - They do not make this repository responsible for public guide pages.
 
 ## Consequences
