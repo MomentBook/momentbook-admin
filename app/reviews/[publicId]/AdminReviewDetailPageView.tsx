@@ -10,14 +10,12 @@ import {
   updatePublishedJourneyReviewAction,
 } from "@/app/_workspace/actions";
 import { buildAdminWorkspaceHref } from "@/lib/admin/paths";
-import { buildAdminArticleWorkspaceHref } from "@/lib/admin/paths";
 import {
   getAdminReviewStatusLabel,
   type AdminReviewDetail,
   type AdminReviewEvidenceSection,
   type AdminReviewPhoto,
   type AdminReviewQueueData,
-  type AdminReviewQueueStatus,
   type AdminReviewStatus,
 } from "@/lib/admin/reviews";
 import type { AdminSession } from "@/lib/admin/session";
@@ -43,19 +41,6 @@ function badgeVariantClass(status: AdminReviewStatus): "default" | "destructive"
   if (status === "APPROVED") return "default";
   if (status === "REJECTED") return "destructive";
   return "secondary";
-}
-
-function buildTabHref(
-  tab: "overview" | "reviews",
-  options: {
-    page: number;
-    status: AdminReviewQueueStatus;
-  },
-): string {
-  return buildAdminWorkspaceHref(tab, {
-    page: options.page > 1 ? String(options.page) : null,
-    status: options.status === "pending" ? null : options.status,
-  });
 }
 
 function resolveDefaultReviewStatus(options: {
@@ -404,31 +389,8 @@ export function AdminReviewDetailPageView({
 
   const sidebar = (
     <AdminSidebar
-      activeTab="reviews"
-      navigationItems={[
-        {
-          tab: "overview",
-          href: buildTabHref("overview", {
-            page: queue.page,
-            status: queue.status,
-          }),
-          label: "Overview",
-        },
-        {
-          tab: "reviews",
-          href: buildTabHref("reviews", {
-            page: queue.page,
-            status: queue.status,
-          }),
-          label: "Reviews",
-          badge: String(queue.summary.pendingCount),
-        },
-        {
-          tab: "articles",
-          href: buildAdminArticleWorkspaceHref(),
-          label: "Articles",
-        },
-      ]}
+      active="reviews"
+      badges={{ reviews: queue.summary.pendingCount }}
       session={session}
     />
   );

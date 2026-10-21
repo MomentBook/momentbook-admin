@@ -8,8 +8,6 @@ import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LocalizedDate } from "@/components/LocalizedTime";
 import {
-  buildAdminArticleWorkspaceHref,
-  buildAdminReportsHref,
   buildAdminReviewDetailHref,
   buildAdminWorkspaceHref,
   type AdminWorkspaceTab,
@@ -292,38 +290,13 @@ export function AdminWorkspace({
   reportStats,
   session,
 }: AdminWorkspaceProps) {
-  const navigationItems = [
-    {
-      tab: "overview" as const,
-      href: buildAdminWorkspaceHref("overview"),
-      label: "Overview",
-    },
-    {
-      tab: "reviews" as const,
-      href: buildAdminWorkspaceHref("reviews"),
-      label: "Reviews",
-      badge: String(queue.summary.pendingCount),
-    },
-    {
-      tab: "reports" as const,
-      href: buildAdminReportsHref(),
-      label: "Reports",
-      badge:
-        typeof reportStats?.openReports === "number" && reportStats.openReports > 0
-          ? String(reportStats.openReports)
-          : undefined,
-    },
-    {
-      tab: "articles" as const,
-      href: buildAdminArticleWorkspaceHref(),
-      label: "Articles",
-    },
-  ];
-
   const sidebar = (
     <AdminSidebar
-      activeTab={activeTab}
-      navigationItems={navigationItems}
+      active={activeTab === "reviews" ? "reviews" : "attention"}
+      badges={{
+        reviews: queue.summary.pendingCount,
+        reports: reportStats?.openReports ?? null,
+      }}
       session={session}
     />
   );

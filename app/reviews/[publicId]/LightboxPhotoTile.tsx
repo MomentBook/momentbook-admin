@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { VisuallyHidden } from "radix-ui";
 
 import type { AdminReviewPhoto } from "@/lib/admin/reviews";
 
@@ -50,9 +50,9 @@ export function LightboxPhotoTile({
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 border-0 bg-black/90">
-          <VisuallyHidden asChild>
+          <VisuallyHidden.Root asChild>
             <DialogTitle>{alt}</DialogTitle>
-          </VisuallyHidden>
+          </VisuallyHidden.Root>
           <div className="relative flex items-center justify-center w-full h-full min-h-[50vh]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
