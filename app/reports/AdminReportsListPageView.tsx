@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { X } from "lucide-react";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
   buildAdminReportsHref,
 } from "@/lib/admin/paths";
 import {
+  REPORT_REASONS,
   getReportReasonLabel,
   getReportStatusLabel,
   getReportTargetTypeLabel,
@@ -30,6 +32,7 @@ import {
 import type {
   AdminReportsDataDto,
   AdminReportStatsDataDto,
+  ReportReason,
   ReportStatus,
   ReportTargetType,
 } from "@/src/apis/types";
@@ -66,6 +69,9 @@ type AdminReportsListPageViewProps = {
   stats: AdminReportStatsDataDto;
   activeStatus?: ReportStatus | null;
   activeTargetType?: ReportTargetType | null;
+  activeReason?: ReportReason | null;
+  activeTargetId?: string | null;
+  activeReporterId?: string | null;
 };
 
 export function AdminReportsListPageView({
@@ -74,7 +80,30 @@ export function AdminReportsListPageView({
   stats,
   activeStatus,
   activeTargetType,
+  activeReason,
+  activeTargetId,
+  activeReporterId,
 }: AdminReportsListPageViewProps) {
+  // Every filter link keeps the other filters and resets to page 1.
+  const hrefWith = (overrides: Parameters<typeof buildAdminReportsHref>[0]) =>
+    buildAdminReportsHref({
+      status: activeStatus,
+      targetType: activeTargetType,
+      reason: activeReason,
+      targetId: activeTargetId,
+      reporterId: activeReporterId,
+      page: null,
+      ...overrides,
+    });
+  const idFilters = [
+    activeTargetId
+      ? { label: "Target", value: activeTargetId, clearHref: hrefWith({ targetId: null }) }
+      : null,
+    activeReporterId
+      ? { label: "Reporter", value: activeReporterId, clearHref: hrefWith({ reporterId: null }) }
+      : null,
+  ].filter((filter) => filter !== null);
+
   const statusFilters: Array<{ value: ReportStatus | undefined; label: string; count?: number }> = [
     { value: undefined, label: "All", count: stats.totalReports },
     { value: "PENDING", label: "Pending", count: stats.pendingReports },
@@ -182,11 +211,8 @@ export function AdminReportsListPageView({
                 return (
                   <Link
                     key={filter.label}
-                    href={buildAdminReportsHref({
-                      status: activeStatus,
-                      targetType: filter.value,
-                      page: null,
-                    })}
+                    // A target ID only makes sense for its own target type.
+                    href={hrefWith({ targetType: filter.value, targetId: null })}
                   >
                     <Badge variant={isActive ? "default" : "outline"} className="cursor-pointer">
                       {filter.label}
@@ -206,11 +232,7 @@ export function AdminReportsListPageView({
               return (
                 <Link
                   key={filter.label}
-                  href={buildAdminReportsHref({
-                    status: filter.value,
-                    targetType: activeTargetType,
-                    page: null,
-                  })}
+                  href={hrefWith({ status: filter.value })}
                 >
                   <Badge variant={isActive ? "default" : "secondary"} className="cursor-pointer">
                     {filter.label}
@@ -220,6 +242,38 @@ export function AdminReportsListPageView({
               );
             })}
           </div>
+
+          {/* Reason Filter */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-muted-foreground mr-1">Reason:</span>
+            {[undefined, ...REPORT_REASONS].map((reason) => (
+              <Link key={reason ?? "all"} href={hrefWith({ reason })}>
+                <Badge
+                  variant={(activeReason ?? undefined) === reason ? "default" : "outline"}
+                  className="cursor-pointer"
+                >
+                  {reason ? getReportReasonLabel(reason) : "All reasons"}
+                </Badge>
+              </Link>
+            ))}
+          </div>
+
+          {idFilters.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {idFilters.map((filter) => (
+                <Badge key={filter.label} variant="secondary" className="gap-1 pr-1">
+                  {filter.label}: <span className="font-mono">{filter.value}</span>
+                  <Link
+                    href={filter.clearHref}
+                    aria-label={`Clear ${filter.label.toLowerCase()} filter`}
+                    className="rounded-sm p-0.5 hover:bg-muted-foreground/20"
+                  >
+                    <X className="size-3" />
+                  </Link>
+                </Badge>
+              ))}
+            </div>
+          ) : null}
 
           {reportsData.reports.length > 0 ? (
             <>
@@ -298,10 +352,8 @@ export function AdminReportsListPageView({
               {reportsData.pages > 1 ? (
                 <div className="flex items-center justify-between gap-2 pt-2">
                   <Link
-                    href={buildAdminReportsHref({
+                    href={hrefWith({
                       page: reportsData.page > 1 ? String(reportsData.page - 1) : null,
-                      status: activeStatus,
-                      targetType: activeTargetType,
                     })}
                   >
                     <Button
@@ -316,13 +368,11 @@ export function AdminReportsListPageView({
                     Page {reportsData.page} of {reportsData.pages}
                   </span>
                   <Link
-                    href={buildAdminReportsHref({
+                    href={hrefWith({
                       page:
                         reportsData.page < reportsData.pages
                           ? String(reportsData.page + 1)
                           : String(reportsData.pages),
-                      status: activeStatus,
-                      targetType: activeTargetType,
                     })}
                   >
                     <Button

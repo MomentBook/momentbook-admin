@@ -10,7 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { LocalizedDate } from "@/components/LocalizedTime";
 import {
   buildAdminReportsHref,
@@ -23,6 +26,7 @@ import {
 } from "@/lib/admin/reports-shared";
 import type {
   AdminReportDetailDataDto,
+  AdminReportUserSummaryDto,
   ReportStatus,
 } from "@/src/apis/types";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
@@ -31,6 +35,7 @@ import {
   updateAdminReportAction,
   updateAdminUserStatusAction,
 } from "../actions";
+import { ReportHistoryList, type ReportHistory } from "../ReportHistoryList";
 
 const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
 
@@ -55,12 +60,77 @@ type AdminReportDetailPageViewProps = {
   banner: AdminDashboardBanner | null;
   report: AdminReportDetailDataDto;
   returnTo: string;
+  targetHistory: ReportHistory;
+  reporterHistory: ReportHistory;
 };
+
+function SanctionReasonInput() {
+  return (
+    <div className="grid gap-1.5">
+      <Label htmlFor="sanction-reason">Reason (optional)</Label>
+      <Input id="sanction-reason" name="reason" />
+      <p className="text-xs text-muted-foreground">Sent to the API; not stored yet.</p>
+    </div>
+  );
+}
+
+/** Ban, unban, or nothing for a deleted account — always behind a confirmation. */
+function UserSanctionControl({
+  reportId,
+  returnTo,
+  user,
+}: {
+  reportId: string;
+  returnTo: string;
+  user: AdminReportUserSummaryDto;
+}) {
+  const label = user.name || user.email || user.userId;
+  const fields = { userId: user.userId, reportId, returnTo };
+
+  if (user.status === "DELETED") {
+    return (
+      <Button type="button" variant="outline" size="sm" disabled>
+        Deleted account
+      </Button>
+    );
+  }
+
+  if (user.status === "BANNED") {
+    return (
+      <ConfirmActionForm
+        action={updateAdminUserStatusAction}
+        fields={{ ...fields, status: "active" }}
+        triggerLabel="Unban"
+        title={`Unban ${label}?`}
+        description={`Lifts the ban on ${label} (${user.userId}). If required consents are pending, the account stays inactive until it accepts them.`}
+        confirmLabel="Unban"
+      >
+        <SanctionReasonInput />
+      </ConfirmActionForm>
+    );
+  }
+
+  return (
+    <ConfirmActionForm
+      action={updateAdminUserStatusAction}
+      fields={{ ...fields, status: "banned" }}
+      triggerLabel="Ban"
+      triggerVariant="destructive"
+      title={`Ban ${label}?`}
+      description={`Bans ${label} (${user.userId}). All of their sessions are revoked immediately.`}
+      confirmLabel="Ban"
+    >
+      <SanctionReasonInput />
+    </ConfirmActionForm>
+  );
+}
 
 export function AdminReportDetailPageView({
   banner,
   report,
   returnTo,
+  targetHistory,
+  reporterHistory,
 }: AdminReportDetailPageViewProps) {
   const isJourney = report.targetType === "PUBLISHED_JOURNEY";
   const isUser = report.targetType === "USER";
@@ -226,34 +296,11 @@ export function AdminReportDetailPageView({
                     </p>
                   </div>
 
-                  <form action={updateAdminUserStatusAction} className="space-y-3">
-                    <input type="hidden" name="userId" value={targetUser.userId} />
-                    <input type="hidden" name="reportId" value={report._id} />
-                    <input type="hidden" name="returnTo" value={returnTo} />
-                    <input
-                      type="hidden"
-                      name="status"
-                      value={isUserBanned ? "active" : "banned"}
-                    />
-
-                    <div>
-                      <input
-                        type="text"
-                        name="reason"
-                        placeholder="Sanction reason (optional note)"
-                        className="w-full text-xs rounded-md border border-input bg-background px-3 py-1.5"
-                      />
-                    </div>
-
-                    <Button
-                      type="submit"
-                      size="sm"
-                      variant={isUserBanned ? "default" : "destructive"}
-                      className="w-full sm:w-auto"
-                    >
-                      {isUserBanned ? "Lift Ban (Restore User)" : "Ban User Account"}
-                    </Button>
-                  </form>
+                  <UserSanctionControl
+                    reportId={report._id}
+                    returnTo={returnTo}
+                    user={targetUser}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -400,6 +447,30 @@ export function AdminReportDetailPageView({
                 </Button>
               </CardFooter>
             </form>
+          </Card>
+
+          {/* Report History Card */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Report History</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <ReportHistoryList
+                title="Other reports on this target"
+                history={targetHistory}
+                excludeReportId={report._id}
+                viewAllHref={buildAdminReportsHref({
+                  targetType: report.targetType,
+                  targetId: report.targetId,
+                })}
+              />
+              <ReportHistoryList
+                title="Other reports by this reporter"
+                history={reporterHistory}
+                excludeReportId={report._id}
+                viewAllHref={buildAdminReportsHref({ reporterId: report.reporterId })}
+              />
+            </CardContent>
           </Card>
 
           {/* Reporter Information Card */}

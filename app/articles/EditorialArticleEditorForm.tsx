@@ -23,7 +23,8 @@ import {
   type EditorialArticleCategory,
   type EditorialArticleRecord,
 } from "@/lib/editorial/types";
-import { languageList } from "@/lib/i18n/config";
+import { languageList, languages } from "@/lib/i18n/config";
+import { ConfirmActionForm } from "@/components/confirm-action-form";
 
 type EditorialArticleEditorFormProps = {
   article: EditorialArticleRecord | null;
@@ -51,15 +52,6 @@ function SubmitButton({ label }: { label: string }) {
   return (
     <Button type="submit" disabled={pending}>
       {pending ? "Saving..." : label}
-    </Button>
-  );
-}
-
-function DeleteButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant="ghost" disabled={pending}>
-      {pending ? "Deleting..." : "Delete article"}
     </Button>
   );
 }
@@ -344,21 +336,24 @@ export function EditorialArticleEditorForm({
         {/* Danger zone */}
         {article && deleteAction ? (
           <Card className="border-destructive/50">
-            <form action={deleteAction}>
-              <input type="hidden" name="articleId" value={article.id} />
-              <input type="hidden" name="nextPath" value={nextPath} />
-              <input type="hidden" name="returnTo" value={returnTo} />
-              <CardContent className="flex flex-col gap-1 pt-6">
-                <span className="text-xs text-muted-foreground">Danger zone</span>
-                <h4 className="font-semibold">Delete article</h4>
-                <p className="text-xs text-muted-foreground">
-                  This is a hard delete of the article and its published routes.
-                </p>
-                <div className="mt-2">
-                  <DeleteButton />
-                </div>
-              </CardContent>
-            </form>
+            <CardContent className="flex flex-col gap-1 pt-6">
+              <span className="text-xs text-muted-foreground">Danger zone</span>
+              <h4 className="font-semibold">Delete article</h4>
+              <p className="text-xs text-muted-foreground">
+                This is a hard delete of the article and its published routes.
+              </p>
+              <div className="mt-2">
+                <ConfirmActionForm
+                  action={deleteAction}
+                  fields={{ articleId: article.id, nextPath, returnTo }}
+                  triggerLabel="Delete article"
+                  triggerVariant="destructive"
+                  title="Delete this article?"
+                  description={`Permanently deletes ${article.title} in ${languages[article.language].name}. Other languages of its translation group are kept.`}
+                  confirmLabel="Delete article"
+                />
+              </div>
+            </CardContent>
           </Card>
         ) : null}
       </div>

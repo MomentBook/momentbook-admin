@@ -30,6 +30,16 @@ describe("admin reports paths and helpers", () => {
     );
   });
 
+  it("reports href carries reason, targetId, reporterId", () => {
+    const href = buildAdminReportsHref({
+      reason: "HARASSMENT",
+      targetId: " journey-1 ",
+      reporterId: "user-9",
+    });
+
+    expect(href).toBe("/reports?reason=HARASSMENT&targetId=journey-1&reporterId=user-9");
+  });
+
   it("omits page=1 from query parameters", () => {
     const href = buildAdminReportsHref({
       page: 1,

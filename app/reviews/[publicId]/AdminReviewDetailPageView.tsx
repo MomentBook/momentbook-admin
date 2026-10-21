@@ -12,9 +12,9 @@ import {
   updatePublishedJourneyReviewAction,
 } from "@/app/reviews/actions";
 import { updateAdminUserStatusAction } from "@/app/reports/actions";
+import { ReportHistoryList, type ReportHistory } from "@/app/reports/ReportHistoryList";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
-import { buildAdminReportDetailHref, buildAdminReportsHref } from "@/lib/admin/paths";
-import { getReportReasonLabel, getReportStatusLabel } from "@/lib/admin/reports-shared";
+import { buildAdminReportsHref } from "@/lib/admin/paths";
 import type { ReviewQueueTab } from "@/lib/admin/review-queue";
 import {
   getAdminReviewStatusLabel,
@@ -24,14 +24,11 @@ import {
   type AdminReviewStatus,
 } from "@/lib/admin/reviews";
 import { defaultLanguage } from "@/lib/i18n/config";
-import type { AdminReportItemDto } from "@/src/apis/types";
 import { ReviewBanner } from "../ReviewBanner";
 import type { AdminReviewBanner } from "../review-banner";
 import { LightboxPhotoTile } from "./LightboxPhotoTile";
 
 const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
-
-export type ReportHistory = { items: AdminReportItemDto[]; total: number } | null;
 
 type AdminReviewDetailPageViewProps = {
   backHref: string;
@@ -369,50 +366,6 @@ function DecisionPanel({
         </form>
       </CardContent>
     </Card>
-  );
-}
-
-function ReportHistoryList({
-  title,
-  history,
-  viewAllHref,
-}: {
-  title: string;
-  history: ReportHistory;
-  viewAllHref: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-medium">{title}</h3>
-        {history && history.total > 0 ? (
-          <Link href={viewAllHref} className="text-xs text-primary hover:underline">
-            View all {history.total}
-          </Link>
-        ) : null}
-      </div>
-      {history === null ? (
-        <p className="text-xs text-muted-foreground">Could not load reports.</p>
-      ) : history.items.length > 0 ? (
-        <ul className="flex flex-col">
-          {history.items.map((report) => (
-            <li key={report._id}>
-              <Link
-                href={buildAdminReportDetailHref(report._id)}
-                className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted"
-              >
-                <span>{getReportReasonLabel(report.reason)}</span>
-                <span className="text-xs text-muted-foreground">
-                  {getReportStatusLabel(report.status)}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-xs text-muted-foreground">None.</p>
-      )}
-    </div>
   );
 }
 

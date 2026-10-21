@@ -13,6 +13,7 @@ import {
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { buildAdminReportsHref } from "@/lib/admin/paths";
+import { parseReportReason } from "@/lib/admin/reports-shared";
 import type { ReportStatus, ReportTargetType } from "@/src/apis/types";
 import { resolveReportBanner } from "./report-banner";
 import { AdminReportsListPageView } from "./AdminReportsListPageView";
@@ -56,6 +57,9 @@ export default async function AdminReportsPage({
   const targetType = parseReportTargetTypeParam(
     readQueryParam(resolvedSearchParams.targetType),
   );
+  const reason = parseReportReason(readQueryParam(resolvedSearchParams.reason));
+  const targetId = readQueryParam(resolvedSearchParams.targetId)?.trim() || undefined;
+  const reporterId = readQueryParam(resolvedSearchParams.reporterId)?.trim() || undefined;
   const mutation = readQueryParam(resolvedSearchParams.mutation);
   const error = readQueryParam(resolvedSearchParams.error);
   const message = readQueryParam(resolvedSearchParams.message);
@@ -64,6 +68,9 @@ export default async function AdminReportsPage({
     page,
     status,
     targetType,
+    reason,
+    targetId,
+    reporterId,
   });
 
   const banner = resolveReportBanner({
@@ -87,6 +94,9 @@ export default async function AdminReportsPage({
             limit: ADMIN_REPORTS_PAGE_SIZE,
             status,
             targetType,
+            reason,
+            targetId,
+            reporterId,
           },
         }),
     });
@@ -109,6 +119,9 @@ export default async function AdminReportsPage({
       <AdminReportsListPageView
         activeStatus={status}
         activeTargetType={targetType}
+        activeReason={reason}
+        activeTargetId={targetId}
+        activeReporterId={reporterId}
         banner={banner}
         reportsData={result.data.reports}
         stats={result.data.stats}

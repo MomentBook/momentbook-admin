@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { isBackendApiError } from "@/lib/api/client";
-import { loadAdminReportDetail } from "@/lib/admin/reports";
+import { loadAdminReportDetail, loadReportHistoryOrNull } from "@/lib/admin/reports";
 import {
   loadWorkspacePage,
   readQueryParam,
@@ -50,7 +50,19 @@ export default async function AdminReportDetailPage({
   try {
     result = await loadWorkspacePage({
       returnTo,
-      load: (accessToken) => loadAdminReportDetail({ accessToken, reportId }),
+      load: async (accessToken) => {
+        const report = await loadAdminReportDetail({ accessToken, reportId });
+        const [targetHistory, reporterHistory] = await Promise.all([
+          loadReportHistoryOrNull({
+            accessToken,
+            targetType: report.targetType,
+            targetId: report.targetId,
+          }),
+          loadReportHistoryOrNull({ accessToken, reporterId: report.reporterId }),
+        ]);
+
+        return { report, targetHistory, reporterHistory };
+      },
     });
   } catch (err) {
     if (isBackendApiError(err)) {
@@ -86,8 +98,10 @@ export default async function AdminReportDetailPage({
     <WorkspaceShell active="reports" counts={result.counts} session={result.session}>
       <AdminReportDetailPageView
         banner={banner}
-        report={result.data}
+        report={result.data.report}
+        reporterHistory={result.data.reporterHistory}
         returnTo={returnTo}
+        targetHistory={result.data.targetHistory}
       />
     </WorkspaceShell>
   );

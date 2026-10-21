@@ -166,9 +166,10 @@ export async function updateAdminUserStatusAction(formData: FormData): Promise<n
   }
 
   const session = await requireAdminActionSession(cookieStore, nextPath);
+  let resultStatus: string;
 
   try {
-    await updateAdminUserStatus({
+    const result = await updateAdminUserStatus({
       accessToken: session.accessToken,
       userId,
       data: {
@@ -176,6 +177,9 @@ export async function updateAdminUserStatusAction(formData: FormData): Promise<n
         reason,
       },
     });
+    // Lifting a ban can leave the account inactive (pending consents); report
+    // what the API did, not what was asked.
+    resultStatus = result.status;
   } catch (error) {
     if (isBackendApiError(error)) {
       if (error.statusCode === 401) {
@@ -226,7 +230,7 @@ export async function updateAdminUserStatusAction(formData: FormData): Promise<n
       nextPath,
       buildReturnEntries({
         mutation: "user_status_updated",
-        userStatus: status,
+        userStatus: resultStatus,
       }),
     ),
   );
