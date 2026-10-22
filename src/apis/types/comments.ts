@@ -21,7 +21,7 @@ export interface AdminCommentItemDto {
   publicId: string;
   body: string;
   status: AdminCommentStatus;
-  deletedByRole: AdminCommentDeletedByRole;
+  deletedByRole: AdminCommentDeletedByRole | null;
   deletedAt: string | null;
   createdAt: string;
   author: AdminCommentAuthorDto;

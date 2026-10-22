@@ -38,8 +38,8 @@ export interface AdminAuditLogItemDto {
   reason: string | null;
   details: Record<string, unknown> | null;
   createdAt: string;
-  actor: AdminAuditUserDto;
-  subject: AdminAuditUserDto;
+  actor: AdminAuditUserDto | null;
+  subject: AdminAuditUserDto | null;
 }
 
 export interface AdminAuditLogDataDto {

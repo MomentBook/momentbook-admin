@@ -32,7 +32,7 @@ export interface AdminUserListItemDto {
   email: string | null;
   providerEmail: string | null;
   picture: string | null;
-  provider: AdminUserProvider;
+  provider: AdminUserProvider | null;
   status: AdminUserStatus;
   role: AdminUserRole;
   createdAt: string;
@@ -86,7 +86,7 @@ export interface AdminUserProfileDto {
   email: string | null;
   emailVerifiedAt: string | null;
   providerEmail: string | null;
-  provider: AdminUserProvider;
+  provider: AdminUserProvider | null;
   status: AdminUserStatus;
   role: AdminUserRole;
   preferredLanguage: string | null;
@@ -163,7 +163,7 @@ export interface AdminUserDetailDataDto {
   profile: AdminUserProfileDto;
   signInMethods: AdminUserSignInMethodsDto;
   deviceCredentials: AdminUserDeviceCredentialDto[];
-  currentSession: AdminUserCurrentSessionDto;
+  currentSession: AdminUserCurrentSessionDto | null;
   consents: AdminUserConsentDto[];
   counts: AdminUserCountsDto;
 }
