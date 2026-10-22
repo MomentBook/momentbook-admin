@@ -55,6 +55,12 @@ export async function deleteAdminCommentAction(formData: FormData): Promise<neve
         redirect(buildAdminLoginHref({ next: nextPath, error: "session_expired" }));
       }
 
+      // No 403 here depends on the target, so it means this admin lost access.
+      if (error.statusCode === 403) {
+        await clearAdminSession(cookieStore);
+        redirect(buildAdminLoginHref({ next: nextPath, error: "admin_access_denied" }));
+      }
+
       if (error.statusCode === 404) {
         redirect(withAdminQuery(nextPath, buildReturnEntries({ error: "comment_not_found" })));
       }

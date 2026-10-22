@@ -177,6 +177,16 @@ describe("deleteAdminCommentAction", () => {
     expect(result).toBe("REDIRECT:/login?next=%2Fcomments&error=session_expired");
   });
 
+  it("403 clears the session and goes to login with admin_access_denied", async () => {
+    signedIn();
+    updateAdminCommentStatus.mockRejectedValue(new ApiError("Forbidden", 403));
+
+    const result = await runDelete(deleteForm({ returnTo: "/comments" }));
+
+    expect(clearAdminSession).toHaveBeenCalled();
+    expect(result).toBe("REDIRECT:/login?next=%2Fcomments&error=admin_access_denied");
+  });
+
   it("another API error is a banner with its message", async () => {
     signedIn();
     updateAdminCommentStatus.mockRejectedValue(new ApiError("Boom", 500));
