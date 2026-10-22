@@ -14,6 +14,7 @@ import {
   buildAdminReportsHref,
   buildAdminReviewQueueHref,
   buildAdminSessionInvalidateHref,
+  buildReviewDetailQueueLinks,
   buildAdminSessionRefreshHref,
 } from "@/lib/admin/paths";
 import { ADMIN_NAV_ITEMS } from "@/components/layout/admin-nav";
@@ -155,6 +156,30 @@ describe("operator surface paths", () => {
     expect(buildAdminReviewQueueHref({ status: "all", userId: "u1" })).toBe(
       "/reviews?status=all&userId=u1",
     );
+  });
+
+  it("review detail links keep the queue's tab, page and author filter", () => {
+    expect(
+      buildReviewDetailQueueLinks({
+        publicId: "p-1",
+        status: "all",
+        page: 2,
+        userId: "u1",
+        lang: "ko-KR",
+      }),
+    ).toEqual({
+      returnTo: "/reviews/p-1?lang=ko-KR&page=2&status=all&userId=u1",
+      backHref: "/reviews?status=all&userId=u1&page=2",
+      notFoundHref: "/reviews?status=all&userId=u1&page=2&error=review_target_not_found",
+    });
+  });
+
+  it("review detail links from outside the queue go back to the pending queue", () => {
+    expect(buildReviewDetailQueueLinks({ publicId: "p-1", status: null, page: 1 })).toEqual({
+      returnTo: "/reviews/p-1",
+      backHref: "/reviews",
+      notFoundHref: "/reviews?error=review_target_not_found",
+    });
   });
 
   it("nav order matches the spec", () => {

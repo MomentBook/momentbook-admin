@@ -227,6 +227,34 @@ export function buildAdminReviewDetailHref(
   );
 }
 
+/** A review detail page's own URL (the action `returnTo`) and its links back
+ * to the queue it was opened from. They carry the tab, page and author
+ * filter, so going back lands on the same rows. `status` is the explicit
+ * queue context, or `null` when opened from outside the queue. */
+export function buildReviewDetailQueueLinks(options: {
+  publicId: string;
+  status: string | null;
+  page: number;
+  userId?: string | null;
+  lang?: string | null;
+}): { returnTo: string; backHref: string; notFoundHref: string } {
+  const queue = { status: options.status, page: options.page, userId: options.userId };
+
+  return {
+    returnTo: buildAdminReviewDetailHref(options.publicId, {
+      lang: options.lang,
+      page: normalizePageQuery(options.page),
+      status: options.status,
+      userId: options.userId,
+    }),
+    backHref: buildAdminReviewQueueHref(queue),
+    notFoundHref: buildAdminReviewQueueHref({
+      ...queue,
+      entries: { error: "review_target_not_found" },
+    }),
+  };
+}
+
 export function buildAdminArticlesHref(
   entries?: Record<string, string | null | undefined>,
 ): string {

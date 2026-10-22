@@ -174,6 +174,7 @@ export function ReviewQueuePageView({
   const detailQuery = {
     status: queue.tab,
     page: queue.page > 1 ? String(queue.page) : null,
+    userId: queue.userId,
   };
 
   return (

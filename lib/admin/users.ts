@@ -1,11 +1,11 @@
 import "server-only";
 
-import { isBackendApiError } from "@/lib/api/client";
 import { listAdminAuditLog } from "@/lib/api/audit";
 import { listAdminComments } from "@/lib/api/comments";
 import { listPublishedJourneys } from "@/lib/api/journeys";
 import { getAdminUser, listAdminUserAuthEvents, listAdminUsers } from "@/lib/api/users";
 import { loadReportHistoryOrNull } from "@/lib/admin/reports";
+import { orNull } from "@/lib/admin/section-load";
 import { ADMIN_USERS_PAGE_SIZE } from "@/lib/admin/users-shared";
 import type {
   AdminAuditLogDataDto,
@@ -69,21 +69,6 @@ export type AdminUserDetailWorkspaceData = {
   reportsFiled: { items: AdminReportItemDto[]; total: number } | null;
   authEvents: AdminUserAuthEventsDataDto | null;
 };
-
-/** A secondary section: a failing endpoint shows "Could not load" instead of
- * taking the page down, but 401/403 still reach the page's session handling
- * (the `loadReportHistoryOrNull` rule). */
-async function orNull<T>(promise: Promise<T>): Promise<T | null> {
-  try {
-    return await promise;
-  } catch (error) {
-    if (isBackendApiError(error) && (error.statusCode === 401 || error.statusCode === 403)) {
-      throw error;
-    }
-
-    return null;
-  }
-}
 
 /**
  * The user detail page. The profile is required, so its 404 propagates for

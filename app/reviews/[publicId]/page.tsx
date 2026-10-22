@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminReviewDetailPageView } from "./AdminReviewDetailPageView";
-import {
-  buildAdminReviewDetailHref,
-  buildAdminReviewQueueHref,
-} from "@/lib/admin/paths";
+import { buildReviewDetailQueueLinks } from "@/lib/admin/paths";
 import { isBackendApiError } from "@/lib/api/client";
 import { parseReviewQueueContext, parseReviewQueuePage } from "@/lib/admin/review-queue";
 import { loadReportHistoryOrNull } from "@/lib/admin/reports";
+import { parseUuidFilter } from "@/lib/admin/reports-shared";
 import { loadAdminReviewDetail, parseAdminReviewStatus } from "@/lib/admin/reviews";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { resolveSupportedLanguage, toLocaleTag } from "@/lib/i18n/config";
@@ -35,15 +33,18 @@ export default async function AdminReviewDetailPage({
   const page = parseReviewQueuePage(readQueryParam(resolvedSearchParams.page));
   // Null when opened from outside the queue (e.g. report detail): no auto-advance.
   const queueContext = parseReviewQueueContext(readQueryParam(resolvedSearchParams.status));
-  const status = queueContext ?? "pending";
+  // The author filter of the queue this was opened from, kept for the way back.
+  const userId = parseUuidFilter(readQueryParam(resolvedSearchParams.userId));
   const detailLanguage = resolveSupportedLanguage(
     readQueryParam(resolvedSearchParams.lang),
   );
   const detailLocale = detailLanguage ? toLocaleTag(detailLanguage) : null;
-  const returnTo = buildAdminReviewDetailHref(publicId, {
-    lang: detailLocale,
-    page: page > 1 ? String(page) : null,
+  const { returnTo, backHref, notFoundHref } = buildReviewDetailQueueLinks({
+    publicId,
     status: queueContext,
+    page,
+    userId,
+    lang: detailLocale,
   });
   const read = (key: string) => readQueryParam(resolvedSearchParams[key]);
   const banner =
@@ -106,16 +107,8 @@ export default async function AdminReviewDetailPage({
     throw error;
   }
 
-  const backHref = buildAdminReviewQueueHref({ status, page });
-
   if (!result.data) {
-    redirect(
-      buildAdminReviewQueueHref({
-        status,
-        page,
-        entries: { error: "review_target_not_found" },
-      }),
-    );
+    redirect(notFoundHref);
   }
 
   return (
