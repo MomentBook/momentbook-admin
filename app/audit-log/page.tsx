@@ -27,7 +27,7 @@ export default async function AdminAuditLogPage({
     actorId: parseUuidFilter(read("actorId")),
     subjectUserId: parseUuidFilter(read("subjectUserId")),
     targetType: parseAuditTargetTypeFilter(read("targetType")),
-    targetId: read("targetId")?.trim().slice(0, 128) || undefined,
+    targetId: read("targetId")?.trim().slice(0, 200) || undefined,
   };
   const pageNumber = parsePage(read("page"));
   const returnTo = buildAdminAuditLogHref({ ...filters, page: pageNumber });
