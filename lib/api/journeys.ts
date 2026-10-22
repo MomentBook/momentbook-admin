@@ -18,6 +18,7 @@ export async function listPublishedJourneys(input: {
   reviewStatus?: JourneyReviewStatus;
   localizationPending?: boolean;
   enqueueFailed?: boolean;
+  userId?: string;
 }): Promise<AdminPublishedJourneysDataDto> {
   const query: Record<string, string | number> = {
     page: input.page,
@@ -34,6 +35,10 @@ export async function listPublishedJourneys(input: {
 
   if (input.enqueueFailed !== undefined) {
     query.enqueueFailed = String(input.enqueueFailed);
+  }
+
+  if (input.userId) {
+    query.userId = input.userId;
   }
 
   const response = await requestEnvelope<AdminPublishedJourneysDataDto>({

@@ -239,6 +239,7 @@ export interface AdminPublishedJourneysQueryDto {
 export interface AdminPublishedJourneyItemDto extends PublishedJourneyItemDto {
   published: boolean;
   publishOperationId?: string;
+  reviewRequestedAt: string | null;
 }
 
 // ─── Admin Journey List Response ─────────────
