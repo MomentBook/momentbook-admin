@@ -3,6 +3,10 @@ export const ADMIN_LOGIN_PATH = "/login";
 export const ADMIN_REVIEWS_PATH = "/reviews";
 export const ADMIN_ARTICLES_PATH = "/articles";
 export const ADMIN_REPORTS_PATH = "/reports";
+export const ADMIN_USERS_PATH = "/users";
+export const ADMIN_COMMENTS_PATH = "/comments";
+export const ADMIN_METRICS_PATH = "/metrics";
+export const ADMIN_AUDIT_LOG_PATH = "/audit-log";
 export const ADMIN_SESSION_PATH = "/session";
 export const ADMIN_SESSION_REFRESH_PATH = "/session/refresh";
 export const ADMIN_SESSION_INVALIDATE_PATH = "/session/invalidate";
@@ -200,12 +204,14 @@ export function parseAdminWorkspaceTab(
 export function buildAdminReviewQueueHref(options?: {
   status?: string | null;
   page?: number | string | null;
+  userId?: string | null;
   entries?: Record<string, string | null | undefined>;
 }): string {
   const status = readOptionalQueryValue(options?.status);
 
   return withAdminQuery(ADMIN_REVIEWS_PATH, {
     status: status === "pending" ? null : status,
+    userId: readOptionalQueryValue(options?.userId),
     page: normalizePageQuery(options?.page),
     ...options?.entries,
   });
@@ -313,3 +319,77 @@ export function buildAdminReportDetailHref(
   );
 }
 
+
+export function buildAdminUsersHref(options?: {
+  q?: string | null;
+  status?: string | null;
+  role?: string | null;
+  page?: number | string | null;
+  error?: string | null;
+}): string {
+  return withAdminQuery(ADMIN_USERS_PATH, {
+    q: readOptionalQueryValue(options?.q),
+    status: readOptionalQueryValue(options?.status),
+    role: readOptionalQueryValue(options?.role),
+    page: normalizePageQuery(options?.page),
+    error: readOptionalQueryValue(options?.error),
+  });
+}
+
+export function buildAdminUserHref(
+  userId: string,
+  entries?: Record<string, string | null | undefined>,
+): string {
+  return withAdminQuery(
+    `${ADMIN_USERS_PATH}/${encodeURIComponent(userId)}`,
+    entries ?? {},
+  );
+}
+
+export function buildAdminCommentsHref(options?: {
+  status?: string | null;
+  userId?: string | null;
+  publicId?: string | null;
+  page?: number | string | null;
+  mutation?: string | null;
+  error?: string | null;
+  message?: string | null;
+}): string {
+  return withAdminQuery(ADMIN_COMMENTS_PATH, {
+    status: readOptionalQueryValue(options?.status),
+    userId: readOptionalQueryValue(options?.userId),
+    publicId: readOptionalQueryValue(options?.publicId),
+    page: normalizePageQuery(options?.page),
+    mutation: readOptionalQueryValue(options?.mutation),
+    error: readOptionalQueryValue(options?.error),
+    message: readOptionalQueryValue(options?.message),
+  });
+}
+
+export function buildAdminMetricsHref(options?: {
+  days?: number | string | null;
+}): string {
+  const days = options?.days;
+
+  return withAdminQuery(ADMIN_METRICS_PATH, {
+    days: days === null || days === undefined ? null : String(days),
+  });
+}
+
+export function buildAdminAuditLogHref(options?: {
+  action?: string | null;
+  actorId?: string | null;
+  subjectUserId?: string | null;
+  targetType?: string | null;
+  targetId?: string | null;
+  page?: number | string | null;
+}): string {
+  return withAdminQuery(ADMIN_AUDIT_LOG_PATH, {
+    action: readOptionalQueryValue(options?.action),
+    actorId: readOptionalQueryValue(options?.actorId),
+    subjectUserId: readOptionalQueryValue(options?.subjectUserId),
+    targetType: readOptionalQueryValue(options?.targetType),
+    targetId: readOptionalQueryValue(options?.targetId),
+    page: normalizePageQuery(options?.page),
+  });
+}

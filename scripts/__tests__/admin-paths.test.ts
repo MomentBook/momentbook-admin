@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  ADMIN_AUDIT_LOG_PATH,
+  ADMIN_COMMENTS_PATH,
+  ADMIN_METRICS_PATH,
+  ADMIN_USERS_PATH,
+  buildAdminAuditLogHref,
+  buildAdminCommentsHref,
+  buildAdminMetricsHref,
+  buildAdminUserHref,
+  buildAdminUsersHref,
   buildAdminArticleTableDetailHref,
   buildAdminArticleWorkspaceHref,
   buildAdminReportsHref,
@@ -7,6 +16,7 @@ import {
   buildAdminSessionInvalidateHref,
   buildAdminSessionRefreshHref,
 } from "@/lib/admin/paths";
+import { ADMIN_NAV_ITEMS } from "@/components/layout/admin-nav";
 
 describe("admin session paths", () => {
   it("builds a refresh path with a sanitized admin return target", () => {
@@ -82,5 +92,81 @@ describe("admin review and report paths", () => {
     expect(
       buildAdminReportsHref({ targetType: "USER", targetId: "user-1", reporterId: "user-2" }),
     ).toBe("/reports?targetType=USER&targetId=user-1&reporterId=user-2");
+  });
+});
+
+describe("operator surface paths", () => {
+  it("exposes the new path constants", () => {
+    expect(ADMIN_USERS_PATH).toBe("/users");
+    expect(ADMIN_COMMENTS_PATH).toBe("/comments");
+    expect(ADMIN_METRICS_PATH).toBe("/metrics");
+    expect(ADMIN_AUDIT_LOG_PATH).toBe("/audit-log");
+  });
+
+  it("buildAdminUsersHref omits defaults", () => {
+    expect(buildAdminUsersHref()).toBe("/users");
+    expect(buildAdminUsersHref({ q: "kim", status: "banned", page: 1 })).toBe(
+      "/users?q=kim&status=banned",
+    );
+    expect(buildAdminUsersHref({ role: "admin", page: 3, error: "user_not_found" })).toBe(
+      "/users?role=admin&page=3&error=user_not_found",
+    );
+  });
+
+  it("buildAdminUserHref encodes the id", () => {
+    expect(buildAdminUserHref("u 1")).toBe("/users/u%201");
+    expect(buildAdminUserHref("u1", { mutation: "sessions_revoked" })).toBe(
+      "/users/u1?mutation=sessions_revoked",
+    );
+  });
+
+  it("buildAdminCommentsHref omits empty values", () => {
+    expect(buildAdminCommentsHref()).toBe("/comments");
+    expect(buildAdminCommentsHref({ status: "deleted", userId: "u1", page: 2 })).toBe(
+      "/comments?status=deleted&userId=u1&page=2",
+    );
+    expect(buildAdminCommentsHref({ publicId: "p1", mutation: "comment_deleted" })).toBe(
+      "/comments?publicId=p1&mutation=comment_deleted",
+    );
+  });
+
+  it("buildAdminMetricsHref omits unset days", () => {
+    expect(buildAdminMetricsHref()).toBe("/metrics");
+    expect(buildAdminMetricsHref({ days: 30 })).toBe("/metrics?days=30");
+  });
+
+  it("buildAdminAuditLogHref carries every filter", () => {
+    expect(buildAdminAuditLogHref()).toBe("/audit-log");
+    expect(
+      buildAdminAuditLogHref({
+        action: "USER_BANNED",
+        actorId: "a1",
+        subjectUserId: "s1",
+        targetType: "USER",
+        targetId: "t1",
+        page: 2,
+      }),
+    ).toBe(
+      "/audit-log?action=USER_BANNED&actorId=a1&subjectUserId=s1&targetType=USER&targetId=t1&page=2",
+    );
+  });
+
+  it("the review queue href takes a userId filter", () => {
+    expect(buildAdminReviewQueueHref({ status: "all", userId: "u1" })).toBe(
+      "/reviews?status=all&userId=u1",
+    );
+  });
+
+  it("nav order matches the spec", () => {
+    expect(ADMIN_NAV_ITEMS.map((item) => item.key)).toEqual([
+      "attention",
+      "reviews",
+      "reports",
+      "comments",
+      "users",
+      "articles",
+      "metrics",
+      "audit",
+    ]);
   });
 });
