@@ -2,6 +2,10 @@
 
 ## Status
 
+> **Amended by [0011](0011-operator-surfaces-users-comments-metrics-audit.md):**
+> 2026-10-23, the call budget table below gains the operator pages and the
+> author-filtered review queue.
+
 Active. Date: 2026-10-22. Amends [0005](0005-moderation-workspace-and-review-evidence.md)
 (review data loading) and [0009](0009-reports-moderation-and-user-sanction.md)
 (sidebar and overview placement).

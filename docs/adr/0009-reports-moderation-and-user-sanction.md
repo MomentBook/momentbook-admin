@@ -6,6 +6,10 @@ Active.
 
 ## Decision
 
+> **Amended by [0011](0011-operator-surfaces-users-comments-metrics-audit.md):**
+> 2026-10-23, the sanction reason (and the linked report) is stored in the API's
+> admin action log, and Sign out is added beside Ban and Unban.
+
 Integrate the backend `admin/reports` and `admin/users` controllers into a dedicated **Reports Moderation** tab (`/reports` and `/reports/[reportId]`), expanding the moderation workspace to support report triage, evidence inspection, resolution state mutations, and direct user account sanctioning (ban/unban).
 
 ## Context

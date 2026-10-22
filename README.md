@@ -4,8 +4,8 @@ Standalone Next.js admin app for MomentBook moderation and editorial operations.
 
 ## Scope
 
-- Owns, at the root of the admin origin: `/` (attention overview), `/reviews`, `/reports`, `/articles`, `/login`, and the `/session*` routes.
-- Talks to the Nest API for authentication, role/RBAC enforcement, review, report, user-status, and article mutations.
+- Owns, at the root of the admin origin: `/` (attention overview), `/reviews`, `/reports`, `/comments`, `/users`, `/articles`, `/metrics`, `/audit-log`, `/login`, and the `/session*` routes.
+- Talks to the Nest API for authentication, role/RBAC enforcement, review, report, user-status, sign-out, comment, and article mutations.
 - Completes public-surface mutations through the Nest API; `momentbook-web` serves fresh public content with its no-cache policy.
 - Does not own public journeys, guides, sitemaps, analytics, public chrome, or app marketing pages.
 

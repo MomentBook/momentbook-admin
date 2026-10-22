@@ -59,6 +59,16 @@ Component use:
 - `/reports` and `/reports/[reportId]`: report queue with status, target-type,
   reason, target and reporter filters; report detail with resolution status,
   account sanction, and report history for the target and the reporter.
+- `/users` and `/users/[userId]`: account directory (search, status and role
+  filters) and account detail: profile, both emails, sign-in methods,
+  sessions and devices, moderation history, public journeys, comments, reports
+  received and filed, sign-in events with IP, and a private-journey count.
+  Admins never see chat bodies or private journey contents (ADR 0011).
+- `/comments`: comment moderation with `active` (default), `deleted` and `all`
+  tabs, user and journey filters, and a confirmed delete.
+- `/metrics`: UTC-day charts over 7, 30 or 90 days, queue health, users by
+  status, and an Operations card for engineers.
+- `/audit-log`: admin actions with filters; targets link to their screen.
 - `/articles`: editorial article management for published-only markdown
   guide records, with language/category filters, pagination, derived
   summary/cover/reading-time display, and route visibility.
@@ -89,6 +99,9 @@ Component use:
   `localizationPending` total — a superset of the Slack alert, which counts
   only translations pending for more than six hours — and the tile and tab say
   so in one line (ADR 0010).
+- **Call budget.** Every page adds its own calls to the 4 attention calls:
+  `/users` 1, `/users/[userId]` 1 + 6, `/comments` 1, `/metrics` 1,
+  `/audit-log` 1 (ADR 0011; the older pages are in ADR 0010).
 - **Queue.** Every tab uses the API order (first published, newest first).
   Rows carry the queue context (`status`, `page`) for the back link.
 - **Decisions.** Approve, Reject, and Move to pending are direct submit
@@ -107,14 +120,18 @@ Component use:
   enqueue): "Pending since …", Retry translation, and — unless the journey is
   rejected — Approve without translation, which publishes the original text to
   every language and posts a Slack audit message.
-- **Confirmation policy.** Ban, Unban, Approve without translation, and article
-  delete go through `ConfirmActionForm`; the dialog names the account or
+- **Confirmation policy.** Ban, Unban, Sign out, Approve without translation, comment
+  delete, and article delete go through `ConfirmActionForm`; the dialog names the account or
   article and states the consequence. Everything else submits directly.
 - **Sanctions.** The sanction button follows the account's current status:
   Ban for active/inactive, Unban for banned, disabled for deleted. The banner
   shows the status the API returned (`banned`, `active`, or `inactive` = still
-  owes consents). Backend 403/409 are error banners, not logouts. The optional
-  reason is sent to the API but not stored yet.
+  owes consents). Backend 403/409 are error banners, not logouts. Ban, Unban and Sign
+  out are disabled for yourself, ADMIN and DELETED accounts. A 403 from these
+  is an error banner (the session stays). The optional reason, and the report a
+  ban started from, are stored in the API's admin action log. Comment delete
+  says "Hidden from the journey for everyone. The author is not notified."
+  and a 403 there clears the session.
 - Review detail prioritizes evidence inspection: title, IDs, review status,
   cluster/photo evidence, and fullscreen photo viewing. Evidence sections may
   come from timeline clusters, recap timeline clusters, and remaining

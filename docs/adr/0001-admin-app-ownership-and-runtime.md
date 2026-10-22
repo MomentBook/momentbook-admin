@@ -6,6 +6,10 @@ Active.
 
 ## Decision
 
+> **Amended by [0011](0011-operator-surfaces-users-comments-metrics-audit.md):**
+> 2026-10-23, the route list below gains `/users`, `/comments`, `/audit-log`
+> and `/metrics`.
+
 MomentBook Admin is a standalone Next.js admin web app. It owns only admin
 surfaces and admin session endpoints:
 
@@ -19,6 +23,8 @@ surfaces and admin session endpoints:
 - `/reports` and `/reports/[reportId]` render report moderation (ADR 0009).
 - `/articles`, `/articles/new`, and `/articles/[articleId]` render editorial
   article administration.
+- `/users`, `/users/[userId]`, `/comments`, `/audit-log`, and `/metrics` render
+  the operator surfaces (ADR 0011).
 - `/login`, `/session`, `/session/refresh`, and `/session/invalidate` handle
   admin sign-in and session lifecycle.
 
