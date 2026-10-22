@@ -53,8 +53,10 @@ export function DailyBarChart({
       <span className="text-[11px] tabular-nums text-muted-foreground" aria-hidden>
         {max > 0 ? COUNT_FORMATTER.format(max) : " "}
       </span>
-      {/* The top hairline marks `max`; bar heights are percentages of it. */}
-      <div role="group" aria-label={label} className="flex h-24 border-t border-border">
+      {/* The top hairline marks `max`; bar heights are percentages of it. Up to
+          90 columns would be read out one by one, so assistive tech gets the
+          caption and the daily table instead. */}
+      <div className="flex h-24 border-t border-border" aria-hidden>
         {series.map((point) => {
           const text = `${formatMetricsDay(point.date)}: ${
             point.value === null ? "no data" : COUNT_FORMATTER.format(point.value)
@@ -64,8 +66,6 @@ export function DailyBarChart({
           return (
             <div
               key={point.date}
-              role="img"
-              aria-label={text}
               title={text}
               className={cn(
                 "group flex h-full min-w-0 flex-1 items-end justify-center",
