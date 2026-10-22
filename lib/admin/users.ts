@@ -1,8 +1,23 @@
 import "server-only";
 
-import { listAdminUsers } from "@/lib/api/users";
+import { isBackendApiError } from "@/lib/api/client";
+import { listAdminAuditLog } from "@/lib/api/audit";
+import { listAdminComments } from "@/lib/api/comments";
+import { listPublishedJourneys } from "@/lib/api/journeys";
+import { getAdminUser, listAdminUserAuthEvents, listAdminUsers } from "@/lib/api/users";
+import { loadReportHistoryOrNull } from "@/lib/admin/reports";
 import { ADMIN_USERS_PAGE_SIZE } from "@/lib/admin/users-shared";
-import type { AdminUserListItemDto, AdminUserRole, AdminUserStatus } from "@/src/apis/types";
+import type {
+  AdminAuditLogDataDto,
+  AdminCommentsDataDto,
+  AdminPublishedJourneysDataDto,
+  AdminReportItemDto,
+  AdminUserAuthEventsDataDto,
+  AdminUserDetailDataDto,
+  AdminUserListItemDto,
+  AdminUserRole,
+  AdminUserStatus,
+} from "@/src/apis/types";
 
 export type AdminUsersFilters = {
   q?: string;
@@ -37,4 +52,67 @@ export async function loadAdminUsersWorkspaceData(
     page: filters.page,
     pages: Math.max(1, list.pages),
   };
+}
+
+const MODERATION_LIMIT = 10;
+const JOURNEYS_LIMIT = 5;
+const COMMENTS_LIMIT = 5;
+const AUTH_EVENTS_LIMIT = 10;
+
+/** A `null` section failed to load; the page says so in that section. */
+export type AdminUserDetailWorkspaceData = {
+  detail: AdminUserDetailDataDto;
+  moderation: AdminAuditLogDataDto | null;
+  journeys: AdminPublishedJourneysDataDto | null;
+  comments: AdminCommentsDataDto | null;
+  reportsReceived: { items: AdminReportItemDto[]; total: number } | null;
+  reportsFiled: { items: AdminReportItemDto[]; total: number } | null;
+  authEvents: AdminUserAuthEventsDataDto | null;
+};
+
+/** A secondary section: a failing endpoint shows "Could not load" instead of
+ * taking the page down, but 401/403 still reach the page's session handling
+ * (the `loadReportHistoryOrNull` rule). */
+async function orNull<T>(promise: Promise<T>): Promise<T | null> {
+  try {
+    return await promise;
+  } catch (error) {
+    if (isBackendApiError(error) && (error.statusCode === 401 || error.statusCode === 403)) {
+      throw error;
+    }
+
+    return null;
+  }
+}
+
+/**
+ * The user detail page. The profile is required, so its 404 propagates for
+ * the page to redirect; the six sections load alongside it, in one round
+ * trip, since they need only the id.
+ */
+export async function loadAdminUserDetailWorkspaceData(
+  accessToken: string,
+  userId: string,
+): Promise<AdminUserDetailWorkspaceData> {
+  const [detail, moderation, journeys, comments, reportsReceived, reportsFiled, authEvents] =
+    await Promise.all([
+      getAdminUser({ accessToken, userId }),
+      orNull(
+        listAdminAuditLog({
+          accessToken,
+          subjectUserId: userId,
+          page: 1,
+          limit: MODERATION_LIMIT,
+        }),
+      ),
+      orNull(listPublishedJourneys({ accessToken, userId, page: 1, limit: JOURNEYS_LIMIT })),
+      orNull(listAdminComments({ accessToken, userId, page: 1, limit: COMMENTS_LIMIT })),
+      loadReportHistoryOrNull({ accessToken, targetType: "USER", targetId: userId }),
+      loadReportHistoryOrNull({ accessToken, reporterId: userId }),
+      orNull(
+        listAdminUserAuthEvents({ accessToken, userId, page: 1, limit: AUTH_EVENTS_LIMIT }),
+      ),
+    ]);
+
+  return { detail, moderation, journeys, comments, reportsReceived, reportsFiled, authEvents };
 }

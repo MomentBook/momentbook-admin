@@ -8,7 +8,7 @@ import { LocalizedDate } from "@/components/LocalizedTime";
 import { cn } from "@/lib/utils";
 import { buildAdminUserHref, buildAdminUsersHref } from "@/lib/admin/paths";
 import type { AdminUsersWorkspaceData } from "@/lib/admin/users";
-import { USER_STATUS_LABELS } from "@/lib/admin/users-shared";
+import { USER_STATUS_LABELS, userStatusBadgeVariant } from "@/lib/admin/users-shared";
 import { defaultLanguage } from "@/lib/i18n/config";
 import type { AdminUserRole, AdminUserStatus } from "@/src/apis/types";
 
@@ -27,13 +27,6 @@ const STATUS_CHIPS: ReadonlyArray<{ label: string; status?: AdminUserStatus }> =
   { label: "Banned", status: "BANNED" },
   { label: "Deleted", status: "DELETED" },
 ];
-
-function statusBadgeVariant(status: AdminUserStatus): "default" | "destructive" | "secondary" | "outline" {
-  if (status === "ACTIVE") return "default";
-  if (status === "BANNED") return "destructive";
-  if (status === "INACTIVE") return "secondary";
-  return "outline";
-}
 
 function hrefFor(filters: UsersFilters, page?: number): string {
   return buildAdminUsersHref({
@@ -233,7 +226,7 @@ export function AdminUsersListPageView({
                       ) : null}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={statusBadgeVariant(user.status)}>
+                      <Badge variant={userStatusBadgeVariant(user.status)}>
                         {USER_STATUS_LABELS[user.status]}
                       </Badge>
                     </TableCell>

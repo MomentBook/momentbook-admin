@@ -10,6 +10,7 @@ import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/app/_workspace/AdminWorkspaceErrorPage";
 import { parseAdminReviewStatus } from "@/lib/admin/reviews";
+import { parseUuidFilter } from "@/lib/admin/reports-shared";
 import { loadWorkspacePage, readQueryParam } from "@/app/_workspace/workspace-data";
 import { resolveReviewBanner } from "./review-banner";
 import { ReviewQueuePageView } from "./ReviewQueuePageView";
@@ -27,7 +28,9 @@ export default async function AdminReviewsPage({
   const resolvedSearchParams = await searchParams;
   const tab = parseReviewQueueTab(readQueryParam(resolvedSearchParams.status));
   const pageNumber = parseReviewQueuePage(readQueryParam(resolvedSearchParams.page));
-  const returnTo = buildAdminReviewQueueHref({ status: tab, page: pageNumber });
+  // An invalid author id is dropped rather than sent (the API answers 400).
+  const userId = parseUuidFilter(readQueryParam(resolvedSearchParams.userId));
+  const returnTo = buildAdminReviewQueueHref({ status: tab, page: pageNumber, userId });
   const banner = resolveReviewBanner({
     error: readQueryParam(resolvedSearchParams.error),
     mutation: readQueryParam(resolvedSearchParams.mutation),
@@ -41,7 +44,7 @@ export default async function AdminReviewsPage({
     page = await loadWorkspacePage({
       returnTo,
       load: (accessToken, counts) =>
-        loadReviewQueue({ accessToken, tab, page: pageNumber, counts }),
+        loadReviewQueue({ accessToken, tab, page: pageNumber, counts, userId }),
     });
   } catch (error) {
     if (isBackendApiError(error)) {

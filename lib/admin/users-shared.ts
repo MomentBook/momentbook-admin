@@ -13,6 +13,15 @@ export const USER_STATUS_LABELS: Record<AdminUserStatus, string> = {
   DELETED: "Deleted",
 };
 
+export function userStatusBadgeVariant(
+  status: AdminUserStatus,
+): "default" | "destructive" | "secondary" | "outline" {
+  if (status === "ACTIVE") return "default";
+  if (status === "BANNED") return "destructive";
+  if (status === "INACTIVE") return "secondary";
+  return "outline";
+}
+
 /** A search the API accepts, or `undefined` (it answers 400 otherwise). */
 export function parseUserSearchQuery(raw?: string | null): string | undefined {
   const trimmed = raw?.trim();

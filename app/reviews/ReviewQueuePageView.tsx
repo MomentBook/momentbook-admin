@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CircleCheck, ImageOff } from "lucide-react";
+import { CircleCheck, ImageOff, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +42,7 @@ function QueueTabs({ queue }: { queue: ReviewQueuePage }) {
         return (
           <Link
             key={tab}
-            href={buildAdminReviewQueueHref({ status: tab })}
+            href={buildAdminReviewQueueHref({ status: tab, userId: queue.userId })}
             aria-current={active ? "page" : undefined}
             className={cn(
               "-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm",
@@ -62,8 +62,31 @@ function QueueTabs({ queue }: { queue: ReviewQueuePage }) {
   );
 }
 
+/** The author filter as a chip; following it clears the filter. */
+function AuthorFilterChip({ queue }: { queue: ReviewQueuePage }) {
+  if (!queue.userId) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge asChild variant="secondary" className="max-w-full">
+        <Link
+          href={buildAdminReviewQueueHref({ status: queue.tab })}
+          aria-label={`Clear author filter ${queue.userId}`}
+        >
+          <span className="truncate">
+            Author: <span className="font-mono">{queue.userId}</span>
+          </span>
+          <X aria-hidden />
+        </Link>
+      </Badge>
+    </div>
+  );
+}
+
 function EmptyQueue({ queue }: { queue: ReviewQueuePage }) {
-  if (queue.tab === "pending" && queue.total === 0) {
+  if (queue.tab === "pending" && queue.total === 0 && !queue.userId) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex items-center gap-3 py-8">
@@ -80,7 +103,9 @@ function EmptyQueue({ queue }: { queue: ReviewQueuePage }) {
         <p className="font-medium">No journeys match this view.</p>
         {queue.page > 1 ? (
           <Button asChild variant="outline" size="sm">
-            <Link href={buildAdminReviewQueueHref({ status: queue.tab })}>Go to page 1</Link>
+            <Link href={buildAdminReviewQueueHref({ status: queue.tab, userId: queue.userId })}>
+              Go to page 1
+            </Link>
           </Button>
         ) : null}
       </CardContent>
@@ -100,7 +125,13 @@ function Pagination({ queue }: { queue: ReviewQueuePage }) {
     <div className="flex items-center justify-between gap-2">
       {previous ? (
         <Button asChild variant="outline" size="sm">
-          <Link href={buildAdminReviewQueueHref({ status: queue.tab, page: previous })}>
+          <Link
+            href={buildAdminReviewQueueHref({
+              status: queue.tab,
+              page: previous,
+              userId: queue.userId,
+            })}
+          >
             Previous
           </Link>
         </Button>
@@ -114,7 +145,11 @@ function Pagination({ queue }: { queue: ReviewQueuePage }) {
       </span>
       {next ? (
         <Button asChild variant="outline" size="sm">
-          <Link href={buildAdminReviewQueueHref({ status: queue.tab, page: next })}>Next</Link>
+          <Link
+            href={buildAdminReviewQueueHref({ status: queue.tab, page: next, userId: queue.userId })}
+          >
+            Next
+          </Link>
         </Button>
       ) : (
         <Button variant="outline" size="sm" disabled>
@@ -155,6 +190,8 @@ export function ReviewQueuePageView({
 
       <QueueTabs queue={queue} />
 
+      <AuthorFilterChip queue={queue} />
+
       {queue.tab === "translation" ? (
         <p className="text-xs text-muted-foreground">
           Every journey whose translation has not landed, in any review status.{" "}
@@ -174,7 +211,7 @@ export function ReviewQueuePageView({
                   <TableHead>Journey</TableHead>
                   <TableHead>Author ID</TableHead>
                   <TableHead className="text-right">Photos</TableHead>
-                  <TableHead>First published</TableHead>
+                  <TableHead>Submitted</TableHead>
                   <TableHead>Review</TableHead>
                   <TableHead>Translation</TableHead>
                 </TableRow>
@@ -214,10 +251,10 @@ export function ReviewQueuePageView({
                     <TableCell className="font-mono text-xs">{item.userId}</TableCell>
                     <TableCell className="text-right tabular-nums">{item.photoCount}</TableCell>
                     <TableCell>
-                      {item.publishedAt ? (
+                      {item.submittedAt ? (
                         <LocalizedDate
                           lang={ADMIN_DISPLAY_LANGUAGE}
-                          timestamp={Date.parse(item.publishedAt)}
+                          timestamp={Date.parse(item.submittedAt)}
                         />
                       ) : (
                         <span className="text-muted-foreground">—</span>

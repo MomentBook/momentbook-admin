@@ -19,11 +19,15 @@ export const REPORT_REASONS: readonly ReportReason[] = [
 const UUID_PATTERN =
   /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/i;
 
-/** A reporter filter the API accepts, or `undefined` (it answers 400 for a
- * non-UUID `reporterId`). */
-export function parseReporterId(value: string | null): string | undefined {
+/** A UUID filter the API accepts (`reporterId`, `userId`, …), or `undefined`
+ * (it answers 400 for a non-UUID). */
+export function parseUuidFilter(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed && UUID_PATTERN.test(trimmed) ? trimmed : undefined;
+}
+
+export function parseReporterId(value: string | null): string | undefined {
+  return parseUuidFilter(value);
 }
 
 export function parseReportReason(value: string | null): ReportReason | undefined {

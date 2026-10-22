@@ -163,6 +163,78 @@ describe("loadReviewQueue", () => {
     expect(result.tabTotals).toEqual({ pending: 4, translation: 1, approved: 7, rejected: 7, all: 7 });
     expect(listPublishedJourneys).toHaveBeenCalledTimes(4);
   });
+
+  it("an author filter applies to the rows and to every tab total", async () => {
+    listPublishedJourneys.mockImplementation(
+      async (input: { limit: number; reviewStatus?: string; localizationPending?: boolean }) => {
+        if (input.limit === 20) {
+          return createAdminJourneysPage({
+            journeys: [createAdminJourneyItem({ reviewRequestedAt: null })],
+            total: 2,
+            limit: 20,
+          });
+        }
+        if (input.reviewStatus === "PENDING") return createAdminJourneysPage({ total: 1 });
+        if (input.localizationPending) return createAdminJourneysPage({ total: 0 });
+        if (input.reviewStatus === "APPROVED") return createAdminJourneysPage({ total: 1 });
+        if (input.reviewStatus === "REJECTED") return createAdminJourneysPage({ total: 0 });
+        throw new Error(`unexpected call ${JSON.stringify(input)}`);
+      },
+    );
+    const { loadReviewQueue } = await loadModule();
+
+    const result = await loadReviewQueue({
+      accessToken: "t",
+      tab: "all",
+      page: 1,
+      counts,
+      userId: "u-1",
+    });
+
+    expect(listPublishedJourneys).toHaveBeenCalledWith({
+      accessToken: "t",
+      page: 1,
+      limit: 20,
+      userId: "u-1",
+    });
+    expect(listPublishedJourneys).toHaveBeenCalledWith({
+      accessToken: "t",
+      page: 1,
+      limit: 1,
+      reviewStatus: "PENDING",
+      userId: "u-1",
+    });
+    expect(listPublishedJourneys).toHaveBeenCalledTimes(5);
+    // The global attention counts do not describe one author's journeys.
+    expect(result.tabTotals).toEqual({ pending: 1, translation: 0, approved: 1, rejected: 0, all: 2 });
+    expect(result.userId).toBe("u-1");
+  });
+
+  it("Submitted is the review request time, else the first publish", async () => {
+    listPublishedJourneys.mockImplementation(async (input: { limit: number }) =>
+      input.limit === 20
+        ? createAdminJourneysPage({
+            journeys: [
+              createAdminJourneyItem({
+                publicId: "republished",
+                reviewRequestedAt: "2026-04-05T00:00:00.000Z",
+              }),
+              createAdminJourneyItem({ publicId: "legacy", reviewRequestedAt: null }),
+            ],
+            limit: 20,
+          })
+        : createAdminJourneysPage({ total: 0 }),
+    );
+    const { loadReviewQueue } = await loadModule();
+
+    const result = await loadReviewQueue({ accessToken: "t", tab: "pending", page: 1, counts });
+
+    expect(result.userId).toBeNull();
+    expect(result.items.map((item) => [item.publicId, item.submittedAt])).toEqual([
+      ["republished", "2026-04-05T00:00:00.000Z"],
+      ["legacy", "2026-04-02T00:00:00.000Z"],
+    ]);
+  });
 });
 
 describe("findNextPendingPublicId", () => {

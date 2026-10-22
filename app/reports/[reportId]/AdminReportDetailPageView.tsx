@@ -18,6 +18,7 @@ import { LocalizedDate } from "@/components/LocalizedTime";
 import {
   buildAdminReportsHref,
   buildAdminReviewDetailHref,
+  buildAdminUserHref,
 } from "@/lib/admin/paths";
 import {
   getReportReasonLabel,
@@ -69,7 +70,7 @@ function SanctionReasonInput() {
     <div className="grid gap-1.5">
       <Label htmlFor="sanction-reason">Reason (optional)</Label>
       <Input id="sanction-reason" name="reason" />
-      <p className="text-xs text-muted-foreground">Sent to the API; not stored yet.</p>
+      <p className="text-xs text-muted-foreground">Saved in the audit log.</p>
     </div>
   );
 }
@@ -271,7 +272,14 @@ export function AdminReportDetailPageView({
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-muted-foreground">Display Name:</span>
-                    <p className="font-medium mt-0.5">{targetUser.name || "—"}</p>
+                    <p className="font-medium mt-0.5">
+                      <Link
+                        href={buildAdminUserHref(targetUser.userId)}
+                        className="text-primary hover:underline"
+                      >
+                        {targetUser.name || "Unnamed user"}
+                      </Link>
+                    </p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Account Email:</span>
@@ -349,7 +357,12 @@ export function AdminReportDetailPageView({
                   <div className="rounded-md border p-3 text-xs space-y-1">
                     <span className="text-muted-foreground">Author:</span>
                     <p className="font-medium">
-                      {report.targetPublishedJourney.owner.name || report.targetPublishedJourney.owner.email || "Unknown Author"}
+                      <Link
+                        href={buildAdminUserHref(report.targetPublishedJourney.userId)}
+                        className="text-primary hover:underline"
+                      >
+                        {report.targetPublishedJourney.owner.name || report.targetPublishedJourney.owner.email || "Unknown Author"}
+                      </Link>
                     </p>
                   </div>
                 ) : null}
@@ -482,7 +495,14 @@ export function AdminReportDetailPageView({
             <CardContent className="space-y-3 text-xs">
               <div>
                 <span className="text-muted-foreground">Name:</span>
-                <p className="font-medium mt-0.5">{report.reporter?.name || "—"}</p>
+                <p className="font-medium mt-0.5">
+                  <Link
+                    href={buildAdminUserHref(report.reporterId)}
+                    className="text-primary hover:underline"
+                  >
+                    {report.reporter?.name || "Unnamed user"}
+                  </Link>
+                </p>
               </div>
               <div>
                 <span className="text-muted-foreground">Email:</span>

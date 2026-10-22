@@ -3,7 +3,7 @@ import "server-only";
 import { listPublishedJourneys } from "@/lib/api/journeys";
 import type { AttentionCounts } from "@/lib/admin/attention";
 import { normalizeAdminReviewItem, type AdminReviewQueueItem } from "@/lib/admin/reviews";
-import type { JourneyReviewStatus } from "@/src/apis/types";
+import type { AdminPublishedJourneyItemDto, JourneyReviewStatus } from "@/src/apis/types";
 
 export type ReviewQueueTab = "pending" | "translation" | "approved" | "rejected" | "all";
 
@@ -59,39 +59,66 @@ export function reviewQueueTabFilter(tab: ReviewQueueTab): {
   }
 }
 
+export type ReviewQueueItem = AdminReviewQueueItem & {
+  /** When the journey last entered review: the latest publish or republish,
+   * or the first publish for rows from before the API recorded it. */
+  submittedAt: string | null;
+};
+
 export type ReviewQueuePage = {
   tab: ReviewQueueTab;
-  items: AdminReviewQueueItem[];
+  /** The author filter, or `null` for every author. */
+  userId: string | null;
+  items: ReviewQueueItem[];
   total: number;
   page: number;
   pages: number;
   tabTotals: Record<ReviewQueueTab, number>;
 };
 
-async function readTabTotal(accessToken: string, tab: ReviewQueueTab): Promise<number> {
+function authorFilter(userId: string | undefined): { userId?: string } {
+  return userId ? { userId } : {};
+}
+
+async function readTabTotal(
+  accessToken: string,
+  tab: ReviewQueueTab,
+  userId: string | undefined,
+): Promise<number> {
   const response = await listPublishedJourneys({
     accessToken,
     page: 1,
     limit: 1,
     ...reviewQueueTabFilter(tab),
+    ...authorFilter(userId),
   });
 
   return response.total;
 }
 
+function toReviewQueueItem(journey: AdminPublishedJourneyItemDto): ReviewQueueItem {
+  const item = normalizeAdminReviewItem(journey);
+
+  return { ...item, submittedAt: journey.reviewRequestedAt ?? item.publishedAt };
+}
+
 /**
  * One server-filtered page of the queue plus a total for every tab. Pending
  * and translation totals come from the attention counts the page already
- * loads; the active tab's total is the list's own, so the tab label always
- * matches the rows.
+ * loads, except under an author filter: those counts cover every author, so
+ * then each tab is counted with the filter. The active tab's total is the
+ * list's own, so the tab label always matches the rows.
  */
 export async function loadReviewQueue(input: {
   accessToken: string;
   tab: ReviewQueueTab;
   page: number;
   counts: AttentionCounts | Promise<AttentionCounts>;
+  userId?: string;
 }): Promise<ReviewQueuePage> {
-  const countedTabs: ReviewQueueTab[] = ["approved", "rejected", "all"];
+  const countedTabs: readonly ReviewQueueTab[] = input.userId
+    ? REVIEW_QUEUE_TABS
+    : ["approved", "rejected", "all"];
   const otherTabs = countedTabs.filter((tab) => tab !== input.tab);
 
   const [list, counts, ...otherTotals] = await Promise.all([
@@ -100,9 +127,10 @@ export async function loadReviewQueue(input: {
       page: input.page,
       limit: REVIEW_QUEUE_PAGE_SIZE,
       ...reviewQueueTabFilter(input.tab),
+      ...authorFilter(input.userId),
     }),
     input.counts,
-    ...otherTabs.map((tab) => readTabTotal(input.accessToken, tab)),
+    ...otherTabs.map((tab) => readTabTotal(input.accessToken, tab, input.userId)),
   ]);
 
   const tabTotals: Record<ReviewQueueTab, number> = {
@@ -119,7 +147,8 @@ export async function loadReviewQueue(input: {
 
   return {
     tab: input.tab,
-    items: list.journeys.map(normalizeAdminReviewItem),
+    userId: input.userId ?? null,
+    items: list.journeys.map(toReviewQueueItem),
     total: list.total,
     page: input.page,
     pages: Math.max(1, list.pages),

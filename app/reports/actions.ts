@@ -145,6 +145,9 @@ export async function updateAdminUserStatusAction(formData: FormData): Promise<n
   const rawStatus = readText(formData.get("status"));
   const status = rawStatus === "banned" ? "banned" : "active";
   const reason = readText(formData.get("reason")) || undefined;
+  // The report this decision answers (report detail only); the API records it
+  // with the sanction and rejects one that is not about this user.
+  const reportId = readText(formData.get("reportId"));
 
   const buildReturnEntries = (extra: Record<string, string | null | undefined>) => ({
     mutation: null,
@@ -175,6 +178,7 @@ export async function updateAdminUserStatusAction(formData: FormData): Promise<n
       data: {
         status,
         reason,
+        ...(reportId ? { reportId } : {}),
       },
     });
     // Lifting a ban can leave the account inactive (pending consents); report

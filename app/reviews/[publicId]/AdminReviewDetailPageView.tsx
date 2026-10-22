@@ -14,7 +14,11 @@ import {
 import { updateAdminUserStatusAction } from "@/app/reports/actions";
 import { ReportHistoryList, type ReportHistory } from "@/app/reports/ReportHistoryList";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
-import { buildAdminReportsHref } from "@/lib/admin/paths";
+import {
+  buildAdminCommentsHref,
+  buildAdminReportsHref,
+  buildAdminUserHref,
+} from "@/lib/admin/paths";
 import type { ReviewQueueTab } from "@/lib/admin/review-queue";
 import {
   getAdminReviewStatusLabel,
@@ -392,11 +396,22 @@ function ContextPanel({
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-muted-foreground">Author</span>
-          <span className="text-sm font-medium">{journey.authorName ?? "Unnamed"}</span>
+          <Link
+            href={buildAdminUserHref(journey.userId)}
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            {journey.authorName ?? "Unnamed"}
+          </Link>
           <span className="break-all font-mono text-xs text-muted-foreground">
             {journey.userId}
           </span>
         </div>
+        <Link
+          href={buildAdminCommentsHref({ publicId: journey.publicId })}
+          className="text-sm text-primary hover:underline"
+        >
+          Comments on this journey
+        </Link>
         <ReportHistoryList
           title="Reports on this journey"
           history={journeyReports}
@@ -422,7 +437,7 @@ function ContextPanel({
           <div className="grid gap-1.5">
             <Label htmlFor="ban-author-reason">Reason (optional)</Label>
             <Input id="ban-author-reason" name="reason" />
-            <p className="text-xs text-muted-foreground">Sent to the API; not stored yet.</p>
+            <p className="text-xs text-muted-foreground">Saved in the audit log.</p>
           </div>
         </ConfirmActionForm>
       </CardContent>

@@ -112,6 +112,28 @@ describe("updateAdminUserStatusAction", () => {
     );
   });
 
+  it("passes the report the decision answers", async () => {
+    cookies.mockResolvedValue({});
+    requireAdminActionSession.mockResolvedValue({ accessToken: "token" });
+    updateAdminUserStatus.mockResolvedValue({ userId: "u1", status: "banned" });
+
+    await runUserStatusAction(userStatusForm({ status: "banned", reportId: "r-1" }));
+
+    expect(updateAdminUserStatus).toHaveBeenCalledTimes(1);
+    expect(updateAdminUserStatus.mock.calls[0]?.[0].data.reportId).toBe("r-1");
+  });
+
+  it("an empty reportId leaves the key out", async () => {
+    cookies.mockResolvedValue({});
+    requireAdminActionSession.mockResolvedValue({ accessToken: "token" });
+    updateAdminUserStatus.mockResolvedValue({ userId: "u1", status: "banned" });
+
+    await runUserStatusAction(userStatusForm({ status: "banned", reportId: " " }));
+
+    expect(updateAdminUserStatus).toHaveBeenCalledTimes(1);
+    expect(Object.keys(updateAdminUserStatus.mock.calls[0]?.[0].data)).not.toContain("reportId");
+  });
+
   it("deleted account 409 is a banner", async () => {
     cookies.mockResolvedValue({});
     requireAdminActionSession.mockResolvedValue({ accessToken: "token" });
