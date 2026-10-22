@@ -41,6 +41,20 @@ describe("user directory parsers", () => {
     expect(parseUserRoleFilter("user")).toBeUndefined();
     expect(parseUserRoleFilter(undefined)).toBeUndefined();
   });
+
+  it("resolveUserSearch ignores, with a notice, any q the API would reject", async () => {
+    const { resolveUserSearch } = await import("@/lib/admin/users-shared");
+
+    expect(resolveUserSearch(" ")).toEqual({ ignored: true });
+    expect(resolveUserSearch("a")).toEqual({ ignored: true });
+    expect(resolveUserSearch("a".repeat(201))).toEqual({ ignored: true });
+    expect(resolveUserSearch("kim")).toEqual({ q: "kim", ignored: false });
+    expect(resolveUserSearch(" kim ")).toEqual({ q: "kim", ignored: false });
+    expect(resolveUserSearch(undefined)).toEqual({ ignored: false });
+    expect(resolveUserSearch(null)).toEqual({ ignored: false });
+    // The search form submits an empty q; that is no search, not a bad one.
+    expect(resolveUserSearch("")).toEqual({ ignored: false });
+  });
 });
 
 describe("loadAdminUsersWorkspaceData", () => {

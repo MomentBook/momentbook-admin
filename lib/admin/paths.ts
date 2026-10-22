@@ -319,7 +319,6 @@ export function buildAdminReportDetailHref(
   );
 }
 
-
 export function buildAdminUsersHref(options?: {
   q?: string | null;
   status?: string | null;

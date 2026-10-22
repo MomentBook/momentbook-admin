@@ -4,8 +4,8 @@ import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminUsersWorkspaceData } from "@/lib/admin/users";
 import {
   parseUserRoleFilter,
-  parseUserSearchQuery,
   parseUserStatusFilter,
+  resolveUserSearch,
 } from "@/lib/admin/users-shared";
 import { buildAdminUsersHref } from "@/lib/admin/paths";
 import {
@@ -28,10 +28,9 @@ export default async function AdminUsersPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const rawQ = readQueryParam(resolvedSearchParams.q)?.trim() || undefined;
-  const q = parseUserSearchQuery(rawQ);
-  // A search the API would reject is ignored, with a notice in the view.
-  const searchIgnored = Boolean(rawQ) && !q;
+  const { q, ignored: searchIgnored } = resolveUserSearch(
+    readQueryParam(resolvedSearchParams.q),
+  );
   const statusParam = readQueryParam(resolvedSearchParams.status);
   const status = parseUserStatusFilter(statusParam);
   const roleParam = readQueryParam(resolvedSearchParams.role);

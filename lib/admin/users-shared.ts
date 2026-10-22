@@ -24,6 +24,15 @@ export function parseUserSearchQuery(raw?: string | null): string | undefined {
   return trimmed;
 }
 
+/** The directory search: a usable `q`, or `ignored` when something was typed
+ * that the API would reject (one character, only spaces, over 200) so the
+ * page can say why the results are unfiltered. An empty `q` is no search. */
+export function resolveUserSearch(raw?: string | null): { q?: string; ignored: boolean } {
+  const q = parseUserSearchQuery(raw);
+
+  return q ? { q, ignored: false } : { ignored: Boolean(raw) };
+}
+
 export function parseUserStatusFilter(raw?: string | null): AdminUserStatus | undefined {
   // Only the lowercase URL form is canonical.
   return (Object.keys(USER_STATUS_LABELS) as AdminUserStatus[]).find(
