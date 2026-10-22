@@ -15,6 +15,7 @@ import {
   buildAdminReviewQueueHref,
   buildAdminUsersHref,
 } from "@/lib/admin/paths";
+import { COMMENT_DELETED_BY_LABELS } from "@/lib/admin/comments-shared";
 import { getAdminReviewStatusLabel, normalizeAdminReviewItem } from "@/lib/admin/reviews";
 import type { AdminUserDetailWorkspaceData } from "@/lib/admin/users";
 import { USER_STATUS_LABELS, userStatusBadgeVariant } from "@/lib/admin/users-shared";
@@ -26,12 +27,6 @@ import { ReportHistoryList } from "@/app/reports/ReportHistoryList";
 import { revokeAdminUserSessionsAction } from "../actions";
 
 const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
-
-const COMMENT_DELETED_BY_LABELS = {
-  AUTHOR: "author",
-  JOURNEY_OWNER: "journey owner",
-  ADMIN: "admin",
-} as const;
 
 const ACTIVITY_COUNTS: ReadonlyArray<[keyof AdminUserCountsDto, string]> = [
   ["publishedJourneys", "Published journeys"],
