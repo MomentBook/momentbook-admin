@@ -57,6 +57,11 @@ export default async function AdminArticleDetailPage({
     });
   } catch (error) {
     if (isBackendApiError(error)) {
+      // The API answers 404 for an unknown or already deleted article.
+      if (error.statusCode === 404) {
+        redirect(withAdminQuery(returnTo, { error: "article_not_found" }));
+      }
+
       return (
         <AdminWorkspaceErrorPage
           heading="The article editor is temporarily unavailable."

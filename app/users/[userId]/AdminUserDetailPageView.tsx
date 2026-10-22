@@ -15,6 +15,7 @@ import {
   buildAdminReviewQueueHref,
   buildAdminUsersHref,
 } from "@/lib/admin/paths";
+import { ADMIN_AUDIT_ACTION_LABELS } from "@/lib/admin/audit-log-shared";
 import { COMMENT_DELETED_BY_LABELS } from "@/lib/admin/comments-shared";
 import { getAdminReviewStatusLabel, normalizeAdminReviewItem } from "@/lib/admin/reviews";
 import type { AdminUserDetailWorkspaceData } from "@/lib/admin/users";
@@ -498,7 +499,7 @@ function ModerationSection({ data, userId }: { data: AdminUserDetailWorkspaceDat
           {moderation.actions.map((action) => (
             <li key={action.id} className="flex flex-col">
               <span className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{humanizeEnum(action.action)}</Badge>
+                <Badge variant="outline">{ADMIN_AUDIT_ACTION_LABELS[action.action]}</Badge>
                 <span className="text-xs text-muted-foreground">
                   <DateValue value={action.createdAt} withTime /> ·{" "}
                   {action.actor?.name || action.actor?.email || "Unknown admin"}
