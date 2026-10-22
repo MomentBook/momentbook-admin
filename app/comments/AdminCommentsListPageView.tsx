@@ -114,7 +114,7 @@ function DeleteComment({ comment, returnTo }: { comment: AdminCommentItemDto; re
     >
       <div className="grid gap-1.5">
         <Label htmlFor={`reason-${comment.commentId}`}>Reason (optional)</Label>
-        <Input id={`reason-${comment.commentId}`} name="reason" />
+        <Input id={`reason-${comment.commentId}`} name="reason" maxLength={1000} />
         <p className="text-xs text-muted-foreground">Saved in the audit log.</p>
       </div>
     </ConfirmActionForm>
@@ -170,7 +170,8 @@ function EmptyState({ data, filters }: { data: AdminCommentsWorkspaceData; filte
             <Link href={hrefFor({ tab: filters.tab })}>Clear filters</Link>
           </Button>
         ) : null}
-        {!filtered && data.page > 1 ? (
+        {/* Deleting the last comment on a later page lands here; page 1 keeps the filters. */}
+        {data.page > 1 ? (
           <Button asChild variant="outline" size="sm">
             <Link href={hrefFor(filters)}>Go to page 1</Link>
           </Button>

@@ -149,9 +149,9 @@ function EmptyState({
             <Link href={buildAdminUsersHref()}>Clear filters</Link>
           </Button>
         ) : null}
-        {!filtered && data.page > 1 ? (
+        {data.page > 1 ? (
           <Button asChild variant="outline" size="sm">
-            <Link href={buildAdminUsersHref()}>Go to page 1</Link>
+            <Link href={hrefFor(filters)}>Go to page 1</Link>
           </Button>
         ) : null}
       </CardContent>

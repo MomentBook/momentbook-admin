@@ -251,9 +251,10 @@ export function AdminAuditLogPageView({
               <Button asChild variant="outline" size="sm">
                 <Link href={hrefFor({})}>Clear filters</Link>
               </Button>
-            ) : data.page > 1 ? (
+            ) : null}
+            {data.page > 1 ? (
               <Button asChild variant="outline" size="sm">
-                <Link href={hrefFor({})}>Go to page 1</Link>
+                <Link href={hrefFor(filters)}>Go to page 1</Link>
               </Button>
             ) : null}
           </CardContent>
