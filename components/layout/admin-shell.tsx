@@ -14,7 +14,10 @@ export function AdminShell({ children, sidebar, defaultOpen = true }: AdminShell
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       {sidebar}
-      <SidebarInset>
+      {/* A flex item defaults to min-width:auto, so without min-w-0 a wide table
+          widens the inset and the whole page scrolls sideways instead of the
+          table's own overflow-x container. */}
+      <SidebarInset className="min-w-0">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-2" />
           <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
