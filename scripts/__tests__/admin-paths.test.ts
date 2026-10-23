@@ -16,6 +16,7 @@ import {
   buildAdminSessionInvalidateHref,
   buildReviewDetailQueueLinks,
   buildAdminSessionRefreshHref,
+  sanitizeAdminPath,
 } from "@/lib/admin/paths";
 import { ADMIN_NAV_ITEMS } from "@/components/layout/admin-nav";
 
@@ -34,6 +35,17 @@ describe("admin session paths", () => {
         next: "https://example.com/phish",
       }),
     ).toBe("/session/refresh");
+  });
+
+  it("rejects paths that normalize to a protocol-relative URL", () => {
+    for (const value of ["/.//evil.com", "/reviews/..//evil.com", "/%2e//evil.com"]) {
+      expect(sanitizeAdminPath(value)).toBeNull();
+    }
+    expect(buildAdminSessionRefreshHref({ next: "/.//evil.com" })).toBe("/session/refresh");
+  });
+
+  it("keeps a normalized admin path", () => {
+    expect(sanitizeAdminPath("/reviews/./public-1?status=all")).toBe("/reviews/public-1?status=all");
   });
 
   it("builds an invalidate path with a whitelisted error code", () => {

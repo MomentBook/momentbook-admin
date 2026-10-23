@@ -98,6 +98,11 @@ export function sanitizeAdminPath(
 
   try {
     const url = buildUrl(value);
+    // Normalization can still produce "//host" (e.g. "/.//evil.com"), which a
+    // redirect would treat as protocol-relative.
+    if (url.pathname.startsWith("//")) {
+      return null;
+    }
     return `${url.pathname}${url.search}`;
   } catch {
     return null;
