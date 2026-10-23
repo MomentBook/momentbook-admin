@@ -282,14 +282,14 @@ describe("updatePublishedJourneyReviewAction queue flow", () => {
 });
 
 describe("requeueJourneyReviewAction", () => {
-  it("requeue 502 maps to review_requeue_unavailable", async () => {
+  it("an upstream failure on requeue maps to review_requeue_failed", async () => {
     cookies.mockResolvedValue(new Map());
     requireAdminActionSession.mockResolvedValue({ accessToken: "admin-access-token" });
     requeueJourneyReview.mockRejectedValue(new ApiError("Bad gateway", 502));
     const { requeueJourneyReviewAction } = await loadActionsModule();
 
     await expect(requeueJourneyReviewAction(decisionForm({}))).rejects.toThrow(
-      "REDIRECT:/reviews/public-123?targetPublicId=public-123&error=review_requeue_unavailable",
+      "REDIRECT:/reviews/public-123?targetPublicId=public-123&error=review_requeue_failed",
     );
   });
 });

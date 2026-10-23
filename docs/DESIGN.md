@@ -94,7 +94,7 @@ Component use:
 
 - **Attention model.** One loader (`lib/admin/attention.ts`) feeds the sidebar
   badges and the overview on every page: pending reviews, translation pending,
-  translation enqueue failed, and open reports. Every number links to the
+  translation failed, and open reports. Every number links to the
   filtered queue whose total it is. Translation pending is the API's
   `localizationPending` total — a superset of the Slack alert, which counts
   only translations pending for more than six hours — and the tile and tab say
@@ -116,10 +116,10 @@ Component use:
   decided journey back to pending. Undo restores the review state only;
   notifications already sent are not recalled, and the copy does not promise
   more.
-- **Translation box** (only while a translation is pending or failed to
-  enqueue): "Pending since …", Retry translation, and — unless the journey is
-  rejected — Approve without translation, which publishes the original text to
-  every language and posts a Slack audit message.
+- **Translation box** (only while a translation is pending or has failed):
+  "Pending since …", Retry translation, and — unless the journey is rejected —
+  Approve without translation, which publishes the original text to every
+  language and posts a Slack audit message.
 - **Confirmation policy.** Ban, Unban, Sign out, Approve without translation, comment
   delete, and article delete go through `ConfirmActionForm`; the dialog names the account or
   article and states the consequence. Everything else submits directly.

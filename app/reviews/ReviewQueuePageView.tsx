@@ -268,7 +268,7 @@ export function ReviewQueuePageView({
                     </TableCell>
                     <TableCell>
                       {item.review.enqueueFailed ? (
-                        <Badge variant="destructive">Enqueue failed</Badge>
+                        <Badge variant="destructive">Failed</Badge>
                       ) : item.review.localizationPending ? (
                         <Badge variant="secondary">Pending</Badge>
                       ) : (

@@ -223,11 +223,11 @@ function TranslationBox({ detail, returnTo }: { detail: AdminReviewDetail; retur
     <Card className="border-amber-300 dark:border-amber-800">
       <CardHeader>
         <CardTitle className="text-base">
-          {review.enqueueFailed ? "Translation failed to enqueue" : "Translation pending"}
+          {review.enqueueFailed ? "Translation failed" : "Translation pending"}
         </CardTitle>
         <CardDescription>
           {review.enqueueFailed
-            ? "The translation job could not be queued. Retry it, or approve without it."
+            ? "Automatic translation gave up after retrying. Retry it, or approve without it."
             : "An approved journey goes public once its translation lands."}
           {Number.isFinite(pendingSince) ? (
             <>

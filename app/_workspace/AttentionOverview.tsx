@@ -164,8 +164,7 @@ export function AttentionOverview({
           >
             {counts.translationEnqueueFailed > 0 ? (
               <p className="text-destructive">
-                {formatCount(counts.translationEnqueueFailed)} failed to enqueue — retry from
-                the journey.
+                {formatCount(counts.translationEnqueueFailed)} failed — retry from the journey.
               </p>
             ) : null}
           </AttentionTile>

@@ -135,7 +135,7 @@ function QueueHealthCard({ data }: { data: AdminMetricsDataDto }) {
               value={reviews.localizationPending}
             />
           </StatRow>
-          <StatRow label="Translation enqueue failed">
+          <StatRow label="Translation failed">
             {COUNT_FORMATTER.format(reviews.enqueueFailed)}
           </StatRow>
           <StatRow label="Open reports">

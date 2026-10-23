@@ -245,16 +245,6 @@ export async function requeueJourneyReviewAction(
           }),
         );
       }
-
-      // The API could not reach the translation queue; nothing was changed.
-      if (error.statusCode === 502) {
-        return buildReviewActionRedirect(
-          nextPath,
-          buildReturnEntries({
-            error: "review_requeue_unavailable",
-          }),
-        );
-      }
     }
 
     return buildReviewActionRedirect(

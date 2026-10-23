@@ -32,10 +32,10 @@ describe("resolveReviewBanner", () => {
     ).toEqual({ tone: "success", message: "p1 moved back to pending." });
   });
 
-  it("explains an unavailable translation queue", () => {
-    expect(resolveReviewBanner({ ...noBanner, error: "review_requeue_unavailable" })).toEqual({
+  it("explains a failed translation retry", () => {
+    expect(resolveReviewBanner({ ...noBanner, error: "review_requeue_failed" })).toEqual({
       tone: "error",
-      message: "Translation queue unavailable. Nothing changed — try again.",
+      message: "Could not retry the translation. Try again.",
     });
   });
 

@@ -20,8 +20,7 @@ const ERROR_COPY: Record<string, string> = {
   review_state_conflict:
     "The owner republished this journey after you opened it. Review the current version and decide again.",
   review_update_failed: "Could not update review status. Try again.",
-  review_requeue_failed: "Could not re-queue the translation. Try again.",
-  review_requeue_unavailable: "Translation queue unavailable. Nothing changed — try again.",
+  review_requeue_failed: "Could not retry the translation. Try again.",
 };
 
 export function resolveReviewBanner(options: {

@@ -28,7 +28,7 @@ export interface PublishedJourneyReviewDto {
   /** True while the 9-locale translation has not landed yet — an APPROVED
    * journey stays out of public surfaces until it does. */
   localizationPending?: boolean;
-  /** True when the translation enqueue after publish failed; recover with
+  /** True when automatic translation gave up after retrying; recover with
    * POST .../review/requeue. */
   enqueueFailed?: boolean;
   /** "AI" appears only on journeys decided before the automated reviewer

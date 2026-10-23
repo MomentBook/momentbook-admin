@@ -31,7 +31,7 @@ export type AdminReviewState = {
   /** Translation has not landed yet — an APPROVED journey is not public
    * until it does. */
   localizationPending?: boolean;
-  /** The translation enqueue after publish failed; retry it from the detail
+  /** Automatic translation gave up after retrying; retry it from the detail
    * page. */
   enqueueFailed?: boolean;
   decidedBy?: "AI" | "ADMIN";
