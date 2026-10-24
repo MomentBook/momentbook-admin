@@ -42,7 +42,7 @@ export function resolveReviewBanner(options: {
   if (options.mutation === "review_requeued" && options.targetPublicId) {
     return {
       tone: "default",
-      message: `${options.targetPublicId} translation re-queued.`,
+      message: `${options.targetPublicId} translation retry scheduled.`,
     };
   }
 
