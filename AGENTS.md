@@ -18,6 +18,8 @@ Auth: Nest API role/RBAC-backed, encrypted `momentbook_admin_session` cookie.
 Scripts: `yarn dev`, `yarn build`, `yarn lint`, `yarn test` (`vitest run`),
 `yarn typecheck` (`next typegen && tsc --noEmit`), `yarn verify`
 (typecheck + lint + test). Gate before done: `yarn verify && yarn build`.
+The edit hook runs eslint on each edited file in the background and reports
+only errors.
 
 shadcn components are added only with `npx shadcn@4.22.1 add <name>`. Rewrite
 its `import { cn } from "cn"` to `@/lib/utils`, do not keep the `cn` package,
