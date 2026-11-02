@@ -53,3 +53,64 @@ export interface AdminMetricsDataDto {
   reports: AdminMetricsReportsDto;
   operations: AdminMetricsOperationsDto;
 }
+
+// ─── Notification metrics (GET /core/admin/metrics/notifications, ADR-0096) ───
+
+export type AdminNotificationGroup = "messages" | "reactions" | "publishing" | "follow" | "memories";
+export type AdminNotificationLegalClass = "SERVICE" | "ENGAGEMENT" | "AD";
+export type AdminPushPlatform = "IOS" | "ANDROID" | "UNKNOWN";
+export type AdminPushPermission = "GRANTED" | "PROVISIONAL" | "DENIED" | "UNDETERMINED";
+export type AdminRetentionCohort = "target" | "holdout";
+
+export interface AdminNotificationSkipDto {
+  /** The delivery policy's reason (`holdout`, `weekly_cap`, `no_device`, …). */
+  reason: string;
+  jobs: number;
+}
+
+export interface AdminNotificationCategoryMetricsDto {
+  category: string;
+  /** Null for a category with no toggle. */
+  group: AdminNotificationGroup | null;
+  legalClass: AdminNotificationLegalClass;
+  defaultEnabled: boolean;
+  /** Pushes created in the window, one per device; push rows are kept 30 days. */
+  sent: number;
+  delivered: number;
+  opened: number;
+  failed: number;
+  /** Most frequent first. */
+  skipped: AdminNotificationSkipDto[];
+  /** Explicit choices of active accounts; an account without one follows `defaultEnabled`. */
+  optedIn: number;
+  optedOut: number;
+  optedOutInWindow: number;
+}
+
+export interface AdminNotificationPermissionDto {
+  platform: AdminPushPlatform;
+  permission: AdminPushPermission;
+  devices: number;
+}
+
+export interface AdminNotificationRetentionDto {
+  category: string;
+  cohort: AdminRetentionCohort;
+  accounts: number;
+  d7Eligible: number;
+  d7Returned: number;
+  d30Eligible: number;
+  d30Returned: number;
+}
+
+export interface AdminNotificationMetricsDataDto {
+  asOf: string;
+  from: string;
+  to: string;
+  days: number;
+  /** Every catalog category, in catalog order. */
+  categories: AdminNotificationCategoryMetricsDto[];
+  permissions: AdminNotificationPermissionDto[];
+  /** A cohort with no account has no entry. */
+  retention: AdminNotificationRetentionDto[];
+}

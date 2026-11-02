@@ -162,6 +162,19 @@ describe("getAdminMetrics", () => {
   });
 });
 
+describe("getAdminNotificationMetrics", () => {
+  it("sends days to the notifications route", async () => {
+    const { getAdminNotificationMetrics } = await import("@/lib/api/metrics");
+
+    await getAdminNotificationMetrics({ accessToken: "t", days: 7 });
+
+    expect(call()).toMatchObject({
+      method: "GET",
+      url: "https://api.test/core/admin/metrics/notifications?days=7",
+    });
+  });
+});
+
 describe("listPublishedJourneys", () => {
   it("sends the userId filter", async () => {
     const { listPublishedJourneys } = await import("@/lib/api/journeys");

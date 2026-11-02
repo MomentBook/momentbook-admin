@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { AdminMetricsDataDto } from "@/src/apis/types";
+import type { AdminMetricsDataDto, AdminNotificationMetricsDataDto } from "@/src/apis/types";
 import { requestEnvelope } from "./client";
 
 // ─── Get Operations Metrics ─────────────────
@@ -11,6 +11,21 @@ export async function getAdminMetrics(input: {
 }): Promise<AdminMetricsDataDto> {
   const response = await requestEnvelope<AdminMetricsDataDto>({
     pathname: "/core/admin/metrics",
+    accessToken: input.accessToken,
+    query: { days: input.days },
+  });
+
+  return response.data;
+}
+
+// ─── Get Notification Metrics ───────────────
+
+export async function getAdminNotificationMetrics(input: {
+  accessToken: string;
+  days: 7 | 30 | 90;
+}): Promise<AdminNotificationMetricsDataDto> {
+  const response = await requestEnvelope<AdminNotificationMetricsDataDto>({
+    pathname: "/core/admin/metrics/notifications",
     accessToken: input.accessToken,
     query: { days: input.days },
   });
