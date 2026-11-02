@@ -20,8 +20,9 @@ import {
   type MetricsDays,
 } from "@/lib/admin/metrics-shared";
 import { defaultLanguage } from "@/lib/i18n/config";
-import type { AdminMetricsDataDto } from "@/src/apis/types";
+import type { AdminMetricsDataDto, AdminNotificationMetricsDataDto } from "@/src/apis/types";
 import { DailyBarChart } from "./DailyBarChart";
+import { NotificationMetricsSection } from "./NotificationMetricsSection";
 
 const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
 const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
@@ -251,9 +252,11 @@ function DailyTable({ daily }: { daily: AdminMetricsDataDto["daily"] }) {
 
 export function AdminMetricsPageView({
   data,
+  notifications,
   days,
 }: {
   data: AdminMetricsDataDto;
+  notifications: AdminNotificationMetricsDataDto | null;
   days: MetricsDays;
 }) {
   const series = (key: DailyMetricKey) => toDailySeries(data.daily, key);
@@ -343,6 +346,8 @@ export function AdminMetricsPageView({
           <OperationsCard operations={data.operations} />
         </div>
       </section>
+
+      <NotificationMetricsSection data={notifications} />
     </div>
   );
 }
