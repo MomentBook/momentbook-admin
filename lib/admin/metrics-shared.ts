@@ -1,4 +1,11 @@
-import type { AdminMetricsDailyDto } from "@/src/apis/types";
+import type {
+  AdminMetricsDailyDto,
+  AdminNotificationPermissionDto,
+  AdminNotificationRetentionDto,
+  AdminNotificationSkipDto,
+  AdminPushPermission,
+  AdminPushPlatform,
+} from "@/src/apis/types";
 
 export const METRICS_DAY_OPTIONS = [7, 30, 90] as const;
 export type MetricsDays = (typeof METRICS_DAY_OPTIONS)[number];
@@ -67,4 +74,105 @@ const DAY_FORMATTER = new Intl.DateTimeFormat("en-US", {
  * in UTC: a local zone would shift them by one. */
 export function formatMetricsDay(date: string): string {
   return DAY_FORMATTER.format(new Date(`${date}T00:00:00Z`));
+}
+
+// ─── Notifications (ADR-0096) ───────────────
+
+const PERCENT_FORMATTER = new Intl.NumberFormat("en-US", {
+  style: "percent",
+  maximumFractionDigits: 1,
+});
+
+/** `part` of `whole` as a percentage; a dash when there is nothing to divide by. */
+export function formatRate(part: number, whole: number): string {
+  return whole > 0 ? PERCENT_FORMATTER.format(part / whole) : "—";
+}
+
+export function totalSkipped(skipped: AdminNotificationSkipDto[]): number {
+  return skipped.reduce((sum, entry) => sum + entry.jobs, 0);
+}
+
+export type RetentionComparison = {
+  target: AdminNotificationRetentionDto;
+  holdout: AdminNotificationRetentionDto;
+  /** Target rate minus holdout rate, in percentage points; null until both
+   * cohorts have an account whose days are over. */
+  d7Lift: number | null;
+  d30Lift: number | null;
+};
+
+function emptyCohort(
+  category: string,
+  cohort: AdminNotificationRetentionDto["cohort"],
+): AdminNotificationRetentionDto {
+  return { category, cohort, accounts: 0, d7Eligible: 0, d7Returned: 0, d30Eligible: 0, d30Returned: 0 };
+}
+
+function liftPoints(targetReturned: number, targetEligible: number, holdoutReturned: number, holdoutEligible: number) {
+  if (targetEligible === 0 || holdoutEligible === 0) return null;
+  return (targetReturned / targetEligible - holdoutReturned / holdoutEligible) * 100;
+}
+
+/** One engagement category's target against its holdout. The API leaves out a
+ * cohort with no account, which reads here as zeros. */
+export function compareRetention(
+  retention: AdminNotificationRetentionDto[],
+  category: string,
+): RetentionComparison {
+  const find = (cohort: AdminNotificationRetentionDto["cohort"]) =>
+    retention.find((row) => row.category === category && row.cohort === cohort) ??
+    emptyCohort(category, cohort);
+  const target = find("target");
+  const holdout = find("holdout");
+
+  return {
+    target,
+    holdout,
+    d7Lift: liftPoints(target.d7Returned, target.d7Eligible, holdout.d7Returned, holdout.d7Eligible),
+    d30Lift: liftPoints(
+      target.d30Returned,
+      target.d30Eligible,
+      holdout.d30Returned,
+      holdout.d30Eligible,
+    ),
+  };
+}
+
+/** `+4.3 pp`, `−1.0 pp`; a dash when there is no comparison yet. */
+export function formatLift(points: number | null): string {
+  if (points === null) return "—";
+  const magnitude = Math.abs(points).toFixed(1);
+  if (Number(magnitude) === 0) return "0.0 pp";
+  return `${points > 0 ? "+" : "−"}${magnitude} pp`;
+}
+
+export const PUSH_PLATFORMS: readonly AdminPushPlatform[] = ["IOS", "ANDROID", "UNKNOWN"];
+export const PUSH_PERMISSIONS: readonly AdminPushPermission[] = [
+  "GRANTED",
+  "PROVISIONAL",
+  "DENIED",
+  "UNDETERMINED",
+];
+
+export type PermissionRow = {
+  platform: AdminPushPlatform;
+  total: number;
+  counts: Record<AdminPushPermission, number>;
+};
+
+/** Devices per platform by permission, platforms in a fixed order, those without
+ * a device left out. */
+export function permissionMatrix(permissions: AdminNotificationPermissionDto[]): PermissionRow[] {
+  return PUSH_PLATFORMS.flatMap((platform) => {
+    const rows = permissions.filter((row) => row.platform === platform);
+    if (rows.length === 0) return [];
+
+    const counts = Object.fromEntries(
+      PUSH_PERMISSIONS.map((permission) => [
+        permission,
+        rows.find((row) => row.permission === permission)?.devices ?? 0,
+      ]),
+    ) as Record<AdminPushPermission, number>;
+    return [{ platform, total: rows.reduce((sum, row) => sum + row.devices, 0), counts }];
+  });
 }

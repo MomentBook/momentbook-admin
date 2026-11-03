@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { isBackendApiError } from "@/lib/api/client";
-import { loadAdminMetricsData } from "@/lib/admin/metrics";
+import { loadAdminMetricsData, loadAdminNotificationMetricsData } from "@/lib/admin/metrics";
 import { parseMetricsDays } from "@/lib/admin/metrics-shared";
 import { buildAdminMetricsHref } from "@/lib/admin/paths";
 import { loadWorkspacePage, readQueryParam } from "@/app/_workspace/workspace-data";
@@ -28,7 +28,13 @@ export default async function AdminMetricsPage({
   try {
     page = await loadWorkspacePage({
       returnTo,
-      load: (accessToken) => loadAdminMetricsData(accessToken, days),
+      load: async (accessToken) => {
+        const [metrics, notifications] = await Promise.all([
+          loadAdminMetricsData(accessToken, days),
+          loadAdminNotificationMetricsData(accessToken, days),
+        ]);
+        return { metrics, notifications };
+      },
     });
   } catch (error) {
     if (isBackendApiError(error)) {
@@ -46,7 +52,11 @@ export default async function AdminMetricsPage({
 
   return (
     <WorkspaceShell active="metrics" counts={page.counts} session={page.session}>
-      <AdminMetricsPageView data={page.data} days={days} />
+      <AdminMetricsPageView
+        data={page.data.metrics}
+        notifications={page.data.notifications}
+        days={days}
+      />
     </WorkspaceShell>
   );
 }

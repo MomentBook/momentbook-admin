@@ -62,6 +62,14 @@ and [0010](0010-server-side-review-counts-and-workspace-shell.md) (call budget).
    average (summing daily distinct accounts would double count). `?days=` is
    7, 30, or 90. Charts are server-rendered div bars; there is no chart
    library. The Operations card is for engineers and has no admin action.
+   *Amended 2026-11-03:* a Notifications section reads
+   `GET /core/admin/metrics/notifications` (API ADR-0096) for the same window:
+   per category pushes sent, delivered, opened and failed, skips by reason,
+   explicit opt-ins and opt-outs; devices by platform and permission; and per
+   engagement category the 7- and 30-day return of the target against the
+   holdout. It loads alongside the operations metrics through `orNull`, so its
+   failure leaves one line and the rest of the page. The page shows the
+   figures and the widening rule, and leaves the decision to the reader.
 
 ### Backend call budget per page render
 
@@ -72,7 +80,7 @@ Each row is in addition to the 4 attention calls.
 | `/users` | 1 |
 | `/users/[userId]` | 1 detail + 6 sections |
 | `/comments` | 1 |
-| `/metrics` | 1 |
+| `/metrics` | 2 (operations, notifications) |
 | `/audit-log` | 1 |
 | `/reviews?userId=` | 5 list calls (see below), replacing the 1 list + ≤ 3 totals |
 
@@ -97,5 +105,6 @@ calls. The next-pending auto-advance after a decision ignores the author filter.
 - Negative: user detail costs 11 calls per render (7 + 4); active accounts are
   an approximation.
 - Deploy order: API first (migration, then core), then admin. An admin deployed
-  first shows 404 banners on the new pages.
+  first shows 404 banners on the new pages; on `/metrics` it shows "Could not
+  load notification metrics." until the API has the notifications route.
 - Changes here should run `yarn verify && yarn build`.

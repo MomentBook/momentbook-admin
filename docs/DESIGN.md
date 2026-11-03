@@ -67,7 +67,9 @@ Component use:
 - `/comments`: comment moderation with `active` (default), `deleted` and `all`
   tabs, user and journey filters, and a confirmed delete.
 - `/metrics`: UTC-day charts over 7, 30 or 90 days, queue health, users by
-  status, and an Operations card for engineers.
+  status, an Operations card for engineers, and a Notifications section
+  (per-category sends, skips and opt-outs, device permission, and the
+  engagement holdout's 7- and 30-day return).
 - `/audit-log`: admin actions with filters; targets link to their screen.
 - `/articles`: editorial article management for published-only markdown
   guide records, with language/category filters, pagination, derived
@@ -100,7 +102,7 @@ Component use:
   only translations pending for more than six hours — and the tile and tab say
   so in one line (ADR 0010).
 - **Call budget.** Every page adds its own calls to the 4 attention calls:
-  `/users` 1, `/users/[userId]` 1 + 6, `/comments` 1, `/metrics` 1,
+  `/users` 1, `/users/[userId]` 1 + 6, `/comments` 1, `/metrics` 2,
   `/audit-log` 1 (ADR 0011; the older pages are in ADR 0010).
 - **Queue.** Every tab uses the API order (first published, newest first).
   Rows carry the queue context (`status`, `page`) for the back link.
