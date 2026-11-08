@@ -88,8 +88,25 @@ mapping `docs/contract-v3.md` (§8 admin, §3 auth).
    generated types; times are parsed from RFC 3339 with one helper; renamed
    fields follow the mapping (`asOf` → `generatedAt`, `oldestPendingSince` →
    `oldestPendingAt`, report `_id` → `id`, people as `AdminUserSummaryDto`).
+   A person's `name` is `string | null` (`AdminUserSummaryDto`, contract-v3
+   §2.2) and so is `email`; views keep their fallback for a missing name
+   (`|| "Unnamed user"` or the person's id, as the comments list does today).
    The admin detail of a published journey is `AdminPublishedJourneyDetailDto`
-   (contract-v3 §8.4), which keeps the review fields the public detail drops.
+   (contract-v3 §8.4): the public detail (§6.6) plus the review fields the
+   public detail drops.
+   **Review evidence.** The review detail builds its evidence sections from
+   the public detail's timeline. Today `lib/admin/reviews.ts` reads two lists,
+   `detail.timeline` and `detail.recapDraft.timeline`
+   (`normalizeTimelineBlocks`/`normalizeRecapTimelineBlocks`, :500-511, passed
+   at :619-631 with the key prefixes `timeline` and `recap`), keys a section by
+   a block's `clusterId`, and maps `localizedContent.clusterImpressions[]`
+   (:315). In v3 the detail has one list, `moments`, and
+   `localizedContent.momentImpressions[]`: sections come from `moments` only,
+   keyed by `moment.id` (today's `clusterId` value, so a section of an existing
+   post keeps its key), with the flattened `startAt`/`endAt` (parsed with the
+   time helper above) and `startLocal`/`endLocal` as the section time, and
+   impressions are matched by `momentId`. The section order
+   and what a reviewer sees do not change.
 7. **Deploy order.** The admin deploys after API v3 and the web (Task 3.8
    step 7: API at 5, web at 6). Neither admin version reads the other API
    version, so between steps 5 and 7 the admin cannot load data or sign in;
