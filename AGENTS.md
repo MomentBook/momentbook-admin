@@ -32,7 +32,7 @@ Admin-only, at the root of the admin origin: `/` (attention overview),
 Do not expand into public UX. Ownership transfers require an ADR.
 
 ## Architecture
-Design decisions: `docs/adr/README.md` (11 ADRs). Product and UX intent:
+Design decisions: `docs/adr/README.md` (12 ADRs). Product and UX intent:
 `docs/DESIGN.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->
