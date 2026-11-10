@@ -151,9 +151,9 @@ describe("notification metrics", () => {
   it("compareRetention sets the target against the holdout, in percentage points", async () => {
     const { compareRetention } = await import("@/lib/admin/metrics-shared");
     const retention = [
-      cohort({ cohort: "holdout", accounts: 10, d7Eligible: 10, d7Returned: 2, d30Eligible: 8, d30Returned: 4 }),
-      cohort({ cohort: "target", accounts: 90, d7Eligible: 80, d7Returned: 24, d30Eligible: 50, d30Returned: 30 }),
-      cohort({ category: "memories.first_journey", cohort: "target", accounts: 5, d7Eligible: 5, d7Returned: 5 }),
+      cohort({ cohort: "HOLDOUT", accounts: 10, d7Eligible: 10, d7Returned: 2, d30Eligible: 8, d30Returned: 4 }),
+      cohort({ cohort: "TARGET", accounts: 90, d7Eligible: 80, d7Returned: 24, d30Eligible: 50, d30Returned: 30 }),
+      cohort({ category: "memories.first_journey", cohort: "TARGET", accounts: 5, d7Eligible: 5, d7Returned: 5 }),
     ];
 
     const result = compareRetention(retention, "memories.on_this_day");
@@ -167,15 +167,15 @@ describe("notification metrics", () => {
     const { compareRetention } = await import("@/lib/admin/metrics-shared");
 
     const onlyTarget = compareRetention(
-      [cohort({ cohort: "target", accounts: 3, d7Eligible: 3, d7Returned: 1 })],
+      [cohort({ cohort: "TARGET", accounts: 3, d7Eligible: 3, d7Returned: 1 })],
       "memories.on_this_day",
     );
-    expect(onlyTarget.holdout).toEqual(cohort({ cohort: "holdout" }));
+    expect(onlyTarget.holdout).toEqual(cohort({ cohort: "HOLDOUT" }));
     expect(onlyTarget.d7Lift).toBeNull();
     expect(onlyTarget.d30Lift).toBeNull();
 
     const nobody = compareRetention([], "memories.first_journey");
-    expect(nobody.target).toEqual(cohort({ category: "memories.first_journey", cohort: "target" }));
+    expect(nobody.target).toEqual(cohort({ category: "memories.first_journey", cohort: "TARGET" }));
     expect(nobody.d30Lift).toBeNull();
   });
 

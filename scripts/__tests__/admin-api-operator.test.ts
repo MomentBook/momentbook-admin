@@ -162,6 +162,21 @@ describe("getAdminMetrics", () => {
   });
 });
 
+describe("getAdminMetrics response", () => {
+  it("returns the v3 body as the metrics", async () => {
+    const metrics = { generatedAt: "2026-11-10T00:00:00.000Z", days: 30, daily: [] };
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify(metrics), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const { getAdminMetrics } = await import("@/lib/api/metrics");
+
+    await expect(getAdminMetrics({ accessToken: "t", days: 30 })).resolves.toEqual(metrics);
+  });
+});
+
 describe("getAdminNotificationMetrics", () => {
   it("sends days to the notifications route", async () => {
     const { getAdminNotificationMetrics } = await import("@/lib/api/metrics");
