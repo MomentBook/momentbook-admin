@@ -12,8 +12,8 @@ ADR during startup.
 4. This index plus relevant ADRs for architecture, ownership, data, and
    operations decisions.
 5. `docs/DESIGN.md` for product and UX intent.
-6. Local code, tests, hand-written API types, and environment templates for
-   implementation truth.
+6. Local code, tests, the generated API types (read through the aliases in
+   `src/apis/types/`), and environment templates for implementation truth.
 
 ## ADR Records
 
@@ -23,8 +23,8 @@ ADR during startup.
 | [0002](0002-admin-auth-session-boundary.md) | Active | Auth and session boundary | Login, session cookie, refresh, invalidation, logout, or RBAC behavior changes. |
 | [0008](0008-backend-rbac-only-admin-login.md) | Active | Backend-RBAC-only admin login | Login authorization, allow-list, session bootstrap, or admin access changes. |
 | [0003](0003-backend-contract-and-api-wrapper.md) | Superseded by [0007](0007-hand-written-api-types-and-service-layer.md) | Backend contract and API wrapper (old) | Historic — code generation approach replaced by ADR 0007. |
-| [0007](0007-hand-written-api-types-and-service-layer.md) | Active; types and envelope parsing superseded by [0012](0012-generated-api-types-and-contract-v3.md) from the v3 release | Hand-written API types and service layer | API type changes, API service layer changes, or `lib/api/*` modifications. |
-| [0012](0012-generated-api-types-and-contract-v3.md) | Active (not implemented yet) | Generated API types and wire contract v3 | API types or their generation, response or error parsing, admin list paging, login/refresh/logout parsing, or the deploy order with the API change. |
+| [0007](0007-hand-written-api-types-and-service-layer.md) | Active for the service layer; types and envelope parsing superseded by [0012](0012-generated-api-types-and-contract-v3.md) | Hand-written API types and service layer | API type changes, API service layer changes, or `lib/api/*` modifications. |
+| [0012](0012-generated-api-types-and-contract-v3.md) | Active | Generated API types and wire contract v3 | API types or their generation, response or error parsing, admin list paging, login/refresh/logout parsing, or the deploy order with the API change. |
 | [0004](0004-public-web-revalidation-boundary.md) | Active | Public web freshness | Admin mutations affect public journeys, guides, sitemap visibility, or public freshness behavior. |
 | [0005](0005-moderation-workspace-and-review-evidence.md) | Active, amended by [0010](0010-server-side-review-counts-and-workspace-shell.md) | Moderation workspace and evidence | `/`, `/reviews`, review detail, evidence grouping, or review mutations change. |
 | [0010](0010-server-side-review-counts-and-workspace-shell.md) | Active | Server-side review counts and workspace shell | Attention counts, sidebar badges, queue tabs/totals, overview loading, `WorkspaceShell`, or backend call budget change. |
@@ -42,8 +42,10 @@ ADR during startup.
   UX belong to the public MomentBook web app.
 - The remaining editorial helpers in this repo serve the admin article
   workflow. They are not permission to add public product surfaces here.
-- The Nest API contract is represented by hand-written types in `src/apis/types/`.
-  API calls use the domain-organized service layer in `lib/api/`.
+- The Nest API contract (wire contract v3) is represented by types generated
+  from its OpenAPI documents into `src/apis/generated/` and read through the
+  aliases in `src/apis/types/`. API calls use the domain-organized service
+  layer in `lib/api/`.
 
 ## Default Change Policy
 
@@ -55,8 +57,11 @@ ADR during startup.
   behavior, inspect the relevant ADR, code, tests, and configs before editing.
 - If a task would move ownership between the public web app and this admin app,
   require a new ADR or explicit ADR update before implementation.
-- API types in `src/apis/types/` are hand-written; update them directly when the
-  backend contract changes. There is no code generation step.
+- API types are generated (ADR 0012): when the backend contract changes, run
+  `yarn generate:api` (the dev server's swagger, or `API_SPEC_DIR=<dir>` for
+  committed documents) and commit `src/apis/generated/`, which is never edited
+  by hand. `src/apis/types/` holds aliases, and a hand-written type only for
+  what the documents do not describe, with a comment saying why.
 
 ## External References Used for Agent Guidance
 

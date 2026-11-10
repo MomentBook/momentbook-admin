@@ -18,6 +18,9 @@ Auth: Nest API role/RBAC-backed, encrypted `momentbook_admin_session` cookie.
 Scripts: `yarn dev`, `yarn build`, `yarn lint`, `yarn test` (`vitest run`),
 `yarn typecheck` (`next typegen && tsc --noEmit`), `yarn verify`
 (typecheck + lint + test). Gate before done: `yarn verify && yarn build`.
+`yarn generate:api` writes the API types to `src/apis/generated/` (types
+only, never edited by hand; `API_SPEC_DIR=<dir>` reads committed documents
+instead of the dev server; ADR 0012).
 The edit hook runs eslint on each edited file in the background and reports
 only errors.
 

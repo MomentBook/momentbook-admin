@@ -2,9 +2,10 @@
 
 ## Status
 
-Active (decided; not implemented yet: Task 3.6 of the data-contract v3 plan
-builds it on `refactor/data-contract-v3`, and until it lands the code follows
-[0007](0007-hand-written-api-types-and-service-layer.md)). Date: 2026-11-08.
+Active. Decided 2026-11-08; implemented 2026-11-10 by Task 3.6 of the
+data-contract v3 plan on `refactor/data-contract-v3` (until that branch
+reaches `main`, `main` follows
+[0007](0007-hand-written-api-types-and-service-layer.md)).
 Supersedes 0007's hand-written types and envelope parsing; 0007's
 domain-organized service layer in `lib/api/` stays. The server half is
 momentbook-api ADR-0099 (wire contract v3) and its operation-by-operation
@@ -41,8 +42,10 @@ mapping `docs/contract-v3.md` (§8 admin, §3 auth).
   single-file template emits only the data contracts. Run against the API's
   current (v2) `docs/openapi/core.json`: `--no-client` wrote 6,464 lines with
   no `HttpClient` or `Api` class and 273 exported types; without it, 9,265
-  lines, both classes, 280 types. Task 3.6 repeats the run on the v3
-  documents.
+  lines, both classes, 280 types. Task 3.6 repeated the run on the v3
+  documents: `core.ts` 5,043 lines with 170 exported types and `auth.ts` 873
+  lines with 44, no class in either, and both pass the project's strict
+  typecheck and lint as they are.
 
 ## Decision
 
@@ -55,7 +58,12 @@ mapping `docs/contract-v3.md` (§8 admin, §3 auth).
    stays the import surface: each name callers use becomes an alias of a
    generated DTO, so call sites change only where a field changed. A
    hand-written type remains only for something the documents do not describe,
-   with a comment saying why.
+   with a comment saying why. The committed files were generated from the
+   API's committed documents, because the dev server still served v2 when
+   Task 3.6 ran: `API_SPEC_DIR=../momentbook-api/docs/openapi yarn
+   generate:api` on momentbook-api `refactor/data-contract-v3` at `48eaa9d`;
+   Task 3.7 reruns `yarn generate:api` against the dev server once it serves
+   v3 and expects no diff.
 2. **No envelope.** `requestEnvelope`/`parseEnvelope` become a request that
    returns the parsed body of a 2xx, and nothing for a 204. Errors keep their
    classes: 401 → `AdminSessionExpiredError`, 403 → `AdminAccessDeniedError`,
@@ -91,6 +99,11 @@ mapping `docs/contract-v3.md` (§8 admin, §3 auth).
    A person's `name` is `string | null` (`AdminUserSummaryDto`, contract-v3
    §2.2) and so is `email`; views keep their fallback for a missing name
    (`|| "Unnamed user"` or the person's id, as the comments list does today).
+   v3 splits the audit log's v2 `email` (the account email, else the provider
+   email) into `email` and `providerEmail`, so the audit log shows a person
+   as `name`, then `email`, then `providerEmail`, then the id, and the user
+   detail's moderation history shows the acting admin the same way ("Unknown
+   admin" when the account no longer exists).
    The admin detail of a published journey is `AdminPublishedJourneyDetailDto`
    (contract-v3 §8.4): the public detail (§6.6) plus the review fields the
    public detail drops.
@@ -115,7 +128,12 @@ mapping `docs/contract-v3.md` (§8 admin, §3 auth).
    **Vercel promote timing is 확인 필요 (Task 3.6):** whether production
    deploys from a push to `main` (then the merge to `main` is step 7) or from
    a prepared deployment promoted at step 7, and, for the second, whether a
-   promoted preview is rebuilt with production environment variables.
+   promoted preview is rebuilt with production environment variables. The
+   repository does not say: `vercel.json` has no `git` settings, and
+   `README.md`, `AGENTS.md` and `docs/` name Vercel only as the host. The
+   answer is in the Vercel project settings (production branch, automatic
+   deployments), which Task 3.6 did not read; the operator settles it before
+   Task 3.8.
 
 ## Alternatives Considered
 
@@ -151,4 +169,4 @@ mapping `docs/contract-v3.md` (§8 admin, §3 auth).
   types", "no code generation step") describe the code as it is; they change
   with Task 3.6's code, together with `AGENTS.md`.
 - Changes here run `yarn verify && yarn build`, plus a manual check of login,
-  review, reports and the audit log (Task 3.6).
+  review, reports and the audit log against an API that serves v3 (Task 3.7).
