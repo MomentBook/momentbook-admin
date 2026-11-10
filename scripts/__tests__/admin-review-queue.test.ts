@@ -96,8 +96,22 @@ describe("loadReviewQueue", () => {
             journeys: [
               createAdminJourneyItem({
                 publicId: "approved-1",
-                metadata: { journeyTitle: "Legacy title" },
-                review: { status: "APPROVED", approved: true },
+                metadata: {
+                  title: "Approved title",
+                  description: null,
+                  hashtags: [],
+                  sourceLanguage: null,
+                  thumbnailUri: null,
+                  localizedContent: null,
+                },
+                review: {
+                  status: "APPROVED",
+                  approved: true,
+                  localizationPending: false,
+                  decidedBy: "ADMIN",
+                  decidedAt: "2026-04-03T00:00:00.000Z",
+                  enqueueFailed: false,
+                },
               }),
             ],
             total: 21,
@@ -142,7 +156,7 @@ describe("loadReviewQueue", () => {
       tabTotals: { pending: 4, translation: 1, approved: 21, rejected: 3, all: 28 },
     });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]).toMatchObject({ publicId: "approved-1", title: "Legacy title" });
+    expect(result.items[0]).toMatchObject({ publicId: "approved-1", title: "Approved title" });
   });
 
   it("accepts the in-flight counts promise", async () => {

@@ -1,11 +1,12 @@
 import { toLocaleTag, type Language } from "@/lib/i18n/config";
 
-export type LocalDateTimeType = "offset_aware" | "floating_local" | "unknown";
+// Contract v3 spells these enums in UPPER_SNAKE_CASE (ADR 0012 item 6).
+export type LocalDateTimeType = "OFFSET_AWARE" | "FLOATING_LOCAL" | "UNKNOWN";
 export type TimeZoneSource =
-    | "exif_explicit_offset"
-    | "gps_derived"
-    | "user_input"
-    | "unknown";
+    | "EXIF_EXPLICIT_OFFSET"
+    | "GPS_DERIVED"
+    | "USER_INPUT"
+    | "UNKNOWN";
 
 export type LocalDateTimeContext = {
     localDateTime: string | null;
@@ -77,27 +78,27 @@ function padNumber(value: number, length = 2): string {
 
 function normalizeLocalDateTimeType(value: unknown): LocalDateTimeType {
     if (
-        value === "offset_aware" ||
-        value === "floating_local" ||
-        value === "unknown"
+        value === "OFFSET_AWARE" ||
+        value === "FLOATING_LOCAL" ||
+        value === "UNKNOWN"
     ) {
         return value;
     }
 
-    return "unknown";
+    return "UNKNOWN";
 }
 
 function normalizeTimeZoneSource(value: unknown): TimeZoneSource {
     if (
-        value === "exif_explicit_offset" ||
-        value === "gps_derived" ||
-        value === "user_input" ||
-        value === "unknown"
+        value === "EXIF_EXPLICIT_OFFSET" ||
+        value === "GPS_DERIVED" ||
+        value === "USER_INPUT" ||
+        value === "UNKNOWN"
     ) {
         return value;
     }
 
-    return "unknown";
+    return "UNKNOWN";
 }
 
 function normalizeLocalDateTime(value: unknown): string | null {
@@ -227,7 +228,7 @@ function toUtcWallClockDate(parts: ParsedLocalDateTime): Date {
 function resolveParsedContext(
     context: LocalDateTimeContextLike | null | undefined,
 ): ParsedLocalDateTime | null {
-    if (!context || context.localDateTimeType === "unknown") {
+    if (!context || context.localDateTimeType === "UNKNOWN") {
         return null;
     }
 
@@ -237,7 +238,7 @@ function resolveParsedContext(
 export function isExplicitUnknownLocalDateTimeContext(
     context: LocalDateTimeContextLike | null | undefined,
 ): boolean {
-    return context?.localDateTimeType === "unknown";
+    return context?.localDateTimeType === "UNKNOWN";
 }
 
 export function hasRenderableLocalDateTimeContext(
@@ -284,7 +285,7 @@ export function buildLocalDateTimeMachineValue(
     }
 
     if (
-        context?.localDateTimeType === "offset_aware" &&
+        context?.localDateTimeType === "OFFSET_AWARE" &&
         typeof context.utcOffsetMinutes === "number" &&
         Number.isFinite(context.utcOffsetMinutes)
     ) {

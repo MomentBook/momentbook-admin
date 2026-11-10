@@ -9,16 +9,17 @@ import {
   type LocalDateTimeContext,
 } from "@/lib/local-time-context";
 import { type Language, toLocaleTag } from "@/lib/i18n/config";
-import { readText, resolveJourneyListCoverUrl } from "@/lib/view-helpers";
+import { parseApiTime, readText, resolveJourneyListCoverUrl } from "@/lib/view-helpers";
 import type {
   AdminPublishedJourneyItemDto,
   PublishedJourneyDetailDto,
   PublishedJourneyImageDto,
   PublishedJourneyLocalizedContentDto,
   PublishedJourneyLocalizationEntryDto,
-  PublishedJourneyClusterLocalizedImpressionsDto,
-  PublishedJourneyClusterLocalizationEntryDto,
+  PublishedJourneyMomentImpressionDto,
+  PublishedJourneyMomentTranslationDto,
   PublishedJourneyReviewDto,
+  PublishedMomentDto,
 } from "@/src/apis/types";
 
 export type AdminReviewStatus = PublishedJourneyReviewDto["status"];
@@ -49,10 +50,10 @@ export type AdminReviewQueueItem = {
   createdAt: string;
   publishedAt: string | null;
   published: boolean;
-  visibility: "public" | "hidden";
+  visibility: AdminReviewVisibility;
   review: AdminReviewState;
   publishOperationId: string | null;
-  startedAt: number;
+  startedAt: number | null;
   endedAt: number | null;
   startedAtLocal: LocalDateTimeContext | null;
   endedAtLocal: LocalDateTimeContext | null;
@@ -69,7 +70,7 @@ export type AdminReviewLocalizedEntry = {
   hashtags: string[];
 };
 
-export type AdminReviewLocalizedClusterTranslation = {
+export type AdminReviewLocalizedMomentTranslation = {
   locale: string;
   languageCode: string;
   countryCode: string;
@@ -77,16 +78,16 @@ export type AdminReviewLocalizedClusterTranslation = {
   impression: string | null;
 };
 
-export type AdminReviewLocalizedClusterImpressions = {
-  clusterId: string;
-  translations: AdminReviewLocalizedClusterTranslation[];
+export type AdminReviewLocalizedMomentImpressions = {
+  momentId: string;
+  translations: AdminReviewLocalizedMomentTranslation[];
 };
 
 export type AdminReviewLocalizedContent = {
   sourceLanguage: string;
   generatedAt: string;
   entries: AdminReviewLocalizedEntry[];
-  clusterImpressions: AdminReviewLocalizedClusterImpressions[];
+  momentImpressions: AdminReviewLocalizedMomentImpressions[];
 };
 
 export type AdminReviewJourney = {
@@ -102,7 +103,7 @@ export type AdminReviewJourney = {
   /** Last change to the published record; while a translation is pending
    * this is when it started waiting. */
   updatedAt: string;
-  startedAt: number;
+  startedAt: number | null;
   endedAt: number | null;
   startedAtLocal: LocalDateTimeContext | null;
   endedAtLocal: LocalDateTimeContext | null;
@@ -141,7 +142,8 @@ export type AdminReviewPhoto = {
 export type AdminReviewEvidenceSection = {
   key: string;
   kind: "cluster" | "remaining";
-  clusterId: string | null;
+  /** The moment the section shows (`null` for the remaining photos). */
+  momentId: string | null;
   type: "STOP" | "MOVE" | "ORPHAN" | null;
   title: string | null;
   impression: string | null;
@@ -169,10 +171,6 @@ const ADMIN_REVIEW_STATUS_LABELS: Record<AdminReviewStatus, string> = {
   REJECTED: "Rejected",
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
 export function parseAdminReviewStatus(
   value: string | null,
 ): AdminReviewStatus | null {
@@ -194,17 +192,9 @@ function normalizeJourneyMetadata(
   description: string | null;
   thumbnailUri: string | null;
 } {
-  if (!isRecord(value)) {
-    return {
-      title: null,
-      description: null,
-      thumbnailUri: null,
-    };
-  }
-
   return {
-    title: readText(value.title) ?? readText(value.journeyTitle),
-    description: readText(value.description) ?? readText(value.summary),
+    title: readText(value.title),
+    description: readText(value.description),
     thumbnailUri: readText(value.thumbnailUri),
   };
 }
@@ -231,10 +221,10 @@ export function normalizeAdminReviewItem(
     visibility: item.visibility,
     review: normalizeReviewState(item.review),
     publishOperationId: readText(item.publishOperationId),
-    startedAt: item.startedAt,
-    endedAt: item.endedAt ?? null,
+    startedAt: parseApiTime(item.startedAt),
+    endedAt: parseApiTime(item.endedAt),
     startedAtLocal: normalizeLocalDateTimeContext(item.startedAtLocal),
-    endedAtLocal: normalizeLocalDateTimeContext(item.endedAtLocal ?? null),
+    endedAtLocal: normalizeLocalDateTimeContext(item.endedAtLocal),
     recapStage: item.recapStage,
   };
 }
@@ -245,10 +235,10 @@ function normalizeReviewState(
   return {
     status: review.status,
     approved: review.approved,
-    ...(review.localizationPending === true ? { localizationPending: true } : {}),
-    ...(review.enqueueFailed === true ? { enqueueFailed: true } : {}),
-    ...(review.decidedBy !== undefined ? { decidedBy: review.decidedBy } : {}),
-    ...(review.decidedAt !== undefined ? { decidedAt: review.decidedAt } : {}),
+    ...(review.localizationPending ? { localizationPending: true } : {}),
+    ...(review.enqueueFailed ? { enqueueFailed: true } : {}),
+    ...(review.decidedBy !== null ? { decidedBy: review.decidedBy } : {}),
+    ...(review.decidedAt !== null ? { decidedAt: review.decidedAt } : {}),
   };
 }
 
@@ -280,9 +270,9 @@ function normalizeLocalizedJourneyEntry(
   };
 }
 
-function normalizeLocalizedClusterTranslation(
-  translation: PublishedJourneyClusterLocalizationEntryDto,
-): AdminReviewLocalizedClusterTranslation {
+function normalizeLocalizedMomentTranslation(
+  translation: PublishedJourneyMomentTranslationDto,
+): AdminReviewLocalizedMomentTranslation {
   return {
     locale: translation.locale,
     languageCode: translation.languageCode,
@@ -292,17 +282,17 @@ function normalizeLocalizedClusterTranslation(
   };
 }
 
-function normalizeLocalizedClusterImpressions(
-  entry: PublishedJourneyClusterLocalizedImpressionsDto,
-): AdminReviewLocalizedClusterImpressions {
+function normalizeLocalizedMomentImpressions(
+  entry: PublishedJourneyMomentImpressionDto,
+): AdminReviewLocalizedMomentImpressions {
   return {
-    clusterId: entry.clusterId,
-    translations: entry.translations.map(normalizeLocalizedClusterTranslation),
+    momentId: entry.momentId,
+    translations: entry.translations.map(normalizeLocalizedMomentTranslation),
   };
 }
 
 function normalizeLocalizedContent(
-  localizedContent: PublishedJourneyLocalizedContentDto | undefined,
+  localizedContent: PublishedJourneyLocalizedContentDto | null,
 ): AdminReviewLocalizedContent | null {
   if (!localizedContent) {
     return null;
@@ -312,8 +302,8 @@ function normalizeLocalizedContent(
     sourceLanguage: localizedContent.sourceLanguage,
     generatedAt: localizedContent.generatedAt,
     entries: localizedContent.entries.map(normalizeLocalizedJourneyEntry),
-    clusterImpressions: localizedContent.clusterImpressions.map(
-      normalizeLocalizedClusterImpressions,
+    momentImpressions: localizedContent.momentImpressions.map(
+      normalizeLocalizedMomentImpressions,
     ),
   };
 }
@@ -341,26 +331,11 @@ function normalizeAdminReviewPhoto(
     thumbnailUrl,
     width: readFiniteNumber(image.width),
     height: readFiniteNumber(image.height),
-    takenAt: readFiniteNumber(image.takenAt),
+    takenAt: parseApiTime(image.takenAt),
     captureTime: normalizeCaptureTimeContext(image.captureTime),
     locationName: readText(image.locationName),
   };
 }
-
-type TimelineBlockLike = {
-  clusterId?: string;
-  type?: "STOP" | "MOVE" | "ORPHAN";
-  time?: {
-    startAt?: number;
-    endAt?: number;
-    startLocal?: unknown;
-    endLocal?: unknown;
-  } | null;
-  locationName?: string;
-  impression?: string;
-  photoIds?: string[];
-  photos?: PublishedJourneyImageDto[];
-};
 
 type AdminReviewPhotoRegistry = {
   orderedKeys: string[];
@@ -370,7 +345,7 @@ type AdminReviewPhotoRegistry = {
 
 type MutableEvidenceSection = {
   key: string;
-  clusterId: string | null;
+  momentId: string | null;
   type: "STOP" | "MOVE" | "ORPHAN" | null;
   title: string | null;
   impression: string | null;
@@ -460,12 +435,12 @@ function pushPhotoKey(
 
 function createMutableEvidenceSection(options: {
   key: string;
-  clusterId: string | null;
+  momentId: string | null;
   order: number;
 }): MutableEvidenceSection {
   return {
     key: options.key,
-    clusterId: options.clusterId,
+    momentId: options.momentId,
     type: null,
     title: null,
     impression: null,
@@ -496,81 +471,56 @@ function mergeSectionTime(
   };
 }
 
-function normalizeTimelineBlocks(
-  timeline: PublishedJourneyDetailDto["timeline"] | undefined,
-): TimelineBlockLike[] {
-  return Array.isArray(timeline)
-    ? timeline.filter(Boolean) as TimelineBlockLike[]
-    : [];
-}
-
-function normalizeRecapTimelineBlocks(
-  timeline: PublishedJourneyDetailDto["recapDraft"]["timeline"] | undefined,
-): TimelineBlockLike[] {
-  return Array.isArray(timeline)
-    ? timeline.filter(Boolean) as TimelineBlockLike[]
-    : [];
-}
-
-function readSectionTime(
-  value: TimelineBlockLike["time"],
-): MutableEvidenceSection["time"] {
-  if (!value) {
-    return null;
-  }
-
+function readSectionTime(moment: PublishedMomentDto): MutableEvidenceSection["time"] {
   return {
-    startAt: readFiniteNumber(value.startAt),
-    endAt: readFiniteNumber(value.endAt),
-    startLocal: normalizeLocalDateTimeContext(value.startLocal),
-    endLocal: normalizeLocalDateTimeContext(value.endLocal),
+    startAt: parseApiTime(moment.startAt),
+    endAt: parseApiTime(moment.endAt),
+    startLocal: normalizeLocalDateTimeContext(moment.startLocal),
+    endLocal: normalizeLocalDateTimeContext(moment.endLocal),
   };
 }
 
+/** One section per moment, keyed by `moment.id` (the old `clusterId` value,
+ * so a section of an existing post keeps its key; ADR 0012 item 6). */
 function collectEvidenceSections(options: {
   registry: AdminReviewPhotoRegistry;
-  blocks: TimelineBlockLike[];
+  moments: PublishedMomentDto[];
   sections: Map<string, MutableEvidenceSection>;
   nextOrderRef: { current: number };
-  keyPrefix: string;
 }): void {
-  for (const [index, block] of options.blocks.entries()) {
-    const clusterId = readText(block.clusterId);
-    const sectionKey = clusterId ?? `${options.keyPrefix}-${index}`;
+  for (const [index, moment] of options.moments.entries()) {
+    const momentId = readText(moment.id);
+    const sectionKey = momentId ?? `moment-${index}`;
     const existing =
       options.sections.get(sectionKey) ??
       createMutableEvidenceSection({
         key: sectionKey,
-        clusterId,
+        momentId,
         order: options.nextOrderRef.current++,
       });
 
-    existing.type = existing.type ?? block.type ?? null;
-    existing.title = existing.title ?? readText(block.locationName);
-    existing.impression = existing.impression ?? readText(block.impression);
-    existing.time = mergeSectionTime(existing.time, readSectionTime(block.time));
+    existing.type = existing.type ?? moment.type;
+    existing.title = existing.title ?? readText(moment.locationName);
+    existing.impression = existing.impression ?? readText(moment.impression);
+    existing.time = mergeSectionTime(existing.time, readSectionTime(moment));
 
-    const blockPhotoIds = Array.isArray(block.photoIds)
-      ? block.photoIds.map((value) => readText(value))
-      : [];
-    const blockPhotoKeys = Array.isArray(block.photos)
-      ? block.photos.map((photo, photoIndex) =>
-          registerAdminReviewPhoto(
-            options.registry,
-            photo,
-            blockPhotoIds[photoIndex] ?? null,
-          ),
-        )
-      : [];
+    const momentPhotoIds = moment.photoIds.map((value) => readText(value));
+    const momentPhotoKeys = moment.photos.map((photo, photoIndex) =>
+      registerAdminReviewPhoto(
+        options.registry,
+        photo,
+        momentPhotoIds[photoIndex] ?? null,
+      ),
+    );
 
-    for (const photoId of blockPhotoIds) {
+    for (const photoId of momentPhotoIds) {
       const key = photoId
         ? options.registry.keyByPhotoId.get(photoId) ?? null
         : null;
       pushPhotoKey(key, existing.photoKeys, existing.photoKeySet);
     }
 
-    for (const photoKey of blockPhotoKeys) {
+    for (const photoKey of momentPhotoKeys) {
       pushPhotoKey(photoKey, existing.photoKeys, existing.photoKeySet);
     }
 
@@ -592,7 +542,7 @@ function resolveEvidenceSections(
       return {
         key: section.key,
         kind: "cluster",
-        clusterId: section.clusterId,
+        momentId: section.momentId,
         type: section.type,
         title: section.title,
         impression: section.impression,
@@ -618,17 +568,9 @@ function buildEvidenceFromDetail(options: {
 
   collectEvidenceSections({
     registry,
-    blocks: normalizeTimelineBlocks(options.detail.timeline),
+    moments: options.detail.moments,
     sections,
     nextOrderRef,
-    keyPrefix: "timeline",
-  });
-  collectEvidenceSections({
-    registry,
-    blocks: normalizeRecapTimelineBlocks(options.detail.recapDraft.timeline),
-    sections,
-    nextOrderRef,
-    keyPrefix: "recap",
   });
 
   const resolvedSections = resolveEvidenceSections(registry, sections);
@@ -654,7 +596,7 @@ function buildEvidenceFromDetail(options: {
                 {
                   key: "remaining-photos",
                   kind: "remaining" as const,
-                  clusterId: null,
+                  momentId: null,
                   type: null,
                   title: null,
                   impression: null,
@@ -670,7 +612,7 @@ function buildEvidenceFromDetail(options: {
             {
               key: "all-photos",
               kind: "remaining" as const,
-              clusterId: null,
+              momentId: null,
               type: null,
               title: null,
               impression: null,
@@ -732,17 +674,17 @@ function buildAdminReviewDetail(options: {
       publicId: options.detail.publicId,
       journeyId: readText(options.detail.journeyId),
       userId: options.detail.userId,
-      authorName: readText(options.detail.author?.name),
+      authorName: readText(options.detail.author.name),
       title,
       description,
       shareUrl: readText(options.detail.shareUrl),
       createdAt: readText(options.detail.createdAt) ?? "",
       publishedAt: readText(options.detail.publishedAt),
       updatedAt: readText(options.detail.updatedAt) ?? "",
-      startedAt: options.detail.startedAt,
-      endedAt: options.detail.endedAt ?? null,
+      startedAt: parseApiTime(options.detail.startedAt),
+      endedAt: parseApiTime(options.detail.endedAt),
       startedAtLocal: normalizeLocalDateTimeContext(options.detail.startedAtLocal),
-      endedAtLocal: normalizeLocalDateTimeContext(options.detail.endedAtLocal ?? null),
+      endedAtLocal: normalizeLocalDateTimeContext(options.detail.endedAtLocal),
       visibility: options.detail.visibility,
       review: normalizeReviewState(options.detail.review),
       publishOperationId: readText(options.detail.publishOperationId),
@@ -750,7 +692,7 @@ function buildAdminReviewDetail(options: {
       notice: readText(options.detail.notice),
       localizedContent: normalizeLocalizedContent(options.detail.localizedContent),
       localizationModel: readText(options.detail.localizationModel),
-      publishedWithoutTranslation: options.detail.publishedWithoutTranslation === true,
+      publishedWithoutTranslation: options.detail.publishedWithoutTranslation,
       requestedLocale: options.lang ? toLocaleTag(options.lang) : null,
     },
     evidence: buildEvidenceFromDetail({

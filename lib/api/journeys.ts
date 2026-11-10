@@ -1,13 +1,15 @@
 import "server-only";
 
 import type {
+  AdminPublishedJourneyPageDto,
   AdminPublishedJourneysDataDto,
   JourneyReviewStatus,
   PublishedJourneyDetailDto,
+  RequeueJourneyReviewResultDto,
   UpdatePublishedJourneyReviewDataDto,
   UpdatePublishedJourneyReviewRequestDto,
 } from "@/src/apis/types";
-import { requestEnvelope } from "./client";
+import { requestApi, withPageCounts } from "./client";
 
 // ─── List Published Journeys ─────────────────
 
@@ -41,13 +43,13 @@ export async function listPublishedJourneys(input: {
     query.userId = input.userId;
   }
 
-  const response = await requestEnvelope<AdminPublishedJourneysDataDto>({
+  const page = await requestApi<AdminPublishedJourneyPageDto>({
     pathname: "/core/admin/journeys/publish",
     accessToken: input.accessToken,
     query,
   });
 
-  return response.data;
+  return withPageCounts(page);
 }
 
 // ─── Re-dispatch a Journey's Translation ─────
@@ -56,7 +58,7 @@ export async function requeueJourneyReview(input: {
   accessToken: string;
   publicId: string;
 }): Promise<void> {
-  await requestEnvelope<{ dispatched: Array<"LOCALIZATION"> }>({
+  await requestApi<RequeueJourneyReviewResultDto>({
     pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review/requeue`,
     method: "POST",
     accessToken: input.accessToken,
@@ -65,18 +67,18 @@ export async function requeueJourneyReview(input: {
 
 // ─── Get Published Journey Detail ───────────
 
+/** `lang` is the locale tag to localize into, sent as `Accept-Language`
+ * (v3 has no `lang` query); without it the original text comes back. */
 export async function getPublishedJourneyDetail(input: {
   accessToken: string;
   publicId: string;
   lang?: string;
 }): Promise<PublishedJourneyDetailDto> {
-  const response = await requestEnvelope<PublishedJourneyDetailDto>({
+  return requestApi<PublishedJourneyDetailDto>({
     pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}`,
     accessToken: input.accessToken,
-    query: input.lang ? { lang: input.lang } : undefined,
+    headers: input.lang ? { "Accept-Language": input.lang } : undefined,
   });
-
-  return response.data;
 }
 
 // ─── Update Review Status ───────────────────
@@ -88,7 +90,7 @@ export async function updateReviewStatus(input: {
   publishOperationId?: string;
   acceptUntranslated?: boolean;
 }): Promise<UpdatePublishedJourneyReviewDataDto> {
-  const response = await requestEnvelope<UpdatePublishedJourneyReviewDataDto>({
+  return requestApi<UpdatePublishedJourneyReviewDataDto>({
     pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review`,
     method: "PATCH",
     accessToken: input.accessToken,
@@ -100,6 +102,4 @@ export async function updateReviewStatus(input: {
       ...(input.acceptUntranslated === true ? { acceptUntranslated: true } : {}),
     },
   });
-
-  return response.data;
 }

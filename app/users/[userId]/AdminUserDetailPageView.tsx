@@ -534,9 +534,9 @@ function JourneysSection({ data, userId }: { data: AdminUserDetailWorkspaceData;
     >
       {journeys === null ? (
         <Unavailable what="journeys" />
-      ) : journeys.journeys.length > 0 ? (
+      ) : journeys.items.length > 0 ? (
         <ul className="flex flex-col">
-          {journeys.journeys.map(normalizeAdminReviewItem).map((journey) => (
+          {journeys.items.map(normalizeAdminReviewItem).map((journey) => (
             <li key={journey.publicId}>
               <Link
                 href={buildAdminReviewDetailHref(journey.publicId)}
