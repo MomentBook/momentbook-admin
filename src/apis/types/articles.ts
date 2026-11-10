@@ -16,7 +16,6 @@ import type { PageCounts } from "./shared";
 
 // ─── Enums ────────────────────────────────────
 
-export type ArticleLanguage = AdminArticleDto["language"];
 /** UPPER_SNAKE_CASE on the wire; admin URLs and forms keep the editorial
  * spelling (`lib/editorial/types.ts`). */
 export type ArticleCategory = AdminArticleDto["category"];

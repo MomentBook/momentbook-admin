@@ -4,12 +4,8 @@
 
 import type {
   AdminReportDto,
-  AdminReportJourneyReviewDto as GeneratedAdminReportJourneyReviewDto,
   AdminReportPageDto,
-  AdminReportPublishedJourneySummaryDto as GeneratedAdminReportPublishedJourneySummaryDto,
   AdminReportStatsDto,
-  AdminReportTargetCountsDto as GeneratedAdminReportTargetCountsDto,
-  AdminReportTargetTypeStatsDto as GeneratedAdminReportTargetTypeStatsDto,
   UpdateAdminReportDto,
 } from "../generated/core";
 import type { PageCounts } from "./shared";
@@ -25,9 +21,6 @@ export type ReportStatus = AdminReportDto["status"];
 
 /** The reporter or the reported account inside a report. */
 export type AdminReportUserSummaryDto = AdminUserSummaryDto;
-export type AdminReportJourneyReviewDto = GeneratedAdminReportJourneyReviewDto;
-export type AdminReportPublishedJourneySummaryDto = GeneratedAdminReportPublishedJourneySummaryDto;
-export type AdminReportTargetCountsDto = GeneratedAdminReportTargetCountsDto;
 export type AdminReportDetailDataDto = AdminReportDto;
 export type AdminReportItemDto = AdminReportDto;
 
@@ -35,12 +28,12 @@ export type AdminReportItemDto = AdminReportDto;
 
 export type { AdminReportPageDto };
 export type AdminReportsDataDto = AdminReportPageDto & PageCounts;
-export type AdminReportTargetTypeStatsDto = GeneratedAdminReportTargetTypeStatsDto;
 export type AdminReportStatsDataDto = AdminReportStatsDto;
 
 // ─── Request Payloads ─────────────────────────
 
-/** Query of `GET /core/admin/reports`. */
+/** Query of `GET /core/admin/reports`. Hand-written: the documents describe
+ * query parameters per operation, and `--no-client` emits no type for them. */
 export interface AdminReportsQueryDto {
   page?: number;
   limit?: number;

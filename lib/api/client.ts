@@ -3,14 +3,6 @@ import "server-only";
 import type { PageCounts } from "@/src/apis/types";
 import { ENV } from "@/src/configs/env.server";
 
-// ─── Response Envelope ───────────────────────
-
-export type Envelope<T> = {
-  status: string;
-  data: T;
-  message?: string;
-};
-
 // ─── Error Classes ───────────────────────────
 
 export class BackendApiError extends Error {
@@ -72,71 +64,7 @@ function buildApiUrl(pathname: string, query?: Record<string, string | number>):
   return url.toString();
 }
 
-// ─── Envelope Parser ─────────────────────────
-
-export async function parseEnvelope<T>(response: Response): Promise<Envelope<T>> {
-  const payload = (await response.json().catch(() => null)) as
-    | Envelope<T>
-    | { message?: string; errorCode?: string }
-    | null;
-
-  if (!response.ok) {
-    const message =
-      typeof payload?.message === "string"
-        ? payload.message
-        : `Request failed with status ${response.status}`;
-
-    if (response.status === 401) {
-      throw new AdminSessionExpiredError(message);
-    }
-
-    if (response.status === 403) {
-      throw new AdminAccessDeniedError(message);
-    }
-
-    const errorCode =
-      payload && "errorCode" in payload && typeof payload.errorCode === "string"
-        ? payload.errorCode
-        : undefined;
-
-    throw new BackendApiError(message, response.status, errorCode);
-  }
-
-  if (!payload || typeof payload !== "object" || !("data" in payload)) {
-    throw new BackendApiError("Invalid backend response shape", response.status);
-  }
-
-  return payload as Envelope<T>;
-}
-
-// ─── Core Request Function ───────────────────
-
-export interface RequestEnvelopeOptions {
-  pathname: string;
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
-  accessToken?: string;
-  body?: unknown;
-  query?: Record<string, string | number>;
-}
-
-export async function requestEnvelope<T>(options: RequestEnvelopeOptions): Promise<Envelope<T>> {
-  const response = await fetch(buildApiUrl(options.pathname, options.query), {
-    method: options.method ?? "GET",
-    headers: {
-      Accept: "application/json",
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...(options.accessToken
-        ? { Authorization: `Bearer ${options.accessToken}` }
-        : {}),
-    },
-    ...(options.body ? { body: JSON.stringify(options.body) } : {}),
-    cache: "no-store",
-  });
-
-  return parseEnvelope<T>(response);
-}
-
-// ─── v3 Request (ADR 0012) ───────────────────
+// ─── Request (contract v3, ADR 0012) ────────
 
 export interface ApiRequestOptions {
   pathname: string;

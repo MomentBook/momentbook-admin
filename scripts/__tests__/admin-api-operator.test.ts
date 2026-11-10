@@ -7,13 +7,6 @@ vi.mock("@/src/configs/env.server", () => ({
 
 const fetchMock = vi.fn();
 
-function okEnvelope(data: unknown) {
-  return new Response(JSON.stringify({ status: "success", data }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
 function ok(body: unknown) {
   return new Response(JSON.stringify(body), {
     status: 200,
@@ -28,7 +21,7 @@ function call(index = 0) {
 
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
-  fetchMock.mockImplementation(async () => okEnvelope({}));
+  fetchMock.mockImplementation(async () => ok({ items: [], total: 0, page: 1, limit: 20 }));
 });
 
 afterEach(() => {
