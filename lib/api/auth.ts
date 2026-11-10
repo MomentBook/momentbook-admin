@@ -1,20 +1,13 @@
 import "server-only";
 
-import { requestEnvelope } from "./client";
-
-// ─── Types ──────────────────────────────────
-
-export type TokenRefreshResponseData = {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-};
-
+import type { TokenPairDto } from "@/src/apis/types";
+import { requestApi } from "./client";
 
 // ─── Logout (requires session) ───────────────
 
+/** v3 answers 204 with no body. */
 export async function logoutAdmin(refreshToken: string): Promise<void> {
-  await requestEnvelope<void>({
+  await requestApi<void>({
     pathname: "/auth/logout",
     method: "POST",
     body: { refreshToken },
@@ -23,14 +16,10 @@ export async function logoutAdmin(refreshToken: string): Promise<void> {
 
 // ─── Token Refresh ──────────────────────────
 
-export async function refreshAdminTokens(
-  refreshToken: string,
-): Promise<TokenRefreshResponseData> {
-  const response = await requestEnvelope<TokenRefreshResponseData>({
+export async function refreshAdminTokens(refreshToken: string): Promise<TokenPairDto> {
+  return requestApi<TokenPairDto>({
     pathname: "/auth/refresh",
     method: "POST",
     body: { refreshToken },
   });
-
-  return response.data;
 }

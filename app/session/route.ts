@@ -7,10 +7,10 @@ import {
 import { normalizeAdminEmail } from "@/lib/admin/config";
 import { createAdminSession } from "@/lib/admin/session";
 
+/** A v3 sign-in body (`AuthSessionDto`): the user's id is `user.id`. */
 type SessionBootstrapRequest = {
   user?: {
-    _id?: unknown;
-    userId?: unknown;
+    id?: unknown;
     name?: unknown;
     email?: unknown;
   };
@@ -59,7 +59,7 @@ function resolveSessionEmail(input: {
 function readSessionUserId(
   user: SessionBootstrapRequest["user"],
 ): string | null {
-  return readText(user?._id) ?? readText(user?.userId);
+  return readText(user?.id);
 }
 
 export async function POST(request: Request) {
