@@ -71,7 +71,7 @@ export async function loadReportHistory(input: {
     },
   });
 
-  return { items: reports.reports, total: reports.total };
+  return { items: reports.items, total: reports.total };
 }
 
 /** Report history for a secondary panel (see `orNull`). */

@@ -25,7 +25,7 @@ afterEach(() => {
 describe("loadReportHistory", () => {
   it("filters by target with a default limit of 5", async () => {
     listAdminReports.mockResolvedValue({
-      reports: [{ _id: "r1" }],
+      items: [{ id: "r1" }],
       total: 7,
       page: 1,
       pages: 2,
@@ -44,15 +44,15 @@ describe("loadReportHistory", () => {
       accessToken: "t",
       query: { page: 1, limit: 5, targetType: "PUBLISHED_JOURNEY", targetId: "public-1" },
     });
-    expect(history).toEqual({ items: [{ _id: "r1" }], total: 7 });
+    expect(history).toEqual({ items: [{ id: "r1" }], total: 7 });
   });
 
   it("filters by reporter", async () => {
     listAdminReports.mockResolvedValue({
-      reports: [],
+      items: [],
       total: 0,
       page: 1,
-      pages: 1,
+      pages: 0,
       limit: 3,
       hasMore: false,
     });

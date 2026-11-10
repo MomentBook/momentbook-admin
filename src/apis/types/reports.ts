@@ -1,109 +1,46 @@
 // ──────────────────────────────────────────────
-// Report API types — hand-written from NestJS contract (apps/core/src/reports)
+// Report admin API types: aliases of the generated v3 DTOs (ADR 0012).
 // ──────────────────────────────────────────────
 
-import type { JourneyReviewStatus } from "./journeys";
+import type {
+  AdminReportDto,
+  AdminReportJourneyReviewDto as GeneratedAdminReportJourneyReviewDto,
+  AdminReportPageDto,
+  AdminReportPublishedJourneySummaryDto as GeneratedAdminReportPublishedJourneySummaryDto,
+  AdminReportStatsDto,
+  AdminReportTargetCountsDto as GeneratedAdminReportTargetCountsDto,
+  AdminReportTargetTypeStatsDto as GeneratedAdminReportTargetTypeStatsDto,
+  UpdateAdminReportDto,
+} from "../generated/core";
+import type { PageCounts } from "./shared";
+import type { AdminUserSummaryDto } from "./users";
 
-// ─── Enums / Literal Unions ───────────────────
+// ─── Enums ────────────────────────────────────
 
-export type ReportTargetType = "USER" | "PUBLISHED_JOURNEY";
-export type ReportReason =
-  | "SPAM"
-  | "ABUSE"
-  | "HATE"
-  | "SEXUAL"
-  | "INAPPROPRIATE"
-  | "OTHER";
-export type ReportStatus = "PENDING" | "REVIEWED" | "RESOLVED" | "REJECTED";
+export type ReportTargetType = AdminReportDto["targetType"];
+export type ReportReason = AdminReportDto["reason"];
+export type ReportStatus = AdminReportDto["status"];
 
-// ─── User Summary ─────────────────────────────
+// ─── Report ───────────────────────────────────
 
-export interface AdminReportUserSummaryDto {
-  userId: string;
-  name?: string | null;
-  email?: string | null;
-  providerEmail?: string | null;
-  picture?: string | null;
-  // Optional and nullable in the API (AdminReportUserSummaryDto).
-  status?: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | null;
-}
-
-// ─── Target Journey Summary ───────────────────
-
-export interface AdminReportJourneyReviewDto {
-  status: JourneyReviewStatus;
-  approved: boolean;
-}
-
-export interface AdminReportPublishedJourneySummaryDto {
-  publicId: string;
-  journeyId: string;
-  userId: string;
-  published: boolean;
-  visibility: "PUBLIC" | "HIDDEN";
-  review: AdminReportJourneyReviewDto;
-  publishedAt?: string | null;
-  owner?: AdminReportUserSummaryDto | null;
-}
-
-// ─── Target Counts ────────────────────────────
-
-export interface AdminReportTargetCountsDto {
-  totalReports: number;
-  effectiveReports: number;
-}
-
-// ─── Report Detail & Item ─────────────────────
-
-export interface AdminReportDetailDataDto {
-  _id: string;
-  reporterId: string;
-  targetType: ReportTargetType;
-  targetId: string;
-  reason: ReportReason;
-  description?: string | null;
-  status: ReportStatus;
-  adminNote?: string | null;
-  resolvedAt?: string | null;
-  resolvedBy?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  reporter?: AdminReportUserSummaryDto | null;
-  targetUser?: AdminReportUserSummaryDto | null;
-  targetPublishedJourney?: AdminReportPublishedJourneySummaryDto | null;
-  targetReportCounts: AdminReportTargetCountsDto;
-}
-
-export type AdminReportItemDto = AdminReportDetailDataDto;
+/** The reporter or the reported account inside a report. */
+export type AdminReportUserSummaryDto = AdminUserSummaryDto;
+export type AdminReportJourneyReviewDto = GeneratedAdminReportJourneyReviewDto;
+export type AdminReportPublishedJourneySummaryDto = GeneratedAdminReportPublishedJourneySummaryDto;
+export type AdminReportTargetCountsDto = GeneratedAdminReportTargetCountsDto;
+export type AdminReportDetailDataDto = AdminReportDto;
+export type AdminReportItemDto = AdminReportDto;
 
 // ─── Report List & Stats ──────────────────────
 
-export interface AdminReportsDataDto {
-  reports: AdminReportItemDto[];
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-  hasMore: boolean;
-}
-
-export interface AdminReportTargetTypeStatsDto {
-  userReports: number;
-  publishedJourneyReports: number;
-}
-
-export interface AdminReportStatsDataDto {
-  totalReports: number;
-  openReports: number;
-  pendingReports: number;
-  reviewedReports: number;
-  resolvedReports: number;
-  rejectedReports: number;
-  byTargetType: AdminReportTargetTypeStatsDto;
-}
+export type { AdminReportPageDto };
+export type AdminReportsDataDto = AdminReportPageDto & PageCounts;
+export type AdminReportTargetTypeStatsDto = GeneratedAdminReportTargetTypeStatsDto;
+export type AdminReportStatsDataDto = AdminReportStatsDto;
 
 // ─── Request Payloads ─────────────────────────
 
+/** Query of `GET /core/admin/reports`. */
 export interface AdminReportsQueryDto {
   page?: number;
   limit?: number;
@@ -114,7 +51,4 @@ export interface AdminReportsQueryDto {
   reporterId?: string;
 }
 
-export interface UpdateAdminReportRequestDto {
-  status?: ReportStatus;
-  adminNote?: string | null;
-}
+export type UpdateAdminReportRequestDto = UpdateAdminReportDto;

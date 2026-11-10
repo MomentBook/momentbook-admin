@@ -275,7 +275,7 @@ export function AdminReportsListPageView({
             </div>
           ) : null}
 
-          {reportsData.reports.length > 0 ? (
+          {reportsData.items.length > 0 ? (
             <>
               <div className="overflow-x-auto rounded-md border">
                 <Table>
@@ -292,8 +292,8 @@ export function AdminReportsListPageView({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportsData.reports.map((report) => (
-                      <TableRow key={report._id}>
+                    {reportsData.items.map((report) => (
+                      <TableRow key={report.id}>
                         <TableCell>
                           <Badge variant={badgeVariantForStatus(report.status)}>
                             {getReportStatusLabel(report.status)}
@@ -336,7 +336,7 @@ export function AdminReportsListPageView({
                           />
                         </TableCell>
                         <TableCell className="text-right">
-                          <Link href={buildAdminReportDetailHref(report._id)}>
+                          <Link href={buildAdminReportDetailHref(report.id)}>
                             <Button variant="outline" size="sm">
                               Inspect
                             </Button>

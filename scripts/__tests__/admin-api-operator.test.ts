@@ -177,6 +177,7 @@ describe("operator list responses", () => {
     const { listAdminUsers, listAdminUserAuthEvents } = await import("@/lib/api/users");
     const { listAdminComments } = await import("@/lib/api/comments");
     const { listAdminAuditLog } = await import("@/lib/api/audit");
+    const { listAdminReports } = await import("@/lib/api/reports");
     const expected = {
       items: [{ id: "x" }],
       total: 21,
@@ -194,6 +195,9 @@ describe("operator list responses", () => {
       expected,
     );
     await expect(listAdminAuditLog({ accessToken: "t", page: 1, limit: 20 })).resolves.toEqual(
+      expected,
+    );
+    await expect(listAdminReports({ accessToken: "t", query: { page: 1 } })).resolves.toEqual(
       expected,
     );
   });

@@ -33,8 +33,8 @@ const moderation = { items: [{ id: "a-1" }], ...page, total: 1 };
 const journeys = { journeys: [{ publicId: "p-1" }], ...page, total: 1 };
 const comments = { items: [{ commentId: "c-1" }], ...page, total: 1 };
 const authEvents = { items: [{ id: "e-1" }], ...page, total: 1 };
-const receivedReport = { _id: "r-received" };
-const filedReport = { _id: "r-filed" };
+const receivedReport = { id: "r-received" };
+const filedReport = { id: "r-filed" };
 
 function mockAllOk() {
   getAdminUser.mockResolvedValue(detail);
@@ -44,8 +44,8 @@ function mockAllOk() {
   listAdminUserAuthEvents.mockResolvedValue(authEvents);
   listAdminReports.mockImplementation(async (input: { query: { reporterId?: string } }) =>
     input.query.reporterId
-      ? { reports: [filedReport], ...page, total: 1 }
-      : { reports: [receivedReport], ...page, total: 2 },
+      ? { items: [filedReport], ...page, total: 1 }
+      : { items: [receivedReport], ...page, total: 2 },
   );
 }
 
