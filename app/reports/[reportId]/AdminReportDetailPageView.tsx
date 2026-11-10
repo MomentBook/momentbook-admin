@@ -85,8 +85,8 @@ function UserSanctionControl({
   returnTo: string;
   user: AdminReportUserSummaryDto;
 }) {
-  const label = user.name || user.email || user.userId;
-  const fields = { userId: user.userId, reportId, returnTo };
+  const label = user.name || user.email || user.id;
+  const fields = { userId: user.id, reportId, returnTo };
 
   if (user.status === "DELETED") {
     return (
@@ -103,7 +103,7 @@ function UserSanctionControl({
         fields={{ ...fields, status: "active" }}
         triggerLabel="Unban"
         title={`Unban ${label}?`}
-        description={`Lifts the ban on ${label} (${user.userId}). If required consents are pending, the account stays inactive until it accepts them.`}
+        description={`Lifts the ban on ${label} (${user.id}). If required consents are pending, the account stays inactive until it accepts them.`}
         confirmLabel="Unban"
       >
         <SanctionReasonInput />
@@ -118,7 +118,7 @@ function UserSanctionControl({
       triggerLabel="Ban"
       triggerVariant="destructive"
       title={`Ban ${label}?`}
-      description={`Bans ${label} (${user.userId}). All of their sessions are revoked immediately.`}
+      description={`Bans ${label} (${user.id}). All of their sessions are revoked immediately.`}
       confirmLabel="Ban"
     >
       <SanctionReasonInput />
@@ -162,7 +162,7 @@ export function AdminReportDetailPageView({
             </Badge>
           </div>
           <span className="font-mono text-xs text-muted-foreground">
-            ID: {report._id}
+            ID: {report.id}
           </span>
         </div>
 
@@ -274,7 +274,7 @@ export function AdminReportDetailPageView({
                     <span className="text-muted-foreground">Display Name:</span>
                     <p className="font-medium mt-0.5">
                       <Link
-                        href={buildAdminUserHref(targetUser.userId)}
+                        href={buildAdminUserHref(targetUser.id)}
                         className="text-primary hover:underline"
                       >
                         {targetUser.name || "Unnamed user"}
@@ -291,7 +291,7 @@ export function AdminReportDetailPageView({
                   </div>
                   <div>
                     <span className="text-muted-foreground">User ID:</span>
-                    <p className="font-mono font-medium mt-0.5 truncate">{targetUser.userId}</p>
+                    <p className="font-mono font-medium mt-0.5 truncate">{targetUser.id}</p>
                   </div>
                 </div>
 
@@ -305,7 +305,7 @@ export function AdminReportDetailPageView({
                   </div>
 
                   <UserSanctionControl
-                    reportId={report._id}
+                    reportId={report.id}
                     returnTo={returnTo}
                     user={targetUser}
                   />
@@ -394,7 +394,7 @@ export function AdminReportDetailPageView({
             </CardHeader>
             <form action={updateAdminReportAction}>
               <CardContent className="space-y-4">
-                <input type="hidden" name="reportId" value={report._id} />
+                <input type="hidden" name="reportId" value={report.id} />
                 <input type="hidden" name="returnTo" value={returnTo} />
 
                 {/* Status Selection */}
@@ -471,7 +471,7 @@ export function AdminReportDetailPageView({
               <ReportHistoryList
                 title="Other reports on this target"
                 history={targetHistory}
-                excludeReportId={report._id}
+                excludeReportId={report.id}
                 viewAllHref={buildAdminReportsHref({
                   targetType: report.targetType,
                   targetId: report.targetId,
@@ -480,7 +480,7 @@ export function AdminReportDetailPageView({
               <ReportHistoryList
                 title="Other reports by this reporter"
                 history={reporterHistory}
-                excludeReportId={report._id}
+                excludeReportId={report.id}
                 viewAllHref={buildAdminReportsHref({ reporterId: report.reporterId })}
               />
             </CardContent>

@@ -18,6 +18,9 @@ Auth: Nest API role/RBAC-backed, encrypted `momentbook_admin_session` cookie.
 Scripts: `yarn dev`, `yarn build`, `yarn lint`, `yarn test` (`vitest run`),
 `yarn typecheck` (`next typegen && tsc --noEmit`), `yarn verify`
 (typecheck + lint + test). Gate before done: `yarn verify && yarn build`.
+`yarn generate:api` writes the API types to `src/apis/generated/` (types
+only, never edited by hand; `API_SPEC_DIR=<dir>` reads committed documents
+instead of the dev server; ADR 0012).
 The edit hook runs eslint on each edited file in the background and reports
 only errors.
 
@@ -32,7 +35,7 @@ Admin-only, at the root of the admin origin: `/` (attention overview),
 Do not expand into public UX. Ownership transfers require an ADR.
 
 ## Architecture
-Design decisions: `docs/adr/README.md` (11 ADRs). Product and UX intent:
+Design decisions: `docs/adr/README.md` (12 ADRs). Product and UX intent:
 `docs/DESIGN.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->

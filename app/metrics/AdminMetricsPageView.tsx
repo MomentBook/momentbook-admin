@@ -20,6 +20,7 @@ import {
   type MetricsDays,
 } from "@/lib/admin/metrics-shared";
 import { defaultLanguage } from "@/lib/i18n/config";
+import { parseApiTime } from "@/lib/view-helpers";
 import type { AdminMetricsDataDto, AdminNotificationMetricsDataDto } from "@/src/apis/types";
 import { DailyBarChart } from "./DailyBarChart";
 import { NotificationMetricsSection } from "./NotificationMetricsSection";
@@ -110,10 +111,12 @@ function CountLink({ href, value }: { href: string; value: number }) {
 
 function QueueHealthCard({ data }: { data: AdminMetricsDataDto }) {
   const { reviews, reports } = data;
+  const generatedAt = parseApiTime(data.generatedAt);
+  const oldestPendingAt = parseApiTime(reviews.oldestPendingAt);
   const oldestWaitSeconds =
-    reviews.oldestPendingSince === null
+    generatedAt === null || oldestPendingAt === null
       ? null
-      : (Date.parse(data.asOf) - Date.parse(reviews.oldestPendingSince)) / 1000;
+      : (generatedAt - oldestPendingAt) / 1000;
 
   return (
     <Card>
@@ -279,7 +282,7 @@ export function AdminMetricsPageView({
         </div>
         <p className="text-xs text-muted-foreground">
           As of{" "}
-          <LocalizedDateTime lang={ADMIN_DISPLAY_LANGUAGE} timestamp={Date.parse(data.asOf)} />
+          <LocalizedDateTime lang={ADMIN_DISPLAY_LANGUAGE} timestamp={parseApiTime(data.generatedAt)} />
         </p>
       </div>
 

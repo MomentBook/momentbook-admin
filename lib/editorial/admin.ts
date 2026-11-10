@@ -76,12 +76,12 @@ export async function loadAdminEditorialArticleDashboard(options: {
     accessToken: options.accessToken,
     page: options.page,
     limit: options.limit,
-    ...(options.language ? { lang: options.language } : {}),
+    ...(options.language ? { language: options.language } : {}),
     ...(options.category ? { category: options.category } : {}),
   });
 
   return {
-    items: (list.articles ?? [])
+    items: list.items
       .map((item) => normalizeListItem(item))
       .filter((item): item is EditorialArticleListItem => Boolean(item)),
     page: list.page,

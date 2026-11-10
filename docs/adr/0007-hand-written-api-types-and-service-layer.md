@@ -3,6 +3,10 @@
 ## Status
 
 Active. Supersedes [0003](0003-backend-contract-and-api-wrapper.md).
+From the v3 release, the hand-written types and envelope parsing are
+superseded by [0012](0012-generated-api-types-and-contract-v3.md): types are
+generated with `--no-client`, a 2xx body is the resource, and admin lists are
+`{items, total, page, limit}`. The domain-organized service layer below stays.
 
 ## Decision
 

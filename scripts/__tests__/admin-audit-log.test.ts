@@ -23,7 +23,7 @@ function item(overrides: Partial<Item>): Item {
     targetId: "t-1",
     subjectUserId: null,
     reason: null,
-    details: null,
+    details: {},
     createdAt: "2026-10-01T00:00:00.000Z",
     actor: null,
     subject: null,
@@ -64,7 +64,7 @@ describe("resolveAuditTargetHref", () => {
     const { resolveAuditTargetHref } = await import("@/lib/admin/audit-log-shared");
 
     expect(
-      resolveAuditTargetHref(item({ targetType: "COMMENT", action: "COMMENT_DELETED", details: null })),
+      resolveAuditTargetHref(item({ targetType: "COMMENT", action: "COMMENT_DELETED", details: {} })),
     ).toBeNull();
     expect(
       resolveAuditTargetHref(
@@ -108,11 +108,11 @@ describe("audit filters", () => {
 describe("loadAdminAuditLogData", () => {
   it("passes every filter through and floors pages at 1", async () => {
     listAdminAuditLog.mockResolvedValue({
-      actions: [],
+      items: [],
       total: 0,
       page: 3,
-      pages: 0,
       limit: 20,
+      pages: 0,
       hasMore: false,
     });
     const { loadAdminAuditLogData } = await import("@/lib/admin/audit-log");

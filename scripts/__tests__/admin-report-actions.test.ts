@@ -83,14 +83,14 @@ describe("updateAdminUserStatusAction", () => {
   it("user status success uses the API result status", async () => {
     cookies.mockResolvedValue({});
     requireAdminActionSession.mockResolvedValue({ accessToken: "token" });
-    updateAdminUserStatus.mockResolvedValue({ userId: "u1", status: "inactive" });
+    updateAdminUserStatus.mockResolvedValue({ userId: "u1", status: "INACTIVE" });
 
     const result = await runUserStatusAction(userStatusForm({ status: "active" }));
 
     expect(updateAdminUserStatus).toHaveBeenCalledWith({
       accessToken: "token",
       userId: "u1",
-      data: { status: "active", reason: undefined },
+      data: { status: "ACTIVE", reason: undefined },
     });
     expect(result).toBe(
       "REDIRECT:/reports/report-1?mutation=user_status_updated&userStatus=inactive",
@@ -115,7 +115,7 @@ describe("updateAdminUserStatusAction", () => {
   it("passes the report the decision answers", async () => {
     cookies.mockResolvedValue({});
     requireAdminActionSession.mockResolvedValue({ accessToken: "token" });
-    updateAdminUserStatus.mockResolvedValue({ userId: "u1", status: "banned" });
+    updateAdminUserStatus.mockResolvedValue({ userId: "u1", status: "BANNED" });
 
     await runUserStatusAction(userStatusForm({ status: "banned", reportId: "r-1" }));
 
@@ -126,7 +126,7 @@ describe("updateAdminUserStatusAction", () => {
   it("an empty reportId leaves the key out", async () => {
     cookies.mockResolvedValue({});
     requireAdminActionSession.mockResolvedValue({ accessToken: "token" });
-    updateAdminUserStatus.mockResolvedValue({ userId: "u1", status: "banned" });
+    updateAdminUserStatus.mockResolvedValue({ userId: "u1", status: "BANNED" });
 
     await runUserStatusAction(userStatusForm({ status: "banned", reportId: " " }));
 

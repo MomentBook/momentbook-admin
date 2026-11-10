@@ -47,7 +47,7 @@ export async function loadAdminUsersWorkspaceData(
   });
 
   return {
-    users: list.users,
+    users: list.items,
     total: list.total,
     page: filters.page,
     pages: Math.max(1, list.pages),

@@ -46,7 +46,7 @@ export async function deleteAdminCommentAction(formData: FormData): Promise<neve
     await updateAdminCommentStatus({
       accessToken: session.accessToken,
       commentId,
-      data: { status: "deleted", reason },
+      data: { status: "DELETED", reason },
     });
   } catch (error) {
     if (isBackendApiError(error)) {

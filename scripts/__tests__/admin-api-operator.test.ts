@@ -7,8 +7,8 @@ vi.mock("@/src/configs/env.server", () => ({
 
 const fetchMock = vi.fn();
 
-function okEnvelope(data: unknown) {
-  return new Response(JSON.stringify({ status: "success", data }), {
+function ok(body: unknown) {
+  return new Response(JSON.stringify(body), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
@@ -21,7 +21,7 @@ function call(index = 0) {
 
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
-  fetchMock.mockImplementation(async () => okEnvelope({}));
+  fetchMock.mockImplementation(async () => ok({ items: [], total: 0, page: 1, limit: 20 }));
 });
 
 afterEach(() => {
@@ -92,10 +92,10 @@ describe("updateAdminUserStatus", () => {
     await updateAdminUserStatus({
       accessToken: "t",
       userId: "u-1",
-      data: { status: "banned", reportId: "r-1" },
+      data: { status: "BANNED", reportId: "r-1" },
     });
 
-    expect(call().body).toBe('{"status":"banned","reportId":"r-1"}');
+    expect(call().body).toBe('{"status":"BANNED","reportId":"r-1"}');
   });
 });
 
@@ -119,13 +119,13 @@ describe("updateAdminCommentStatus", () => {
     await updateAdminCommentStatus({
       accessToken: "t",
       commentId: "c-1",
-      data: { status: "deleted", reason: "spam" },
+      data: { status: "DELETED", reason: "spam" },
     });
 
     expect(call()).toMatchObject({
       method: "PATCH",
       url: "https://api.test/core/admin/comments/c-1/status",
-      body: '{"status":"deleted","reason":"spam"}',
+      body: '{"status":"DELETED","reason":"spam"}',
     });
   });
 });
@@ -159,6 +159,50 @@ describe("getAdminMetrics", () => {
       method: "GET",
       url: "https://api.test/core/admin/metrics?days=30",
     });
+  });
+});
+
+describe("operator list responses", () => {
+  it("returns each v3 page with the derived pages and hasMore", async () => {
+    fetchMock.mockImplementation(async () =>
+      ok({ items: [{ id: "x" }], total: 21, page: 1, limit: 20 }),
+    );
+    const { listAdminUsers, listAdminUserAuthEvents } = await import("@/lib/api/users");
+    const { listAdminComments } = await import("@/lib/api/comments");
+    const { listAdminAuditLog } = await import("@/lib/api/audit");
+    const { listAdminReports } = await import("@/lib/api/reports");
+    const expected = {
+      items: [{ id: "x" }],
+      total: 21,
+      page: 1,
+      limit: 20,
+      pages: 2,
+      hasMore: true,
+    };
+
+    await expect(listAdminUsers({ accessToken: "t", page: 1, limit: 20 })).resolves.toEqual(expected);
+    await expect(
+      listAdminUserAuthEvents({ accessToken: "t", userId: "u-1", page: 1, limit: 20 }),
+    ).resolves.toEqual(expected);
+    await expect(listAdminComments({ accessToken: "t", page: 1, limit: 20 })).resolves.toEqual(
+      expected,
+    );
+    await expect(listAdminAuditLog({ accessToken: "t", page: 1, limit: 20 })).resolves.toEqual(
+      expected,
+    );
+    await expect(listAdminReports({ accessToken: "t", query: { page: 1 } })).resolves.toEqual(
+      expected,
+    );
+  });
+});
+
+describe("getAdminMetrics response", () => {
+  it("returns the v3 body as the metrics", async () => {
+    const metrics = { generatedAt: "2026-11-10T00:00:00.000Z", days: 30, daily: [] };
+    fetchMock.mockResolvedValueOnce(ok(metrics));
+    const { getAdminMetrics } = await import("@/lib/api/metrics");
+
+    await expect(getAdminMetrics({ accessToken: "t", days: 30 })).resolves.toEqual(metrics);
   });
 });
 

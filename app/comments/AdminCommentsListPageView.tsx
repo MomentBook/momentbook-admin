@@ -100,7 +100,7 @@ function Filters({ filters }: { filters: CommentsFilters }) {
 }
 
 function DeleteComment({ comment, returnTo }: { comment: AdminCommentItemDto; returnTo: string }) {
-  const author = comment.author.name || comment.author.userId;
+  const author = comment.author.name || comment.author.id;
 
   return (
     <ConfirmActionForm
@@ -233,7 +233,7 @@ export function AdminCommentsListPageView({
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
                         <Link
-                          href={buildAdminUserHref(comment.author.userId)}
+                          href={buildAdminUserHref(comment.author.id)}
                           className="font-medium text-primary hover:underline"
                         >
                           {comment.author.name || "Unnamed user"}

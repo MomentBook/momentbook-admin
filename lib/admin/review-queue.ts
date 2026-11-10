@@ -148,7 +148,7 @@ export async function loadReviewQueue(input: {
   return {
     tab: input.tab,
     userId: input.userId ?? null,
-    items: list.journeys.map(toReviewQueueItem),
+    items: list.items.map(toReviewQueueItem),
     total: list.total,
     page: input.page,
     pages: Math.max(1, list.pages),
@@ -172,7 +172,7 @@ export async function findNextPendingPublicId(input: {
   });
 
   return (
-    response.journeys.find((journey) => journey.publicId !== input.excludePublicId)
+    response.items.find((journey) => journey.publicId !== input.excludePublicId)
       ?.publicId ?? null
   );
 }

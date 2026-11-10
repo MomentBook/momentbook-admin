@@ -90,7 +90,7 @@ async function loadRecentIntake(
       limit: INTAKE_PAGE_LIMIT,
     });
 
-    for (const journey of response.journeys) {
+    for (const journey of response.items) {
       if (seenPublicIds.has(journey.publicId)) {
         continue;
       }

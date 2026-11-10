@@ -1,52 +1,19 @@
 // ──────────────────────────────────────────────
-// Audit Log Admin API types — hand-written from docs/openapi/core.json
+// Audit log admin API types: aliases of the generated v3 DTOs (ADR 0012).
 // ──────────────────────────────────────────────
 
-export type AdminAuditAction =
-  | "USER_BANNED"
-  | "USER_UNBANNED"
-  | "USER_SESSIONS_REVOKED"
-  | "JOURNEY_REVIEW_DECIDED"
-  | "JOURNEY_PUBLISHED_UNTRANSLATED"
-  | "JOURNEY_TRANSLATION_REQUEUED"
-  | "REPORT_UPDATED"
-  | "COMMENT_DELETED"
-  | "ARTICLE_CREATED"
-  | "ARTICLE_UPDATED"
-  | "ARTICLE_DELETED";
+import type {
+  AdminAuditLogItemDto as GeneratedAdminAuditLogItemDto,
+  AdminAuditLogPageDto,
+} from "../generated/core";
+import type { PageCounts } from "./shared";
+import type { AdminUserSummaryDto } from "./users";
 
-export type AdminAuditTargetType =
-  | "USER"
-  | "PUBLISHED_JOURNEY"
-  | "REPORT"
-  | "COMMENT"
-  | "ARTICLE";
-
-export interface AdminAuditUserDto {
-  userId: string;
-  name: string | null;
-  email: string | null;
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
-}
-
-export interface AdminAuditLogItemDto {
-  id: string;
-  action: AdminAuditAction;
-  targetType: AdminAuditTargetType;
-  targetId: string;
-  subjectUserId: string | null;
-  reason: string | null;
-  details: Record<string, unknown> | null;
-  createdAt: string;
-  actor: AdminAuditUserDto | null;
-  subject: AdminAuditUserDto | null;
-}
-
-export interface AdminAuditLogDataDto {
-  actions: AdminAuditLogItemDto[];
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-  hasMore: boolean;
-}
+export type AdminAuditAction = GeneratedAdminAuditLogItemDto["action"];
+export type AdminAuditTargetType = GeneratedAdminAuditLogItemDto["targetType"];
+/** The actor or subject of an audit row; `email` is the representative email
+ * only, the provider email is `providerEmail`. */
+export type AdminAuditUserDto = AdminUserSummaryDto;
+export type AdminAuditLogItemDto = GeneratedAdminAuditLogItemDto;
+export type { AdminAuditLogPageDto };
+export type AdminAuditLogDataDto = AdminAuditLogPageDto & PageCounts;

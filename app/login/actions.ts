@@ -11,6 +11,7 @@ import {
   sanitizeAdminPath,
 } from "@/lib/admin/paths";
 import { createAdminSession } from "@/lib/admin/session";
+import type { AuthSessionDto } from "@/src/apis/types";
 import { ENV } from "@/src/configs/env.server";
 
 export type LoginState = {
@@ -21,18 +22,12 @@ function readText(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-type BackendLoginPayload = {
-  status?: string;
-  data?: {
-    user?: {
-      _id?: string;
-      userId?: string;
-      name?: string | null;
-      email?: string | null;
-    };
-    accessToken?: string;
-    refreshToken?: string;
-  };
+/** The v3 sign-in body is the bare `AuthSessionDto`; it is read defensively
+ * because it comes over the network. */
+type BackendLoginPayload = Partial<
+  Pick<AuthSessionDto, "accessToken" | "refreshToken">
+> & {
+  user?: Partial<Pick<AuthSessionDto["user"], "id" | "name" | "email">>;
 };
 
 function buildLoginEndpoint() {
@@ -91,17 +86,13 @@ export async function loginAdminAction(
     return { error: "Service unavailable." };
   }
 
-  if (
-    loginPayload?.status !== "success" ||
-    (!loginPayload?.data?.user?._id &&
-      !loginPayload?.data?.user?.userId) ||
-    !loginPayload?.data?.accessToken ||
-    !loginPayload?.data?.refreshToken
-  ) {
+  const user = loginPayload?.user;
+  const accessToken = loginPayload?.accessToken;
+  const refreshToken = loginPayload?.refreshToken;
+
+  if (!user?.id || !accessToken || !refreshToken) {
     return { error: "Incomplete login response." };
   }
-
-  const { user, accessToken, refreshToken } = loginPayload.data;
 
   let claims;
 
@@ -122,7 +113,7 @@ export async function loginAdminAction(
     return { error: "This account does not have admin access." };
   }
 
-  const userId = (user._id || user.userId) as string;
+  const userId = user.id;
   const cookieStore = await cookies();
 
   try {

@@ -13,6 +13,17 @@ export function readText(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** Epoch milliseconds of an API time (RFC 3339 in contract v3), or `null`
+ * when it is absent or unreadable. */
+export function parseApiTime(value: string | null | undefined): number | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
 export function resolveJourneyListCoverUrl(source: {
   thumbnailUrl?: unknown;
   coverUrl?: unknown;

@@ -35,23 +35,104 @@ function createAdminJourney(
     publicId: "public-1",
     journeyId: "journey-1",
     userId: "user-1",
-    startedAt: Date.parse("2026-04-01T00:00:00.000Z"),
-    endedAt: Date.parse("2026-04-01T02:00:00.000Z"),
-    startedAtLocal: null,
+    startedAt: "2026-04-01T00:00:00.000Z",
+    endedAt: "2026-04-01T02:00:00.000Z",
+    startedAtLocal: localContext("2026-04-01T09:00:00"),
     endedAtLocal: null,
-    recapStage: "FINALIZED",
     photoCount: 12,
-    imageCount: 12,
-    thumbnailUrl: undefined,
-    metadata: undefined,
+    thumbnailUrl: null,
+    seoImages: [],
+    metadata: {
+      title: null,
+      description: null,
+      hashtags: [],
+      sourceLanguage: null,
+      thumbnailUri: null,
+      localizedContent: null,
+    },
     publishedAt: "2026-04-02T00:00:00.000Z",
     createdAt: "2026-04-01T23:00:00.000Z",
+    updatedAt: null,
+    review: review({ status: "PENDING", approved: false }),
+    visibility: "PUBLIC",
+    contentStatus: "REVIEW_PENDING",
+    recapStage: "FINALIZED",
     published: true,
-    visibility: "public",
-    review: {
-      status: "PENDING",
-      approved: false,
+    publishOperationId: null,
+    reviewRequestedAt: null,
+    ...overrides,
+  };
+}
+
+function localContext(localDateTime: string) {
+  return {
+    localDateTime,
+    utcOffsetMinutes: 540,
+    timeZoneId: "Asia/Seoul",
+    localDateTimeType: "OFFSET_AWARE",
+  };
+}
+
+function review(overrides: Record<string, unknown>) {
+  return {
+    status: "PENDING",
+    approved: false,
+    localizationPending: false,
+    decidedBy: null,
+    decidedAt: null,
+    enqueueFailed: false,
+    ...overrides,
+  };
+}
+
+/** A v3 `PublishedJourneyImageDto`; with no variants every URL is the original. */
+function image(photoId: string, overrides: Record<string, unknown> = {}) {
+  const url = `https://images.example.com/${photoId}.jpg`;
+
+  return {
+    photoId,
+    url,
+    fullUrl: url,
+    displayUrl: url,
+    thumbnailUrl: url,
+    width: null,
+    height: null,
+    takenAt: null,
+    location: null,
+    locationName: null,
+    captureTime: {
+      localDateTime: null,
+      utcOffsetMinutes: null,
+      timeZoneId: null,
+      localDateTimeType: "UNKNOWN",
+      timeZoneSource: "UNKNOWN",
     },
+    ...overrides,
+  };
+}
+
+function variants(photoId: string) {
+  return image(photoId, {
+    displayUrl: `https://images.example.com/variants/${photoId}.display.webp`,
+    thumbnailUrl: `https://images.example.com/variants/${photoId}.thumbnail.webp`,
+  });
+}
+
+/** A v3 `PublishedMomentDto`. */
+function moment(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "moment-1",
+    type: "STOP",
+    startAt: "2026-04-01T00:00:00.000Z",
+    endAt: "2026-04-01T01:00:00.000Z",
+    durationMs: 3_600_000,
+    startLocal: localContext("2026-04-01T09:00:00"),
+    endLocal: localContext("2026-04-01T10:00:00"),
+    center: { lat: 37.57, lng: 126.98 },
+    locationName: "Seoul",
+    impression: "Quiet afternoon",
+    photoIds: ["photo-1"],
+    photos: [image("photo-1")],
     ...overrides,
   };
 }
@@ -62,7 +143,7 @@ function createAdminPage(
   journeys: Array<Record<string, unknown>>,
 ) {
   return {
-    journeys,
+    items: journeys,
     total: journeys.length,
     page,
     pages,
@@ -71,64 +152,44 @@ function createAdminPage(
   };
 }
 
+/** A v3 `AdminPublishedJourneyDetailDto` (contract-v3 §8.4). */
 function createAdminDetail(
   overrides: Record<string, unknown> = {},
 ) {
   return {
     publicId: "public-1",
+    journeyId: "journey-1",
     userId: "user-1",
     author: {
-      userId: "user-1",
+      id: "user-1",
       name: "Admin User",
       picture: null,
+      biography: null,
     },
-    startedAt: Date.parse("2026-04-01T00:00:00.000Z"),
-    endedAt: Date.parse("2026-04-01T02:00:00.000Z"),
-    startedAtLocal: null,
+    startedAt: "2026-04-01T00:00:00.000Z",
+    endedAt: "2026-04-01T02:00:00.000Z",
+    startedAtLocal: localContext("2026-04-01T09:00:00"),
     endedAtLocal: null,
     title: "Journey title",
     description: "Journey description",
-    thumbnailUrl: undefined,
-    shareUrl: undefined,
-    mode: "PHOTO_ONLY",
+    hashtags: [],
+    thumbnailUrl: null,
+    shareUrl: null,
     photoCount: 1,
-    images: [
-      {
-        photoId: "photo-1",
-        url: "https://images.example.com/photo-1.jpg",
-      },
-    ],
-    clusters: ["timeline-1"],
-    timeline: [
-      {
-        clusterId: "timeline-1",
-        type: "STOP",
-        locationName: "Seoul",
-        impression: "Quiet afternoon",
-        time: {
-          startAt: Date.parse("2026-04-01T00:00:00.000Z"),
-          endAt: Date.parse("2026-04-01T01:00:00.000Z"),
-          startLocal: null,
-          endLocal: null,
-        },
-        photoIds: ["photo-1"],
-        photos: [],
-      },
-    ],
-    recapDraft: {
-      timeline: [],
-      photoCount: 1,
-      imageCount: 1,
-    },
-    localizedContent: undefined,
+    images: [image("photo-1")],
+    moments: [moment()],
+    localizedContent: null,
+    seoImages: [],
     publishedAt: "2026-04-02T00:00:00.000Z",
     createdAt: "2026-04-01T23:00:00.000Z",
-    review: {
-      status: "PENDING",
-      approved: false,
-    },
-    contentStatus: "available",
-    visibility: "public",
+    updatedAt: "2026-04-02T00:00:00.000Z",
+    review: review({ status: "PENDING", approved: false }),
+    contentStatus: "REVIEW_PENDING",
+    visibility: "PUBLIC",
+    notice: null,
+    localizationModel: null,
+    publishedWithoutTranslation: false,
+    publishOperationId: null,
     ...overrides,
   };
 }
@@ -157,18 +218,21 @@ async function loadReviewQueueModule() {
 }
 
 describe("review queue and detail loaders", () => {
-  it("normalizes legacy metadata aliases", async () => {
+  it("reads the title, description and cover from the metadata", async () => {
     listPublishedJourneys.mockImplementation(async (input: { limit: number }) =>
       input.limit === 1
         ? createAdminPage(1, 1, [])
         : createAdminPage(1, 1, [
             createAdminJourney({
               publicId: "pending-1",
-              thumbnailUrl: "",
+              thumbnailUrl: null,
               metadata: {
-                journeyTitle: "Legacy title",
-                summary: "Legacy summary",
-                thumbnailUri: "https://images.example.com/legacy.jpg",
+                title: "Metadata title",
+                description: "Metadata summary",
+                hashtags: [],
+                sourceLanguage: "ko",
+                thumbnailUri: "https://images.example.com/cover.jpg",
+                localizedContent: null,
               },
             }),
           ]),
@@ -188,9 +252,9 @@ describe("review queue and detail loaders", () => {
     expect(queue.items).toHaveLength(1);
     expect(queue.items[0]).toMatchObject({
       publicId: "pending-1",
-      title: "Legacy title",
-      description: "Legacy summary",
-      thumbnailUrl: "https://images.example.com/legacy.jpg",
+      title: "Metadata title",
+      description: "Metadata summary",
+      thumbnailUrl: "https://images.example.com/cover.jpg",
     });
   });
 
@@ -201,10 +265,7 @@ describe("review queue and detail loaders", () => {
         userId: "user-2",
         title: "Approved title",
         description: "Approved description",
-        review: {
-          status: "APPROVED",
-          approved: true,
-        },
+        review: review({ status: "APPROVED", approved: true }),
       }),
     );
 
@@ -256,73 +317,41 @@ describe("review queue and detail loaders", () => {
     expect(queue.items.map((item) => item.publicId)).toEqual(["pending-1", "pending-2"]);
   });
 
-  it("keeps photos that exist only in timeline media references and merges them into cluster evidence", async () => {
+  it("reads a queue item's times and enums as v3 sends them", async () => {
+    listPublishedJourneys.mockImplementation(async (input: { limit: number }) =>
+      input.limit === 1
+        ? createAdminPage(1, 1, [])
+        : createAdminPage(1, 1, [createAdminJourney({ publicId: "pending-1", endedAt: null })]),
+    );
+
+    const { loadReviewQueue } = await loadReviewQueueModule();
+    const queue = await loadReviewQueue({
+      accessToken: "admin-token",
+      tab: "pending",
+      page: 1,
+      counts: attentionCounts,
+    });
+
+    expect(queue.items[0]).toMatchObject({
+      startedAt: Date.parse("2026-04-01T00:00:00.000Z"),
+      endedAt: null,
+      visibility: "PUBLIC",
+      startedAtLocal: localContext("2026-04-01T09:00:00"),
+    });
+  });
+
+  it("keeps photos that exist only in moment media references and merges them into cluster evidence", async () => {
     getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "approved-1",
         photoCount: 3,
-        images: [
-          {
-            photoId: "photo-1",
-            url: "https://images.example.com/photo-1.jpg",
-          },
+        images: [image("photo-1")],
+        moments: [
+          moment({
+            photoIds: ["photo-1", "photo-2", "photo-3"],
+            photos: [variants("photo-1"), variants("photo-2"), image("photo-3")],
+          }),
         ],
-        timeline: [
-          {
-            clusterId: "timeline-1",
-            type: "STOP",
-            locationName: "Seoul",
-            impression: "Quiet afternoon",
-            time: {
-              startAt: Date.parse("2026-04-01T00:00:00.000Z"),
-              endAt: Date.parse("2026-04-01T01:00:00.000Z"),
-              startLocal: null,
-              endLocal: null,
-            },
-            photoIds: ["photo-1", "photo-2"],
-            photos: [
-              {
-                photoId: "photo-1",
-                url: "https://images.example.com/photo-1.jpg",
-                fullUrl: "https://images.example.com/photo-1.jpg",
-                displayUrl: "https://images.example.com/variants/photo-1.display.webp",
-                thumbnailUrl: "https://images.example.com/variants/photo-1.thumbnail.webp",
-              },
-              {
-                photoId: "photo-2",
-                url: "https://images.example.com/photo-2.jpg",
-                fullUrl: "https://images.example.com/photo-2.jpg",
-                displayUrl: "https://images.example.com/variants/photo-2.display.webp",
-                thumbnailUrl: "https://images.example.com/variants/photo-2.thumbnail.webp",
-              },
-            ],
-          },
-        ],
-        recapDraft: {
-          timeline: [
-            {
-              clusterId: "timeline-1",
-              type: "STOP",
-              locationName: "Seoul",
-              impression: "Quiet afternoon",
-              time: {
-                startAt: Date.parse("2026-04-01T00:00:00.000Z"),
-                endAt: Date.parse("2026-04-01T01:00:00.000Z"),
-                startLocal: null,
-                endLocal: null,
-              },
-              photoIds: ["photo-1", "photo-2", "photo-3"],
-              photos: [
-                {
-                  photoId: "photo-3",
-                  url: "https://images.example.com/photo-3.jpg",
-                },
-              ],
-            },
-          ],
-          photoCount: 3,
-          imageCount: 3,
-        },
       }),
     );
 
@@ -355,7 +384,7 @@ describe("review queue and detail loaders", () => {
     expect(result.detail?.evidence.sections).toHaveLength(1);
     expect(result.detail?.evidence.sections[0]).toMatchObject({
       kind: "cluster",
-      clusterId: "timeline-1",
+      momentId: "moment-1",
       title: "Seoul",
       impression: "Quiet afternoon",
       photoCount: 3,
@@ -367,31 +396,14 @@ describe("review queue and detail loaders", () => {
       createAdminDetail({
         publicId: "pending-1",
         photoCount: 2,
-        images: [
-          {
-            photoId: "photo-1",
-            url: "https://images.example.com/photo-1.jpg",
-          },
-          {
-            photoId: "photo-2",
-            url: "https://images.example.com/photo-2.jpg",
-          },
-        ],
-        timeline: [
-          {
-            clusterId: "timeline-1",
-            type: "STOP",
+        images: [image("photo-1"), image("photo-2")],
+        moments: [
+          moment({
             locationName: "Busan",
             impression: "Harbor walk",
-            time: {
-              startAt: Date.parse("2026-04-01T00:00:00.000Z"),
-              endAt: Date.parse("2026-04-01T01:00:00.000Z"),
-              startLocal: null,
-              endLocal: null,
-            },
             photoIds: ["photo-1"],
-            photos: [],
-          },
+            photos: [image("photo-1")],
+          }),
         ],
       }),
     );
@@ -415,18 +427,15 @@ describe("review queue and detail loaders", () => {
     ).toEqual(["photo-2"]);
   });
 
-  it("passes locale-tagged lang to admin detail and prefers detail moderation fields", async () => {
+  it("passes the locale tag to the admin detail and reads its moderation fields", async () => {
     getPublishedJourneyDetail.mockResolvedValueOnce(
       createAdminDetail({
         publicId: "pending-1",
         title: "로컬라이즈된 제목",
         description: "로컬라이즈된 설명",
-        review: {
-          status: "REJECTED",
-          approved: false,
-        },
-        visibility: "hidden",
-        contentStatus: "review_rejected",
+        review: review({ status: "REJECTED", approved: false }),
+        visibility: "HIDDEN",
+        contentStatus: "REVIEW_REJECTED",
         localizedContent: {
           sourceLanguage: "ko",
           generatedAt: "2026-04-03T00:00:00.000Z",
@@ -441,7 +450,7 @@ describe("review queue and detail loaders", () => {
               hashtags: ["#서울"],
             },
           ],
-          clusterImpressions: [],
+          momentImpressions: [],
         },
       }),
     );
@@ -461,8 +470,8 @@ describe("review queue and detail loaders", () => {
       lang: "ko-KR",
     });
     expect(result.detail?.journey.review.status).toBe("REJECTED");
-    expect(result.detail?.journey.visibility).toBe("hidden");
-    expect(result.detail?.journey.contentStatus).toBe("review_rejected");
+    expect(result.detail?.journey.visibility).toBe("HIDDEN");
+    expect(result.detail?.journey.contentStatus).toBe("REVIEW_REJECTED");
     expect(result.detail?.journey.requestedLocale).toBe("ko-KR");
     expect(result.detail?.journey.localizedContent?.entries[0]?.title).toBe(
       "로컬라이즈된 제목",
@@ -495,7 +504,7 @@ describe("loadAdminReviewDetail", () => {
         publishOperationId: "op-9",
         updatedAt: "2026-04-03T00:00:00.000Z",
         localizationModel: "gpt-test",
-        review: { status: "APPROVED", approved: true, localizationPending: true },
+        review: review({ status: "APPROVED", approved: true, localizationPending: true }),
       }),
     );
 
@@ -518,6 +527,91 @@ describe("loadAdminReviewDetail", () => {
       review: { status: "APPROVED", localizationPending: true },
     });
     expect(detail?.evidence.expectedCount).toBe(3);
+  });
+
+  it("builds one section per moment, in order, keyed by the moment id with its times", async () => {
+    getPublishedJourneyDetail.mockResolvedValueOnce(
+      createAdminDetail({
+        photoCount: 2,
+        images: [image("photo-1"), image("photo-2")],
+        moments: [
+          moment(),
+          moment({
+            id: "moment-2",
+            type: "MOVE",
+            startAt: "2026-04-01T01:00:00.000Z",
+            endAt: "2026-04-01T02:00:00.000Z",
+            locationName: null,
+            impression: null,
+            photoIds: ["photo-2"],
+            photos: [image("photo-2")],
+          }),
+        ],
+      }),
+    );
+
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const detail = await loadAdminReviewDetail({ accessToken: "admin-token", publicId: "public-1" });
+
+    expect(detail?.evidence.sections.map((section) => [section.key, section.momentId])).toEqual([
+      ["moment-1", "moment-1"],
+      ["moment-2", "moment-2"],
+    ]);
+    expect(detail?.evidence.sections[0]?.time).toEqual({
+      startAt: Date.parse("2026-04-01T00:00:00.000Z"),
+      endAt: Date.parse("2026-04-01T01:00:00.000Z"),
+      startLocal: localContext("2026-04-01T09:00:00"),
+      endLocal: localContext("2026-04-01T10:00:00"),
+    });
+    expect(detail?.evidence.sections[1]).toMatchObject({
+      kind: "cluster",
+      type: "MOVE",
+      title: null,
+      impression: null,
+      photoCount: 1,
+    });
+  });
+
+  it("reads RFC 3339 times as epoch milliseconds", async () => {
+    getPublishedJourneyDetail.mockResolvedValueOnce(
+      createAdminDetail({
+        images: [image("photo-1", { takenAt: "2026-04-01T00:30:00.000Z" })],
+      }),
+    );
+
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const detail = await loadAdminReviewDetail({ accessToken: "admin-token", publicId: "public-1" });
+
+    expect(detail?.journey.startedAt).toBe(Date.parse("2026-04-01T00:00:00.000Z"));
+    expect(detail?.journey.endedAt).toBe(Date.parse("2026-04-01T02:00:00.000Z"));
+    expect(detail?.evidence.photos[0]?.takenAt).toBe(Date.parse("2026-04-01T00:30:00.000Z"));
+  });
+
+  it("keeps the moment impressions keyed by momentId", async () => {
+    const translation = {
+      locale: "en-US",
+      languageCode: "en",
+      countryCode: "US",
+      languageName: "English",
+      impression: "Quiet afternoon",
+    };
+    getPublishedJourneyDetail.mockResolvedValueOnce(
+      createAdminDetail({
+        localizedContent: {
+          sourceLanguage: "ko",
+          generatedAt: "2026-04-03T00:00:00.000Z",
+          entries: [],
+          momentImpressions: [{ momentId: "moment-1", translations: [translation] }],
+        },
+      }),
+    );
+
+    const { loadAdminReviewDetail } = await loadAdminReviewsModule();
+    const detail = await loadAdminReviewDetail({ accessToken: "admin-token", publicId: "public-1" });
+
+    expect(detail?.journey.localizedContent?.momentImpressions).toEqual([
+      { momentId: "moment-1", translations: [translation] },
+    ]);
   });
 
   it("returns null when the detail endpoint responds with 404", async () => {

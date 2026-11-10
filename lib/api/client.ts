@@ -1,14 +1,7 @@
 import "server-only";
 
+import type { PageCounts } from "@/src/apis/types";
 import { ENV } from "@/src/configs/env.server";
-
-// ─── Response Envelope ───────────────────────
-
-export type Envelope<T> = {
-  status: string;
-  data: T;
-  message?: string;
-};
 
 // ─── Error Classes ───────────────────────────
 
@@ -71,19 +64,53 @@ function buildApiUrl(pathname: string, query?: Record<string, string | number>):
   return url.toString();
 }
 
-// ─── Envelope Parser ─────────────────────────
+// ─── Request (contract v3, ADR 0012) ────────
 
-export async function parseEnvelope<T>(response: Response): Promise<Envelope<T>> {
-  const payload = (await response.json().catch(() => null)) as
-    | Envelope<T>
-    | { message?: string; errorCode?: string }
-    | null;
+export interface ApiRequestOptions {
+  pathname: string;
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  accessToken?: string;
+  body?: unknown;
+  query?: Record<string, string | number>;
+  /** Extra request headers, such as `Accept-Language`. */
+  headers?: Record<string, string>;
+}
+
+function readErrorBody(payload: unknown): { message?: string; errorCode?: string } {
+  if (!payload || typeof payload !== "object") {
+    return {};
+  }
+
+  const { message, errorCode } = payload as Record<string, unknown>;
+
+  return {
+    ...(typeof message === "string" ? { message } : {}),
+    ...(typeof errorCode === "string" ? { errorCode } : {}),
+  };
+}
+
+/** The resource a 2xx carries (contract v3 has no envelope), nothing for a
+ * 204, and the error classes for everything else: 401 and 403 end or deny the
+ * session, any other status is a `BackendApiError` with the top-level
+ * `errorCode` of `ApiErrorResponseDto`. */
+export async function parseApiResponse<T>(response: Response): Promise<T> {
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await response.text().catch(() => "");
+  let payload: unknown;
+  let parsed = true;
+
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    parsed = false;
+  }
 
   if (!response.ok) {
-    const message =
-      typeof payload?.message === "string"
-        ? payload.message
-        : `Request failed with status ${response.status}`;
+    const body = readErrorBody(payload);
+    const message = body.message ?? `Request failed with status ${response.status}`;
 
     if (response.status === 401) {
       throw new AdminSessionExpiredError(message);
@@ -93,32 +120,17 @@ export async function parseEnvelope<T>(response: Response): Promise<Envelope<T>>
       throw new AdminAccessDeniedError(message);
     }
 
-    const errorCode =
-      payload && "errorCode" in payload && typeof payload.errorCode === "string"
-        ? payload.errorCode
-        : undefined;
-
-    throw new BackendApiError(message, response.status, errorCode);
+    throw new BackendApiError(message, response.status, body.errorCode);
   }
 
-  if (!payload || typeof payload !== "object" || !("data" in payload)) {
-    throw new BackendApiError("Invalid backend response shape", response.status);
+  if (!parsed) {
+    throw new BackendApiError("Invalid backend response body", response.status);
   }
 
-  return payload as Envelope<T>;
+  return payload as T;
 }
 
-// ─── Core Request Function ───────────────────
-
-export interface RequestEnvelopeOptions {
-  pathname: string;
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
-  accessToken?: string;
-  body?: unknown;
-  query?: Record<string, string | number>;
-}
-
-export async function requestEnvelope<T>(options: RequestEnvelopeOptions): Promise<Envelope<T>> {
+export async function requestApi<T>(options: ApiRequestOptions): Promise<T> {
   const response = await fetch(buildApiUrl(options.pathname, options.query), {
     method: options.method ?? "GET",
     headers: {
@@ -127,10 +139,24 @@ export async function requestEnvelope<T>(options: RequestEnvelopeOptions): Promi
       ...(options.accessToken
         ? { Authorization: `Bearer ${options.accessToken}` }
         : {}),
+      ...options.headers,
     },
     ...(options.body ? { body: JSON.stringify(options.body) } : {}),
     cache: "no-store",
   });
 
-  return parseEnvelope<T>(response);
+  return parseApiResponse<T>(response);
+}
+
+// ─── Page Counts ─────────────────────────────
+
+/** Adds what v3 admin lists no longer send (`{items, total, page, limit}`),
+ * so loaders and views keep their pagination props: `pages = ceil(total /
+ * limit)`, 0 when `total` is 0, and `hasMore = page < pages`. */
+export function withPageCounts<P extends { total: number; page: number; limit: number }>(
+  page: P,
+): P & PageCounts {
+  const pages = page.total > 0 && page.limit > 0 ? Math.ceil(page.total / page.limit) : 0;
+
+  return { ...page, pages, hasMore: page.page < pages };
 }

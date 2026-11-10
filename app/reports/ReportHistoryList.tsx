@@ -19,7 +19,7 @@ export function ReportHistoryList({
   /** The report on screen, left out of its own history rows. */
   excludeReportId?: string;
 }) {
-  const items = history?.items.filter((report) => report._id !== excludeReportId) ?? [];
+  const items = history?.items.filter((report) => report.id !== excludeReportId) ?? [];
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -36,9 +36,9 @@ export function ReportHistoryList({
       ) : items.length > 0 ? (
         <ul className="flex flex-col">
           {items.map((report) => (
-            <li key={report._id}>
+            <li key={report.id}>
               <Link
-                href={buildAdminReportDetailHref(report._id)}
+                href={buildAdminReportDetailHref(report.id)}
                 className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted"
               >
                 <span>{getReportReasonLabel(report.reason)}</span>

@@ -2,12 +2,13 @@ import "server-only";
 
 import type {
   AdminReportDetailDataDto,
+  AdminReportPageDto,
   AdminReportsDataDto,
   AdminReportsQueryDto,
   AdminReportStatsDataDto,
   UpdateAdminReportRequestDto,
 } from "@/src/apis/types";
-import { requestEnvelope } from "./client";
+import { requestApi, withPageCounts } from "./client";
 
 // ─── List Reports ───────────────────────────
 
@@ -39,13 +40,13 @@ export async function listAdminReports(input: {
     queryRecord.reporterId = input.query.reporterId;
   }
 
-  const response = await requestEnvelope<AdminReportsDataDto>({
+  const page = await requestApi<AdminReportPageDto>({
     pathname: "/core/admin/reports",
     accessToken: input.accessToken,
     query: Object.keys(queryRecord).length > 0 ? queryRecord : undefined,
   });
 
-  return response.data;
+  return withPageCounts(page);
 }
 
 // ─── Get Report Statistics ──────────────────
@@ -53,12 +54,10 @@ export async function listAdminReports(input: {
 export async function getAdminReportStats(input: {
   accessToken: string;
 }): Promise<AdminReportStatsDataDto> {
-  const response = await requestEnvelope<AdminReportStatsDataDto>({
+  return requestApi<AdminReportStatsDataDto>({
     pathname: "/core/admin/reports/stats",
     accessToken: input.accessToken,
   });
-
-  return response.data;
 }
 
 // ─── Get Report Detail ──────────────────────
@@ -67,12 +66,10 @@ export async function getAdminReport(input: {
   accessToken: string;
   reportId: string;
 }): Promise<AdminReportDetailDataDto> {
-  const response = await requestEnvelope<AdminReportDetailDataDto>({
+  return requestApi<AdminReportDetailDataDto>({
     pathname: `/core/admin/reports/${encodeURIComponent(input.reportId)}`,
     accessToken: input.accessToken,
   });
-
-  return response.data;
 }
 
 // ─── Update Report ──────────────────────────
@@ -82,12 +79,10 @@ export async function updateAdminReport(input: {
   reportId: string;
   report: UpdateAdminReportRequestDto;
 }): Promise<AdminReportDetailDataDto> {
-  const response = await requestEnvelope<AdminReportDetailDataDto>({
+  return requestApi<AdminReportDetailDataDto>({
     pathname: `/core/admin/reports/${encodeURIComponent(input.reportId)}`,
     method: "PATCH",
     accessToken: input.accessToken,
     body: input.report,
   });
-
-  return response.data;
 }

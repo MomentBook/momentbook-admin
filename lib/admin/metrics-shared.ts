@@ -122,8 +122,8 @@ export function compareRetention(
   const find = (cohort: AdminNotificationRetentionDto["cohort"]) =>
     retention.find((row) => row.category === category && row.cohort === cohort) ??
     emptyCohort(category, cohort);
-  const target = find("target");
-  const holdout = find("holdout");
+  const target = find("TARGET");
+  const holdout = find("HOLDOUT");
 
   return {
     target,

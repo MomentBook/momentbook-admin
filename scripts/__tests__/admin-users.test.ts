@@ -60,11 +60,11 @@ describe("user directory parsers", () => {
 describe("loadAdminUsersWorkspaceData", () => {
   it("passes filters through with the page size and normalizes the result", async () => {
     listAdminUsers.mockResolvedValue({
-      users: [],
+      items: [],
       total: 0,
       page: 2,
-      pages: 0,
       limit: 20,
+      pages: 0,
       hasMore: false,
     });
     const { loadAdminUsersWorkspaceData } = await import("@/lib/admin/users");

@@ -1,25 +1,46 @@
+/** A v3 `AdminPublishedJourneyItemDto` (contract-v3 §8.4). */
 export function createAdminJourneyItem(overrides: Record<string, unknown> = {}) {
   return {
     publicId: "public-1",
     journeyId: "journey-1",
     userId: "user-1",
-    startedAt: Date.parse("2026-04-01T00:00:00.000Z"),
-    endedAt: Date.parse("2026-04-01T02:00:00.000Z"),
-    startedAtLocal: null,
+    startedAt: "2026-04-01T00:00:00.000Z",
+    endedAt: "2026-04-01T02:00:00.000Z",
+    startedAtLocal: {
+      localDateTime: "2026-04-01T09:00:00",
+      utcOffsetMinutes: 540,
+      timeZoneId: "Asia/Seoul",
+      localDateTimeType: "OFFSET_AWARE",
+    },
     endedAtLocal: null,
-    recapStage: "FINALIZED",
     photoCount: 12,
-    imageCount: 12,
-    thumbnailUrl: undefined,
-    metadata: undefined,
+    thumbnailUrl: null,
+    seoImages: [],
+    metadata: {
+      title: null,
+      description: null,
+      hashtags: [],
+      sourceLanguage: null,
+      thumbnailUri: null,
+      localizedContent: null,
+    },
     publishedAt: "2026-04-02T00:00:00.000Z",
     createdAt: "2026-04-01T23:00:00.000Z",
-    published: true,
-    visibility: "public",
+    updatedAt: null,
     review: {
       status: "PENDING",
       approved: false,
+      localizationPending: false,
+      decidedBy: null,
+      decidedAt: null,
+      enqueueFailed: false,
     },
+    visibility: "PUBLIC",
+    contentStatus: "REVIEW_PENDING",
+    recapStage: "FINALIZED",
+    published: true,
+    publishOperationId: null,
+    reviewRequestedAt: null,
     ...overrides,
   };
 }
@@ -36,8 +57,10 @@ export function createAdminJourneysPage(options: {
   const page = options.page ?? 1;
   const pages = options.pages ?? 1;
 
+  // What `listPublishedJourneys` returns: the v3 page plus the counts the
+  // service layer derives.
   return {
-    journeys,
+    items: journeys,
     total: options.total ?? journeys.length,
     page,
     pages,
