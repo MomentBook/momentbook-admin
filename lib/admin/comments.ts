@@ -36,7 +36,7 @@ export async function loadAdminCommentsWorkspaceData(
   });
 
   return {
-    comments: list.comments,
+    comments: list.items,
     total: list.total,
     page: filters.page,
     pages: Math.max(1, list.pages),

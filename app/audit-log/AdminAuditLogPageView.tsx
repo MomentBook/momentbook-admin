@@ -100,13 +100,13 @@ function Chips({ filters }: { filters: Filters }) {
 }
 
 function UserCell({ user, fallbackId }: { user: AdminAuditUserDto | null; fallbackId?: string | null }) {
-  const id = user?.userId ?? fallbackId;
+  const id = user?.id ?? fallbackId;
 
   if (!id) return <span className="text-muted-foreground">—</span>;
 
   return (
     <Link href={buildAdminUserHref(id)} className="font-medium text-primary hover:underline">
-      {user?.name || user?.email || id}
+      {user?.name || user?.email || user?.providerEmail || id}
     </Link>
   );
 }

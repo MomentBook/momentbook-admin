@@ -1,8 +1,10 @@
 import "server-only";
 
 import type {
+  AdminUserAuthEventPageDto,
   AdminUserAuthEventsDataDto,
   AdminUserDetailDataDto,
+  AdminUserPageDto,
   AdminUserRole,
   AdminUserSessionsRevokeDataDto,
   AdminUserStatus,
@@ -10,7 +12,7 @@ import type {
   AdminUsersDataDto,
   UpdateAdminUserStatusDto,
 } from "@/src/apis/types";
-import { requestEnvelope } from "./client";
+import { requestApi, withPageCounts } from "./client";
 
 // ─── Update User Status (Ban / Unban) ───────
 
@@ -19,14 +21,12 @@ export async function updateAdminUserStatus(input: {
   userId: string;
   data: UpdateAdminUserStatusDto;
 }): Promise<AdminUserStatusResponseDataDto> {
-  const response = await requestEnvelope<AdminUserStatusResponseDataDto>({
+  return requestApi<AdminUserStatusResponseDataDto>({
     pathname: `/core/admin/users/${encodeURIComponent(input.userId)}/status`,
     method: "PATCH",
     accessToken: input.accessToken,
     body: input.data,
   });
-
-  return response.data;
 }
 
 // ─── List Users ─────────────────────────────
@@ -47,13 +47,13 @@ export async function listAdminUsers(input: {
   query.page = input.page;
   query.limit = input.limit;
 
-  const response = await requestEnvelope<AdminUsersDataDto>({
+  const page = await requestApi<AdminUserPageDto>({
     pathname: "/core/admin/users",
     accessToken: input.accessToken,
     query,
   });
 
-  return response.data;
+  return withPageCounts(page);
 }
 
 // ─── Get User Detail ────────────────────────
@@ -62,12 +62,10 @@ export async function getAdminUser(input: {
   accessToken: string;
   userId: string;
 }): Promise<AdminUserDetailDataDto> {
-  const response = await requestEnvelope<AdminUserDetailDataDto>({
+  return requestApi<AdminUserDetailDataDto>({
     pathname: `/core/admin/users/${encodeURIComponent(input.userId)}`,
     accessToken: input.accessToken,
   });
-
-  return response.data;
 }
 
 // ─── List User Auth Events ──────────────────
@@ -78,13 +76,13 @@ export async function listAdminUserAuthEvents(input: {
   page: number;
   limit: number;
 }): Promise<AdminUserAuthEventsDataDto> {
-  const response = await requestEnvelope<AdminUserAuthEventsDataDto>({
+  const page = await requestApi<AdminUserAuthEventPageDto>({
     pathname: `/core/admin/users/${encodeURIComponent(input.userId)}/auth-events`,
     accessToken: input.accessToken,
     query: { page: input.page, limit: input.limit },
   });
 
-  return response.data;
+  return withPageCounts(page);
 }
 
 // ─── Revoke User Sessions ───────────────────
@@ -94,12 +92,10 @@ export async function revokeAdminUserSessions(input: {
   userId: string;
   reason?: string;
 }): Promise<AdminUserSessionsRevokeDataDto> {
-  const response = await requestEnvelope<AdminUserSessionsRevokeDataDto>({
+  return requestApi<AdminUserSessionsRevokeDataDto>({
     pathname: `/core/admin/users/${encodeURIComponent(input.userId)}/sessions/revoke`,
     method: "POST",
     accessToken: input.accessToken,
     body: input.reason ? { reason: input.reason } : {},
   });
-
-  return response.data;
 }

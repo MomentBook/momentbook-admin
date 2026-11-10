@@ -3,9 +3,10 @@ import "server-only";
 import type {
   AdminAuditAction,
   AdminAuditLogDataDto,
+  AdminAuditLogPageDto,
   AdminAuditTargetType,
 } from "@/src/apis/types";
-import { requestEnvelope } from "./client";
+import { requestApi, withPageCounts } from "./client";
 
 // ─── List Audit Log ─────────────────────────
 
@@ -29,11 +30,11 @@ export async function listAdminAuditLog(input: {
   query.page = input.page;
   query.limit = input.limit;
 
-  const response = await requestEnvelope<AdminAuditLogDataDto>({
+  const page = await requestApi<AdminAuditLogPageDto>({
     pathname: "/core/admin/audit-logs",
     accessToken: input.accessToken,
     query,
   });
 
-  return response.data;
+  return withPageCounts(page);
 }

@@ -494,15 +494,20 @@ function ModerationSection({ data, userId }: { data: AdminUserDetailWorkspaceDat
     >
       {moderation === null ? (
         <Unavailable what="moderation history" />
-      ) : moderation.actions.length > 0 ? (
+      ) : moderation.items.length > 0 ? (
         <ul className="flex flex-col gap-2 text-sm">
-          {moderation.actions.map((action) => (
+          {moderation.items.map((action) => (
             <li key={action.id} className="flex flex-col">
               <span className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{ADMIN_AUDIT_ACTION_LABELS[action.action]}</Badge>
                 <span className="text-xs text-muted-foreground">
                   <DateValue value={action.createdAt} withTime /> ·{" "}
-                  {action.actor?.name || action.actor?.email || "Unknown admin"}
+                  {action.actor
+                    ? action.actor.name ||
+                      action.actor.email ||
+                      action.actor.providerEmail ||
+                      action.actor.id
+                    : "Unknown admin"}
                 </span>
               </span>
               {action.reason ? (
@@ -565,9 +570,9 @@ function CommentsSection({ data, userId }: { data: AdminUserDetailWorkspaceData;
     >
       {comments === null ? (
         <Unavailable what="comments" />
-      ) : comments.comments.length > 0 ? (
+      ) : comments.items.length > 0 ? (
         <ul className="flex flex-col gap-2 text-sm">
-          {comments.comments.map((comment) => (
+          {comments.items.map((comment) => (
             <li key={comment.commentId} className="flex flex-col gap-0.5">
               <p className="line-clamp-2 whitespace-pre-wrap break-words">{comment.body}</p>
               <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -626,9 +631,9 @@ function AuthEventsSection({ data }: { data: AdminUserDetailWorkspaceData }) {
     <Section title="Recent sign-in events" total={authEvents?.total ?? null}>
       {authEvents === null ? (
         <Unavailable what="sign-in events" />
-      ) : authEvents.events.length > 0 ? (
+      ) : authEvents.items.length > 0 ? (
         <ul className="flex flex-col gap-2 text-sm">
-          {authEvents.events.map((event) => (
+          {authEvents.items.map((event) => (
             <li key={event.id} className="flex flex-col">
               <span className="flex flex-wrap items-center gap-2">
                 {humanizeEnum(event.eventType)}

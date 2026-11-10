@@ -1,12 +1,13 @@
 import "server-only";
 
 import type {
+  AdminCommentPageDto,
   AdminCommentStatus,
   AdminCommentStatusDataDto,
   AdminCommentsDataDto,
   UpdateAdminCommentStatusDto,
 } from "@/src/apis/types";
-import { requestEnvelope } from "./client";
+import { requestApi, withPageCounts } from "./client";
 
 // ─── List Comments ──────────────────────────
 
@@ -26,13 +27,13 @@ export async function listAdminComments(input: {
   query.page = input.page;
   query.limit = input.limit;
 
-  const response = await requestEnvelope<AdminCommentsDataDto>({
+  const page = await requestApi<AdminCommentPageDto>({
     pathname: "/core/admin/comments",
     accessToken: input.accessToken,
     query,
   });
 
-  return response.data;
+  return withPageCounts(page);
 }
 
 // ─── Delete Comment (status update) ─────────
@@ -42,12 +43,10 @@ export async function updateAdminCommentStatus(input: {
   commentId: string;
   data: UpdateAdminCommentStatusDto;
 }): Promise<AdminCommentStatusDataDto> {
-  const response = await requestEnvelope<AdminCommentStatusDataDto>({
+  return requestApi<AdminCommentStatusDataDto>({
     pathname: `/core/admin/comments/${encodeURIComponent(input.commentId)}/status`,
     method: "PATCH",
     accessToken: input.accessToken,
     body: input.data,
   });
-
-  return response.data;
 }

@@ -40,7 +40,7 @@ export async function loadAdminAuditLogData(
   });
 
   return {
-    actions: list.actions,
+    actions: list.items,
     total: list.total,
     page: filters.page,
     pages: Math.max(1, list.pages),

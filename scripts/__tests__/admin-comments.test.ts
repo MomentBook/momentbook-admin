@@ -73,11 +73,11 @@ describe("comment filters", () => {
 describe("loadAdminCommentsWorkspaceData", () => {
   it("passes the tab status and filters through", async () => {
     listAdminComments.mockResolvedValue({
-      comments: [],
+      items: [],
       total: 0,
       page: 2,
-      pages: 0,
       limit: 20,
+      pages: 0,
       hasMore: false,
     });
     const { loadAdminCommentsWorkspaceData } = await import("@/lib/admin/comments");
@@ -131,7 +131,7 @@ describe("deleteAdminCommentAction", () => {
     signedIn();
     updateAdminCommentStatus.mockResolvedValue({
       commentId: "c-1",
-      status: "deleted",
+      status: "DELETED",
       deletedByRole: "ADMIN",
     });
 
@@ -140,7 +140,7 @@ describe("deleteAdminCommentAction", () => {
     expect(updateAdminCommentStatus).toHaveBeenCalledWith({
       accessToken: "token",
       commentId: "c-1",
-      data: { status: "deleted", reason: "spam" },
+      data: { status: "DELETED", reason: "spam" },
     });
     expect(result).toBe(`REDIRECT:/comments?userId=${UUID}&mutation=comment_deleted`);
   });
@@ -154,7 +154,7 @@ describe("deleteAdminCommentAction", () => {
     expect(updateAdminCommentStatus).toHaveBeenCalledWith({
       accessToken: "token",
       commentId: "c-1",
-      data: { status: "deleted", reason: undefined },
+      data: { status: "DELETED", reason: undefined },
     });
   });
 

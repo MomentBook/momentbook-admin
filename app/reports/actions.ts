@@ -143,7 +143,7 @@ export async function updateAdminUserStatusAction(formData: FormData): Promise<n
     sanitizeAdminPath(readText(formData.get("returnTo"))) ?? ADMIN_REPORTS_PATH;
   const userId = readText(formData.get("userId"));
   const rawStatus = readText(formData.get("status"));
-  const status = rawStatus === "banned" ? "banned" : "active";
+  const status = rawStatus === "banned" ? "BANNED" : "ACTIVE";
   const reason = readText(formData.get("reason")) || undefined;
   // The report this decision answers (report detail only); the API records it
   // with the sanction and rejects one that is not about this user.
@@ -234,7 +234,8 @@ export async function updateAdminUserStatusAction(formData: FormData): Promise<n
       nextPath,
       buildReturnEntries({
         mutation: "user_status_updated",
-        userStatus: resultStatus,
+        // The URL keeps its lowercase spelling (`banned`, `active`, `inactive`).
+        userStatus: resultStatus.toLowerCase(),
       }),
     ),
   );
