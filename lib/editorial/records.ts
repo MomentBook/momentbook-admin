@@ -2,7 +2,7 @@ import { type Language, languageList } from "@/lib/i18n/config";
 import type { ArticleAlternateDto } from "@/src/apis/types";
 import { normalizeCoverImage, readPositiveInteger, readText } from "./normalize";
 import {
-  editorialArticleCategories,
+  parseArticleCategoryApiValue,
   type EditorialArticleAlternate,
   type EditorialArticleCategory,
   type EditorialArticleListItem,
@@ -52,16 +52,11 @@ export function normalizeEditorialLanguage(value: unknown): Language | null {
   return text as Language;
 }
 
+/** The editorial spelling of a v3 category (`TRAVEL_GUIDE` → `travel-guide`). */
 export function normalizeEditorialCategory(
   value: unknown,
 ): EditorialArticleCategory {
-  const text = readText(value);
-
-  if (text && editorialArticleCategories.includes(text as EditorialArticleCategory)) {
-    return text as EditorialArticleCategory;
-  }
-
-  return DEFAULT_CATEGORY;
+  return parseArticleCategoryApiValue(value) ?? DEFAULT_CATEGORY;
 }
 
 function normalizeEditorialReadingMinutes(value: unknown): number {

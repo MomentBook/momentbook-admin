@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { isBackendApiError } from "@/lib/api/client";
 import {
+  type AdminArticleCreateInput,
+  type AdminArticleUpdateInput,
   createAdminArticle,
   deleteAdminArticle,
   updateAdminArticle,
@@ -23,10 +25,6 @@ import {
   type EditorialArticleCategory,
 } from "@/lib/editorial/types";
 import { languageList, type Language } from "@/lib/i18n/config";
-import type {
-  CreateAdminArticleRequestDto,
-  UpdateAdminArticleRequestDto,
-} from "@/src/apis/types";
 
 type ArticleActionErrorCode =
   | "article_validation"
@@ -170,7 +168,7 @@ function validateMarkdownImageSyntax(body: string) {
   }
 }
 
-function buildCreatePayload(formData: FormData): CreateAdminArticleRequestDto {
+function buildCreatePayload(formData: FormData): AdminArticleCreateInput {
   const language = parseLanguage(readRequiredValue(formData, "language"));
   const category = parseCategory(readRequiredValue(formData, "category"));
   const title = readRequiredValue(formData, "title");
@@ -190,7 +188,7 @@ function buildCreatePayload(formData: FormData): CreateAdminArticleRequestDto {
   };
 }
 
-function buildUpdatePayload(formData: FormData): UpdateAdminArticleRequestDto {
+function buildUpdatePayload(formData: FormData): AdminArticleUpdateInput {
   const category = parseCategory(readRequiredValue(formData, "category"));
   const title = readRequiredValue(formData, "title");
   const body = readRequiredBody(formData);
