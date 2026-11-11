@@ -53,7 +53,7 @@ export interface ReadinessDto {
 
 export interface ConsentStatusDto {
   /**
-   * Whether every required consent item is agreed. Always `true` for guest sessions.
+   * Whether every required consent item is agreed.
    * @example true
    */
   isAllRequiredConsented: boolean;
@@ -71,17 +71,17 @@ export interface ConsentStatusDto {
 
 export interface MyProfileDto {
   /**
-   * Account id (UUID). For a guest session, the guest id.
+   * Account id (UUID).
    * @example "0199a1b2-3c4d-7e5f-8a9b-0c1d2e3f4a5b"
    */
   id: string;
   /**
-   * How the account signs in. `ANONYMOUS` for a guest session; `null` when unknown.
+   * How the account signs in; `null` when unknown. `ANONYMOUS` was a guest session's; no account has it.
    * @example "GOOGLE"
    */
   provider: "GOOGLE" | "APPLE" | "EMAIL" | "PASSKEY" | "ANONYMOUS" | null;
   /**
-   * Display name; `null` when the account has none. A guest session without a name gets `게스트`.
+   * Display name; `null` when the account has none.
    * @example "Jane Doe"
    */
   name: string | null;
@@ -92,7 +92,7 @@ export interface MyProfileDto {
    */
   email: string | null;
   /**
-   * Self-introduction; `null` when not set, and always for a guest session.
+   * Self-introduction; `null` when not set.
    * @example "Traveler and photographer"
    */
   biography: string | null;
@@ -103,23 +103,23 @@ export interface MyProfileDto {
    */
   picture: string | null;
   /**
-   * Whether this is a guest session rather than an account.
+   * Always `false`: every session belongs to an account.
    * @example false
    */
   isGuest: boolean;
   /**
-   * Account status. Guest sessions are always `ACTIVE`.
+   * Account status.
    * @example "ACTIVE"
    */
   status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
   /**
-   * When the account was created. For a guest session, the time of the request.
+   * When the account was created.
    * @format date-time
    * @example "2026-01-15T09:30:00.000Z"
    */
   createdAt: string;
   /**
-   * When the account was last updated. For a guest session, the time of the request.
+   * When the account was last updated.
    * @format date-time
    * @example "2026-03-02T12:00:00.000Z"
    */
@@ -165,17 +165,17 @@ export interface UpdateUserProfileDto {
 
 export interface UserProfileDto {
   /**
-   * Account id (UUID). For a guest session, the guest id.
+   * Account id (UUID).
    * @example "0199a1b2-3c4d-7e5f-8a9b-0c1d2e3f4a5b"
    */
   id: string;
   /**
-   * How the account signs in. `ANONYMOUS` for a guest session; `null` when unknown.
+   * How the account signs in; `null` when unknown. `ANONYMOUS` was a guest session's; no account has it.
    * @example "GOOGLE"
    */
   provider: "GOOGLE" | "APPLE" | "EMAIL" | "PASSKEY" | "ANONYMOUS" | null;
   /**
-   * Display name; `null` when the account has none. A guest session without a name gets `게스트`.
+   * Display name; `null` when the account has none.
    * @example "Jane Doe"
    */
   name: string | null;
@@ -186,7 +186,7 @@ export interface UserProfileDto {
    */
   email: string | null;
   /**
-   * Self-introduction; `null` when not set, and always for a guest session.
+   * Self-introduction; `null` when not set.
    * @example "Traveler and photographer"
    */
   biography: string | null;
@@ -197,23 +197,23 @@ export interface UserProfileDto {
    */
   picture: string | null;
   /**
-   * Whether this is a guest session rather than an account.
+   * Always `false`: every session belongs to an account.
    * @example false
    */
   isGuest: boolean;
   /**
-   * Account status. Guest sessions are always `ACTIVE`.
+   * Account status.
    * @example "ACTIVE"
    */
   status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
   /**
-   * When the account was created. For a guest session, the time of the request.
+   * When the account was created.
    * @format date-time
    * @example "2026-01-15T09:30:00.000Z"
    */
   createdAt: string;
   /**
-   * When the account was last updated. For a guest session, the time of the request.
+   * When the account was last updated.
    * @format date-time
    * @example "2026-03-02T12:00:00.000Z"
    */
@@ -369,7 +369,7 @@ export interface AdminUserListItemDto {
    */
   picture: string | null;
   /**
-   * Provider the account was created with; `null` when none.
+   * Provider the account was created with, read from its earliest sign-in method (`PASSKEY` when a passkey came first); `null` when none or erased.
    * @example "GOOGLE"
    */
   provider: "GOOGLE" | "APPLE" | "EMAIL" | "PASSKEY" | null;
@@ -533,7 +533,7 @@ export interface AdminUserProfileDto {
    */
   providerEmail: string | null;
   /**
-   * Provider the account was created with; `null` when none or erased.
+   * Provider the account was created with, read from its earliest sign-in method (`PASSKEY` when a passkey came first); `null` when none or erased.
    * @example "GOOGLE"
    */
   provider: "GOOGLE" | "APPLE" | "EMAIL" | "PASSKEY" | null;
@@ -553,7 +553,7 @@ export interface AdminUserProfileDto {
    */
   preferredLanguage: string | null;
   /**
-   * Whether the account has push notifications enabled.
+   * Whether a push device of the account may receive pushes: its permission is granted, or provisional on iOS.
    * @example true
    */
   notificationEnabled: boolean;
@@ -2366,13 +2366,13 @@ export interface PrivateJourneyPhotoInputDto {
 /** The whole private journey document, version 4 (the journey id comes from the path). A PUT replaces the stored document. The JSON of `metadata` and `timeline` must fit in 1 MB (413 otherwise). */
 export interface PutPrivateJourneyRequestDto {
   /**
-   * Journey start.
+   * Journey start, in the years 1 to 9999 (UTC).
    * @format date-time
    * @example "2026-03-30T02:00:00.000Z"
    */
   startedAt: string;
   /**
-   * Journey end; `null` while the journey is ongoing.
+   * Journey end, in the years 1 to 9999 (UTC); `null` while the journey is ongoing.
    * @format date-time
    * @example "2026-03-30T02:00:00.000Z"
    */
@@ -4074,7 +4074,7 @@ export interface RegisterPushDeviceDto {
    */
   appVersion?: string;
   /**
-   * The FCM token this install registered before it moved to Expo. Its row is deleted, whichever account owns it, so the device does not receive a push twice.
+   * The FCM token this install registered before it moved to Expo. Accepted and ignored: no FCM token or row is left to delete.
    * @example "dXNlckBleGFtcGxlLmNvbQ:APA91bHPRgkF3JUikC4ENAHEeMrd41Zxv3hVZjC9KtT8"
    */
   replacesFcmToken?: string;
@@ -4788,7 +4788,7 @@ export interface AdminMetricsReviewsDto {
    */
   localizationPending: number;
   /**
-   * Published journeys whose translation request could not be queued (`reviewEnqueueFailed`).
+   * Published journeys whose automatic translation gave up (`localizationFailed`, ADR-0094).
    * @example 0
    */
   enqueueFailed: number;
