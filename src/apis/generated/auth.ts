@@ -637,7 +637,7 @@ export interface PasskeyCredentialDto {
 }
 
 export interface PasskeyCredentialListDto {
-  /** The caller's passkeys, newest first (empty for a guest). */
+  /** The caller's passkeys, newest first. */
   items: PasskeyCredentialDto[];
 }
 
