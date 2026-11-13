@@ -26,6 +26,7 @@ const STATUS_CHIPS: ReadonlyArray<{ label: string; status?: AdminUserStatus }> =
   { label: "Inactive", status: "INACTIVE" },
   { label: "Banned", status: "BANNED" },
   { label: "Deleted", status: "DELETED" },
+  { label: "Deletion scheduled", status: "PENDING_DELETION" },
 ];
 
 function hrefFor(filters: UsersFilters, page?: number): string {

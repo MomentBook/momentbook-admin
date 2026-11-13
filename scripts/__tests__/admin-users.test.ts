@@ -29,9 +29,17 @@ describe("user directory parsers", () => {
     expect(parseUserStatusFilter("active")).toBe("ACTIVE");
     expect(parseUserStatusFilter("inactive")).toBe("INACTIVE");
     expect(parseUserStatusFilter("deleted")).toBe("DELETED");
+    expect(parseUserStatusFilter("pending_deletion")).toBe("PENDING_DELETION");
     expect(parseUserStatusFilter("x")).toBeUndefined();
     expect(parseUserStatusFilter("BANNED")).toBeUndefined();
     expect(parseUserStatusFilter(undefined)).toBeUndefined();
+  });
+
+  it("shows a scheduled deletion with its own label and the outline badge", async () => {
+    const { USER_STATUS_LABELS, userStatusBadgeVariant } = await import("@/lib/admin/users-shared");
+
+    expect(USER_STATUS_LABELS.PENDING_DELETION).toBe("Deletion scheduled");
+    expect(userStatusBadgeVariant("PENDING_DELETION")).toBe("outline");
   });
 
   it("parseUserRoleFilter only accepts admin", async () => {

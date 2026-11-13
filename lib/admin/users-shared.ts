@@ -11,6 +11,7 @@ export const USER_STATUS_LABELS: Record<AdminUserStatus, string> = {
   INACTIVE: "Inactive",
   BANNED: "Banned",
   DELETED: "Deleted",
+  PENDING_DELETION: "Deletion scheduled",
 };
 
 export function userStatusBadgeVariant(
