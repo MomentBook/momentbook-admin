@@ -152,3 +152,56 @@ describe("allowanceTone", () => {
     expect(allowanceTone(10, -1)).toBe("at");
   });
 });
+
+describe("parseAllowanceGigabytes", () => {
+  async function parse(raw: string) {
+    const { parseAllowanceGigabytes } = await import("@/lib/admin/storage-shared");
+    return parseAllowanceGigabytes(raw);
+  }
+
+  it("turns binary gigabytes into whole bytes", async () => {
+    expect(await parse("5")).toEqual({ ok: true, bytes: 5368709120 });
+    expect(await parse("0")).toEqual({ ok: true, bytes: 0 });
+    expect(await parse("0.5")).toEqual({ ok: true, bytes: 536870912 });
+    expect(await parse("1024")).toEqual({ ok: true, bytes: 1099511627776 });
+    expect(await parse("1.5")).toEqual({ ok: true, bytes: 1610612736 });
+    expect(await parse(".5")).toEqual({ ok: true, bytes: 536870912 });
+  });
+
+  it("rounds to a whole byte", async () => {
+    // 0.0000000001 GB is 0.107 bytes.
+    expect(await parse("0.0000000001")).toEqual({ ok: true, bytes: 0 });
+    // 0.123456789 GB is 132560717.8 bytes.
+    expect(await parse("0.123456789")).toEqual({ ok: true, bytes: 132560718 });
+  });
+
+  it("reads minus zero as zero", async () => {
+    const result = await parse("-0");
+    expect(result).toEqual({ ok: true, bytes: 0 });
+    expect(Object.is((result as { bytes: number }).bytes, 0)).toBe(true);
+  });
+
+  it("rejects what is outside 0 to 1024 GB", async () => {
+    expect(await parse("1024.1")).toEqual({ ok: false, error: "out_of_range" });
+    expect(await parse("1025")).toEqual({ ok: false, error: "out_of_range" });
+    expect(await parse("-1")).toEqual({ ok: false, error: "out_of_range" });
+    expect(await parse("-0.0000000001")).toEqual({ ok: false, error: "out_of_range" });
+  });
+
+  it("rejects a blank amount as empty", async () => {
+    expect(await parse("")).toEqual({ ok: false, error: "empty" });
+    expect(await parse("  ")).toEqual({ ok: false, error: "empty" });
+  });
+
+  it("rejects text, exponents, infinity and NaN as not a number", async () => {
+    for (const raw of ["abc", "1e999", "1e3", "NaN", "Infinity", "-Infinity", "5 GB", "1.2.3", "--1", "0x10", "."]) {
+      expect(await parse(raw)).toEqual({ ok: false, error: "not_a_number" });
+    }
+    expect(await parse("9".repeat(400))).toEqual({ ok: false, error: "not_a_number" });
+  });
+
+  it("rejects a decimal comma and accepts surrounding spaces", async () => {
+    expect(await parse("5,5")).toEqual({ ok: false, error: "not_a_number" });
+    expect(await parse(" 5 ")).toEqual({ ok: true, bytes: 5368709120 });
+  });
+});

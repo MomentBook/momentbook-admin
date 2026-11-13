@@ -9,6 +9,7 @@ import type {
   AdminUserSessionsRevokeDataDto,
   AdminUserStatus,
   AdminUserStatusResponseDataDto,
+  AdminUserStorageDto,
   AdminUsersDataDto,
   UpdateAdminUserStatusDto,
 } from "@/src/apis/types";
@@ -97,5 +98,22 @@ export async function revokeAdminUserSessions(input: {
     method: "POST",
     accessToken: input.accessToken,
     body: input.reason ? { reason: input.reason } : {},
+  });
+}
+
+// ─── Update Storage Allowance ───────────────
+
+export async function updateAdminUserStorageAllowance(input: {
+  accessToken: string;
+  userId: string;
+  /** Bytes, or `null` to clear the override so the plan decides again. */
+  quotaOverrideBytes: number | null;
+  reason: string;
+}): Promise<AdminUserStorageDto> {
+  return requestApi<AdminUserStorageDto>({
+    pathname: `/core/admin/users/${encodeURIComponent(input.userId)}/storage-allowance`,
+    method: "PATCH",
+    accessToken: input.accessToken,
+    body: { quotaOverrideBytes: input.quotaOverrideBytes, reason: input.reason },
   });
 }

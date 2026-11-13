@@ -24,6 +24,7 @@ import { ReportHistoryList } from "@/app/reports/ReportHistoryList";
 import { revokeAdminUserSessionsAction } from "../actions";
 import { DateValue, Field, ReasonInput, Section } from "./UserDetailParts";
 import { UserDeletionSection } from "./UserDeletionSection";
+import { UserStorageSection } from "./UserStorageSection";
 
 const ACTIVITY_COUNTS: ReadonlyArray<[keyof AdminUserCountsDto, string]> = [
   ["publishedJourneys", "Published journeys"],
@@ -629,6 +630,13 @@ export function AdminUserDetailPageView({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <UserStorageSection
+          storage={data.detail.storage}
+          userId={profile.userId}
+          returnTo={returnTo}
+          label={profile.name || profile.email || profile.userId}
+          disabledReason={profile.status === "DELETED" ? "Deleted account." : null}
+        />
         <ModerationSection data={data} userId={profile.userId} />
         <ReportsSection data={data} userId={profile.userId} />
         <JourneysSection data={data} userId={profile.userId} />

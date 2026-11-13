@@ -66,3 +66,33 @@ export function allowanceTone(usedBytes: number, quotaBytes: number): AllowanceT
   if (usedBytes * 100 >= quotaBytes * NEAR_PERCENT) return "near";
   return "ok";
 }
+
+const MAX_ALLOWANCE_BYTES = 1_099_511_627_776;
+const BYTES_PER_GIGABYTE = 1024 ** 3;
+const DECIMAL_NUMBER = /^-?(\d+\.?\d*|\.\d+)$/;
+
+export type AllowanceGigabytesResult =
+  | { ok: true; bytes: number }
+  | { ok: false; error: "empty" | "not_a_number" | "out_of_range" };
+
+/** The amount an operator typed, in binary gigabytes (1 GB = 1024³ bytes), as a
+ * whole number of bytes from 0 to 1099511627776 (the API's limit, 1 TB). Spaces
+ * around the amount are ignored. Only plain decimals with a point are numbers:
+ * a comma (`5,5`), an exponent (`1e3`), `NaN` and `Infinity` are not, and a
+ * value too large to be finite is not either. `0` is valid: it stops new
+ * backups for the account. */
+export function parseAllowanceGigabytes(raw: string): AllowanceGigabytesResult {
+  const text = raw.trim();
+  if (text === "") return { ok: false, error: "empty" };
+  if (!DECIMAL_NUMBER.test(text)) return { ok: false, error: "not_a_number" };
+
+  const gigabytes = Number(text);
+  if (!Number.isFinite(gigabytes)) return { ok: false, error: "not_a_number" };
+  if (gigabytes < 0) return { ok: false, error: "out_of_range" };
+
+  // `+ 0` turns a rounded -0 into 0.
+  const bytes = Math.round(gigabytes * BYTES_PER_GIGABYTE) + 0;
+  if (bytes > MAX_ALLOWANCE_BYTES) return { ok: false, error: "out_of_range" };
+
+  return { ok: true, bytes };
+}
