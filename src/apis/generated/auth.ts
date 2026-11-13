@@ -158,7 +158,7 @@ export interface AppleAuthDto {
    */
   identityToken?: string;
   /**
-   * Apple authorization code (iOS naming). Required (or `code`) but only checked for presence — it is not exchanged with Apple.
+   * Apple authorization code (iOS naming). Required (or `code`). After the sign-in, and when the server is configured for it, exchanged with Apple for a refresh token kept to revoke the grant when the account is deleted; a failed exchange does not fail the sign-in.
    * @example "c1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.0.mrqtu.Ab1Cd2Ef3Gh4Ij5Kl6Mn7O"
    */
   authorizationCode?: string;
@@ -180,12 +180,12 @@ export interface AppleAuthDto {
    */
   id_token?: string;
   /**
-   * Apple authorization code (Android/web naming). Used when `authorizationCode` is absent; only checked for presence.
+   * Apple authorization code (Android/web naming). Used when `authorizationCode` is absent, and handled the same way.
    * @example "c1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.0.mrqtu.Ab1Cd2Ef3Gh4Ij5Kl6Mn7O"
    */
   code?: string;
   /**
-   * The raw (un-hashed) nonce the app gave the Apple SDK. When sent, the identity token's `nonce` claim must equal SHA-256(nonce) as hex, or the request fails with 401. Optional for older app builds, which skip the check.
+   * The raw (un-hashed) nonce the app gave the Apple SDK. When sent, the identity token's `nonce` claim must equal SHA-256(nonce) as hex, or the request fails with 401. When it is not sent and the token carries a `nonce` claim, the server's setting decides whether the sign-in is accepted or fails with 401.
    * @example "b5f1c0a3e9d84c27a6f2e1d0c9b8a7f6"
    */
   nonce?: string;
@@ -792,7 +792,7 @@ export interface DeviceCredentialListDto {
 
 export interface SensitiveActionPrepareDto {
   /**
-   * The sensitive action to approve. `account.delete` = `DELETE /core/users/me`.
+   * The sensitive action to approve. `account.delete` = `POST /core/users/me/deletion` or `DELETE /core/users/me`.
    * @example "account.delete"
    */
   action: "account.delete";

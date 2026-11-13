@@ -18,6 +18,20 @@ export enum PlaceNameSource {
   AI_SUGGESTION = "AI_SUGGESTION",
 }
 
+/** `NONE`: nothing was asked for. `PENDING`: being written (an earlier result, if any, is still returned). `READY`: written. `FAILED`: the server gave up; ask again with `POST …/insights`. */
+export enum JourneyInsightStatus {
+  NONE = "NONE",
+  PENDING = "PENDING",
+  READY = "READY",
+  FAILED = "FAILED",
+}
+
+/** The on-device engine that looked at the photo: Apple Vision on iOS, ML Kit on Android. */
+export enum PhotoAnalysisProvider {
+  APPLE_VISION = "APPLE_VISION",
+  MLKIT = "MLKIT",
+}
+
 export interface HealthDto {
   /**
    * Always `UP`: the process answered.
@@ -220,6 +234,35 @@ export interface UserProfileDto {
   updatedAt: string;
 }
 
+export interface RequestAccountDeletionDto {
+  /**
+   * The reason the member picked, if any. There is no free-text reason.
+   * @example "NOT_USING"
+   */
+  reasonCode?:
+    | "NOT_USING"
+    | "HARD_TO_USE"
+    | "MISSING_FEATURE"
+    | "PRIVACY"
+    | "NEW_ACCOUNT"
+    | "OTHER";
+}
+
+export interface AccountDeletionStateDto {
+  /**
+   * When the deletion was requested.
+   * @format date-time
+   * @example "2026-11-13T09:30:00.000Z"
+   */
+  requestedAt: string;
+  /**
+   * When the account is deleted for good unless it is restored before (`POST /core/users/me/deletion/cancel`).
+   * @format date-time
+   * @example "2026-11-27T09:30:00.000Z"
+   */
+  scheduledAt: string;
+}
+
 export interface UserSummaryDto {
   /**
    * The member's user id.
@@ -340,6 +383,32 @@ export interface BlockStatusDto {
   isBlocked: boolean;
 }
 
+export interface UserStorageDto {
+  /**
+   * Bytes the account's backup holds: every photo original uploaded to its private journeys, and every photo presigned and not yet uploaded (a reservation holds its bytes until it is uploaded, removed, or released after 7 days untouched).
+   * @min 0
+   * @example 1288490188
+   */
+  usedBytes: number;
+  /**
+   * The photos `usedBytes` counts, uploaded and reserved.
+   * @min 0
+   * @example 1234
+   */
+  photoCount: number;
+  /**
+   * The account's backup storage allowance in bytes: an amount set for this account when there is one, else its plan's.
+   * @min 0
+   * @example 5368709120
+   */
+  quotaBytes: number;
+  /**
+   * The account's storage plan (`free` unless it has another). `quotaBytes` may differ from the plan's when an amount is set for the account.
+   * @example "free"
+   */
+  planKey: string;
+}
+
 export interface AdminUserListItemDto {
   /**
    * Account id.
@@ -377,7 +446,7 @@ export interface AdminUserListItemDto {
    * Account status.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
   /**
    * Account role.
    * @example "USER"
@@ -434,7 +503,9 @@ export interface AdminUserAuthEventDto {
     | "REVOKE"
     | "LINK"
     | "RATE_LIMITED"
-    | "VERIFY_FAILED";
+    | "VERIFY_FAILED"
+    | "REFRESH_REUSE"
+    | "SENSITIVE_ACTION_BYPASS";
   /**
    * Outcome.
    * @example "SUCCESS"
@@ -541,7 +612,7 @@ export interface AdminUserProfileDto {
    * Account status.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
   /**
    * Account role.
    * @example "USER"
@@ -813,6 +884,38 @@ export interface AdminUserCountsDto {
   reportsFiled: number;
 }
 
+export interface AdminUserStorageDto {
+  /**
+   * Bytes the account's backup holds: every photo original uploaded to its private journeys plus every photo presigned and not yet uploaded.
+   * @min 0
+   * @example 1288490188
+   */
+  usedBytes: number;
+  /**
+   * The photos `usedBytes` counts, uploaded and reserved.
+   * @min 0
+   * @example 1234
+   */
+  photoCount: number;
+  /**
+   * The account's backup allowance in bytes now: the override when there is one, else its plan's quota.
+   * @min 0
+   * @example 5368709120
+   */
+  quotaBytes: number;
+  /**
+   * The account's storage plan (the default plan when it has none). `quotaBytes` differs from the plan's quota when an override is set.
+   * @example "free"
+   */
+  planKey: string;
+  /**
+   * The allowance an operator set for this account, in bytes, or `null` when the plan decides. Change it with `PATCH /core/admin/users/{userId}/storage-allowance`.
+   * @min 0
+   * @example 10737418240
+   */
+  quotaOverrideBytes: number | null;
+}
+
 export interface AdminUserDetailDto {
   /** Account profile. */
   profile: AdminUserProfileDto;
@@ -826,6 +929,8 @@ export interface AdminUserDetailDto {
   consents: AdminUserConsentDto[];
   /** Activity counts. */
   counts: AdminUserCountsDto;
+  /** The account's backup storage usage and allowance. */
+  storage: AdminUserStorageDto;
 }
 
 export interface UpdateAdminUserStatusDto {
@@ -860,6 +965,23 @@ export interface AdminUserStatusDto {
    * @example "BANNED"
    */
   status: "BANNED" | "ACTIVE" | "INACTIVE";
+}
+
+export interface UpdateAdminUserStorageAllowanceDto {
+  /**
+   * The account's backup allowance in bytes, replacing its plan's quota, or `null` to clear the override so the plan decides again. An integer from 0 to 1099511627776 (1 TiB); 0 stops new backups for the account.
+   * @min 0
+   * @max 1099511627776
+   * @example 10737418240
+   */
+  quotaOverrideBytes: number | null;
+  /**
+   * Why the allowance changes, trimmed, 1 to 500 characters. Stored in the admin action log.
+   * @minLength 1
+   * @maxLength 500
+   * @example "Support ticket: restoring a full trip backup"
+   */
+  reason: string;
 }
 
 export interface RevokeAdminUserSessionsDto {
@@ -1719,6 +1841,35 @@ export interface SignupConsentsDto {
   version: string;
 }
 
+export interface UserConsentDto {
+  /**
+   * The consent item key (a `key` of `GET /core/consent-templates/signup`, or a feature consent such as `ai-suggestions-v1`).
+   * @example "ai-suggestions-v1"
+   */
+  consentType: string;
+  /**
+   * The account's current answer.
+   * @example true
+   */
+  agreement: boolean;
+  /**
+   * Whether the item was required when it was answered.
+   * @example false
+   */
+  isRequired: boolean;
+  /**
+   * When the answer was last changed.
+   * @format date-time
+   * @example "2026-11-14T02:11:45.000Z"
+   */
+  updatedAt: string;
+}
+
+export interface UserConsentListDto {
+  /** Every consent item the account has answered. An item it never answered is absent, which means "not agreed". */
+  items: UserConsentDto[];
+}
+
 export interface UserConsentItemUpdateDto {
   /**
    * Whether the user agrees to this item.
@@ -1865,7 +2016,7 @@ export interface AdminUserSummaryDto {
    * Account status now.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
 }
 
 export interface AdminReportJourneyReviewDto {
@@ -2681,6 +2832,172 @@ export interface CommitPrivateJourneyAssetResultDto {
 export interface CommittedPrivateJourneyAssetsDto {
   /** One entry per requested photo, in request order. */
   committed: CommitPrivateJourneyAssetResultDto[];
+}
+
+/** One thing a photo shows. */
+export interface PhotoCategoryScoreDto {
+  /**
+   * A photo category id of the app's category set: `food`, `drink`, `beach`, `water`, `mountain`, `snow`, `nature`, `desert`, `sunset`, `night`, `cityscape`, `architecture`, `museum_art`, `nightlife`, `amusement`, `animal`, `people`, `transport`, `indoor`, `activity`, `document`. An id the server does not know is dropped.
+   * @maxLength 40
+   * @example "food"
+   */
+  id: string;
+  /**
+   * How strongly the photo shows it, 0 to 1.
+   * @min 0
+   * @max 1
+   * @example 0.82
+   */
+  score: number;
+}
+
+/** What one photo shows, as the owner's phone judged it. */
+export interface PhotoAnalysisItemDto {
+  /**
+   * The photo's `photoId` in the private journey document. An entry for a photo the document does not list is dropped.
+   * @pattern ^[A-Za-z0-9_-]{1,122}$
+   * @example "7c1e2d3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f"
+   */
+  photoId: string;
+  /**
+   * The on-device engine that looked at the photo: Apple Vision on iOS, ML Kit on Android.
+   * @example "APPLE_VISION"
+   */
+  provider: PhotoAnalysisProvider;
+  /**
+   * The version of the engine that ran.
+   * @maxLength 32
+   * @example "rev2"
+   */
+  engineVersion: string;
+  /**
+   * The version of the app's category set and label tables that produced `categories`.
+   * @min 1
+   * @example 1
+   */
+  categoryVersion: number;
+  /** What the photo shows, the strongest first: at most 8 categories. Empty when the photo shows none of them. */
+  categories: PhotoCategoryScoreDto[];
+}
+
+export interface PutPhotoAnalysisRequestDto {
+  /** The journey's analysed photos, at most 500. The list replaces what was stored for the journey before; a photo named twice keeps its last entry. */
+  items: PhotoAnalysisItemDto[];
+}
+
+export interface RequestJourneyInsightDto {
+  /**
+   * The title the app gave the journey when it was created (for example its date range). A title is suggested only while the stored title is empty or still equal to this.
+   * @maxLength 200
+   * @example "2026.10.14 - 10.18 여정"
+   */
+  defaultTitle: string;
+}
+
+/** What was suggested for one moment. */
+export interface JourneyInsightMomentDto {
+  /**
+   * The moment's `id` in the private journey document.
+   * @example "moment_01HZX"
+   */
+  momentId: string;
+  /**
+   * Up to two theme ids for the moment.
+   * @example ["food"]
+   */
+  themes: string[];
+  /**
+   * A suggested caption (at most 80 characters); `null` when the owner already wrote one or removed the suggestion. Show it only while the moment's own caption is empty.
+   * @example "호시우 광장에서의 아침 식사"
+   */
+  caption: string | null;
+}
+
+/** What was written for a journey from what its photos show. Kept apart from the journey document: show a value from here only where the owner entered none. */
+export interface JourneyInsightDto {
+  /**
+   * `NONE`: nothing was asked for. `PENDING`: being written (an earlier result, if any, is still returned). `READY`: written. `FAILED`: the server gave up; ask again with `POST …/insights`.
+   * @example "READY"
+   */
+  status: JourneyInsightStatus;
+  /**
+   * The language the text is written in (a supported language code); `null` with `NONE`.
+   * @example "ko"
+   */
+  language: string | null;
+  /**
+   * When the returned result was written; `null` before that.
+   * @format date-time
+   * @example "2026-11-14T02:11:45.000Z"
+   */
+  generatedAt: string | null;
+  /**
+   * The `defaultTitle` of the request. Show `title` only while the journey's stored title is empty or equal to this.
+   * @example "2026.10.14 - 10.18 여정"
+   */
+  defaultTitle: string | null;
+  /**
+   * Up to three theme ids for the journey, from: `food`, `drinks`, `beach`, `water`, `mountain`, `snow`, `nature`, `desert`, `sunset`, `night`, `city`, `architecture`, `art`, `nightlife`, `amusement`, `animals`, `people`, `activity`. Show a label per id; ignore an id the app does not know.
+   * @example ["food","city"]
+   */
+  themes: string[];
+  /**
+   * A suggested title (at most 40 characters); `null` when none was written or the owner removed it.
+   * @example "리스본에서의 이틀"
+   */
+  title: string | null;
+  /**
+   * A suggested description (at most 200 characters); `null` when none was written or the owner removed it. Show it only while the journey's own description is empty.
+   * @example "광장과 골목을 걸으며 먹고 쉬었다."
+   */
+  description: string | null;
+  /** Moments with a theme or a caption; a moment that has neither is left out. */
+  moments: JourneyInsightMomentDto[];
+}
+
+export interface HideJourneyInsightDto {
+  /**
+   * `true` removes the suggested title for good.
+   * @example true
+   */
+  title?: boolean;
+  /**
+   * `true` removes the suggested description for good.
+   * @example false
+   */
+  description?: boolean;
+  /**
+   * Moments whose suggested caption is removed for good (their themes stay).
+   * @example ["moment_01HZX"]
+   */
+  momentIds?: string[];
+}
+
+/** One journey that suggestions were asked for. */
+export interface JourneyInsightIndexItemDto {
+  /**
+   * The journey's id.
+   * @format uuid
+   * @example "0199a1b2-3c4d-4e5f-8a9b-0c1d2e3f4a5b"
+   */
+  journeyId: string;
+  /**
+   * The state of the suggestions, as `GET …/insights` returns it; never `NONE` here.
+   * @example "READY"
+   */
+  status: JourneyInsightStatus;
+  /**
+   * When the entry last changed: a result was written, something was removed, or a new attempt was scheduled. Compare for equality with the value last seen and read `GET …/insights` again when it differs (the text may still be the same).
+   * @format date-time
+   * @example "2026-11-14T02:11:45.000Z"
+   */
+  updatedAt: string;
+}
+
+/** The account's journeys that suggestions were asked for. */
+export interface JourneyInsightIndexDto {
+  /** One entry per journey, in no particular order. */
+  items: JourneyInsightIndexItemDto[];
 }
 
 export interface PublicationDto {
@@ -4640,7 +4957,8 @@ export interface AdminAuditLogItemDto {
     | "COMMENT_DELETED"
     | "ARTICLE_CREATED"
     | "ARTICLE_UPDATED"
-    | "ARTICLE_DELETED";
+    | "ARTICLE_DELETED"
+    | "USER_STORAGE_QUOTA_CHANGED";
   /**
    * Kind of the thing acted on.
    * @example "USER"
@@ -4697,6 +5015,115 @@ export interface AdminAuditLogPageDto {
    * @example 20
    */
   limit: number;
+}
+
+export interface AdminStorageBucketDto {
+  /**
+   * Upper bound of the bucket in bytes, included: an account using exactly this much is counted here, not in the next bucket. `null` for the last bucket, which holds every account above the previous bound.
+   * @example 1073741824
+   */
+  upToBytes: number | null;
+  /**
+   * Accounts whose backup usage falls in the bucket.
+   * @example 42
+   */
+  accounts: number;
+}
+
+export interface AdminStorageTopAccountDto {
+  /**
+   * Id (UUID) of the account.
+   * @format uuid
+   * @example "0199a1b2-7d8e-7f01-9a2b-3c4d5e6f7a8b"
+   */
+  userId: string;
+  /**
+   * The account name, `null` when it has none.
+   * @example "Alice"
+   */
+  name: string | null;
+  /**
+   * Bytes the account's backup holds.
+   * @example 4294967296
+   */
+  usedBytes: number;
+  /**
+   * Photos in the account backup.
+   * @example 900
+   */
+  photoCount: number;
+  /**
+   * The account's allowance in bytes: its override, else its plan's quota.
+   * @example 5368709120
+   */
+  quotaBytes: number;
+}
+
+export interface AdminStoragePlanDto {
+  /**
+   * Plan key.
+   * @example "free"
+   */
+  key: string;
+  /**
+   * The plan's allowance in bytes.
+   * @example 5368709120
+   */
+  quotaBytes: number;
+  /**
+   * Whether accounts without a plan of their own get this plan.
+   * @example true
+   */
+  isDefault: boolean;
+  /**
+   * Whether a store subscription can buy this plan.
+   * @example false
+   */
+  isPurchasable: boolean;
+  /**
+   * Accounts on the plan (accounts with none count for the default plan). Deleted accounts are left out.
+   * @example 1200
+   */
+  accounts: number;
+}
+
+export interface AdminStorageMetricsDto {
+  /**
+   * Bytes held by the backups of all accounts that are not deleted.
+   * @example 483183820800
+   */
+  totalBytes: number;
+  /**
+   * Photos in those backups.
+   * @example 120000
+   */
+  totalPhotos: number;
+  /**
+   * Accounts with at least one photo in their backup.
+   * @example 800
+   */
+  accountsWithBackups: number;
+  /**
+   * Bytes of the public copies of published journeys, summed over the publications whose size is recorded. Publications made before the size was recorded are not counted until they are published again.
+   * @example 21474836480
+   */
+  publishedBytes: number;
+  /** Accounts with a backup by usage: 100 MiB, 500 MiB, 1 GiB, 2.5 GiB, 5 GiB, and above 5 GiB, in this order. */
+  buckets: AdminStorageBucketDto[];
+  /**
+   * Accounts using at least 80% and less than 100% of their allowance (an operator's override counts).
+   * @example 17
+   */
+  nearLimit: number;
+  /**
+   * Accounts using 100% or more of their allowance.
+   * @example 3
+   */
+  atLimit: number;
+  /** The 20 accounts with the largest backups, largest first (equal sizes by account id). */
+  topAccounts: AdminStorageTopAccountDto[];
+  /** Every storage plan with the accounts on it. */
+  plans: AdminStoragePlanDto[];
 }
 
 export interface AdminMetricsDailyDto {
