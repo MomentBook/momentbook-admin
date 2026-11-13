@@ -37,8 +37,9 @@ Component use:
 | Status chips, filter chips | `Badge` (filter chips are links) |
 | Notices and mutation results | `Alert` with `AlertTitle className="line-clamp-none"` |
 | Metrics, panels | `Card` |
+| One figure (Storage, Metrics) | `StatTile` (`components/stat-tile.tsx`) |
 | Queues | `Table` with link pagination (server-rendered; no client table engine) |
-| Irreversible or outward-facing actions | `ConfirmActionForm` (`components/confirm-action-form.tsx`, `AlertDialog`) |
+| Irreversible, outward-facing or consequential actions (ban, sign out, allowance) | `ConfirmActionForm` (`components/confirm-action-form.tsx`, `AlertDialog`) |
 | Fullscreen photo inspection | `LightboxPhotoTile` (`Dialog`) |
 | Forms | native `<form action={serverAction}>` with `Input`, `Textarea`, `Select`, `Label` |
 
@@ -63,11 +64,19 @@ Component use:
   filters) and account detail: profile, both emails, sign-in methods,
   sessions and devices, moderation history, public journeys, comments, reports
   received and filed, sign-in events with IP, and a private-journey count.
-  Admins never see chat bodies or private journey contents (ADR 0011).
+  Below the header, an account scheduled for deletion shows a read-only
+  "Deletion scheduled" section (requested, deletes on, reason). A "Backup
+  storage" section shows used (with the tone badge), photos and the allowance,
+  and changes it: "Set allowance" in GB (0 stops new backups) or "Use the
+  plan's allowance", each confirmed in a dialog with a required reason
+  (ADR 0013). Admins never see chat bodies or private journey contents
+  (ADR 0011).
 - `/comments`: comment moderation with `active` (default), `deleted` and `all`
   tabs, user and journey filters, and a confirmed delete.
 - `/metrics`: UTC-day charts over 7, 30 or 90 days, queue health, users by
-  status, an Operations card for engineers, and a Notifications section
+  status, an Operations card for engineers, an "Account deletions" section
+  (requested, restored by owner and deleted over the window, "Scheduled now",
+  and the reasons given), and a Notifications section
   (per-category sends, skips and opt-outs, device permission, and the
   engagement holdout's 7- and 30-day return).
 - `/storage`: read-only backup storage overview: totals, accounts at or near

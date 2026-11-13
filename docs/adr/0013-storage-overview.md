@@ -2,7 +2,8 @@
 
 ## Status
 
-Active. Date: 2026-11-13. Amends [0001](0001-admin-app-ownership-and-runtime.md)
+Active. Date: 2026-11-13; amended the same day for the allowance change and
+account deletion (decisions 5, 7, 8, 9). Amends [0001](0001-admin-app-ownership-and-runtime.md)
 (route list) and [0011](0011-operator-surfaces-users-comments-metrics-audit.md)
 (call budget).
 
@@ -36,12 +37,36 @@ Active. Date: 2026-11-13. Amends [0001](0001-admin-app-ownership-and-runtime.md)
 4. **Percentages are whole and rounded down**, tone boundaries are compared in
    integer products (`allowanceTone`), so 79% never reads as near and 99.9%
    never as at.
-5. **Changing an account's allowance is not done here.** It belongs on the user
-   detail page (a later task), where the operator sees the account and its
-   history. This page links each top account to that page.
+5. **An account's allowance is changed on its user page, not here.** The
+   user detail page has a "Backup storage" section (used with the same tone
+   badge as this page, photos, the allowance and whether it is set for the
+   account or comes from its plan). This page links each top account there.
+   - "Set allowance" takes an amount in **binary GB** (1 GB = 1024³ bytes,
+     decimals allowed, 0 to 1024; `parseAllowanceGigabytes` in
+     `lib/admin/storage-shared.ts`). **0 is allowed** and means "no new
+     backups"; a clear hint says so. "Use the plan's allowance" (shown only when
+     an override exists) sends `null`.
+   - A **reason is required** (1 to 500 characters after trimming) for both. The
+     API stores it in the audit log; the admin app logs nothing itself.
+   - Both buttons sit behind `ConfirmActionForm`, like ban and sign-out. The
+     server action validates the choice, the amount and the reason before any
+     request, and only a form that names `set` or `plan` sends one.
+   - A smaller allowance than the account's usage deletes nothing; its next
+     backups are refused. The dialog says so.
 6. **No new visual pattern.** The page reuses Metrics' section headings and
    tiles, the Users table, `Badge` variants and `Card`. The bucket share is a
    percentage, with no bar and no chart library.
+
+7. **The deletion section is read-only.** An account scheduled for deletion
+   (`PENDING_DELETION`, 14-day grace period) shows a "Deletion scheduled"
+   section on its user page: when it was requested, when it is deleted, and the
+   reason the person gave. An operator neither deletes nor restores an account
+   on its owner's behalf; banning cancels the deletion.
+8. **Deletions in Metrics.** "Account deletions" shows requested, restored by
+   owner and deleted over the selected period, "Scheduled now" (not limited to
+   the period), and the reasons given with their share of the requests. It
+   reads the same metrics call: no new call.
+9. **One stat tile** (`components/stat-tile.tsx`) serves Storage and Metrics.
 
 ## Alternatives Considered
 
@@ -51,6 +76,10 @@ Active. Date: 2026-11-13. Amends [0001](0001-admin-app-ownership-and-runtime.md)
   are binary, so the labels would not match the numbers an engineer sets.
 - **Edit allowances from the top-accounts table** — rejected: a mutation needs
   the confirmation and audit flow the user detail page owns (ADR 0011).
+- **Decimal GB in the form** — rejected for the same reason as decimal units
+  above: the allowance and the plans are binary.
+- **An optional reason** — rejected: an allowance change affects what someone
+  can back up, so the audit log must say why.
 
 ## Consequences
 
@@ -60,5 +89,6 @@ Active. Date: 2026-11-13. Amends [0001](0001-admin-app-ownership-and-runtime.md)
   allowance but small (a lowered override) may not appear in it, though it is
   counted in the near and at figures.
 - Deploy order: API first, then admin. An admin deployed first shows the error
-  page on `/storage`.
+  page on `/storage`, and a user page without its `storage` block cannot render
+  the new section.
 - Changes here should run `yarn verify && yarn build`.
