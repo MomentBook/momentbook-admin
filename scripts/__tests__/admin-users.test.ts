@@ -95,3 +95,29 @@ describe("loadAdminUsersWorkspaceData", () => {
     expect(result).toMatchObject({ total: 0, page: 2, pages: 1, users: [] });
   });
 });
+
+describe("deletion reason labels", () => {
+  it("labels each code the API sends", async () => {
+    const { deletionReasonLabel } = await import("@/lib/admin/users-shared");
+
+    expect(deletionReasonLabel("NOT_USING")).toBe("Doesn't use it");
+    expect(deletionReasonLabel("HARD_TO_USE")).toBe("Hard to use");
+    expect(deletionReasonLabel("MISSING_FEATURE")).toBe("Missing a feature");
+    expect(deletionReasonLabel("PRIVACY")).toBe("Privacy concern");
+    expect(deletionReasonLabel("NEW_ACCOUNT")).toBe("Switching account");
+    expect(deletionReasonLabel("OTHER")).toBe("Other");
+  });
+
+  it("reads no code as not given", async () => {
+    const { deletionReasonLabel } = await import("@/lib/admin/users-shared");
+
+    expect(deletionReasonLabel(null)).toBe("Not given");
+  });
+
+  it("humanizes a code it does not know", async () => {
+    const { deletionReasonLabel, humanizeEnum } = await import("@/lib/admin/users-shared");
+
+    expect(deletionReasonLabel("TOO_EXPENSIVE")).toBe("Too expensive");
+    expect(humanizeEnum("USER_SESSIONS_REVOKED")).toBe("User sessions revoked");
+  });
+});

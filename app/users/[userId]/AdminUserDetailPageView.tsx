@@ -2,11 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmActionForm } from "@/components/confirm-action-form";
-import { LocalizedDate, LocalizedDateTime } from "@/components/LocalizedTime";
 import {
   buildAdminAuditLogHref,
   buildAdminCommentsHref,
@@ -19,15 +16,14 @@ import { ADMIN_AUDIT_ACTION_LABELS } from "@/lib/admin/audit-log-shared";
 import { COMMENT_DELETED_BY_LABELS } from "@/lib/admin/comments-shared";
 import { getAdminReviewStatusLabel, normalizeAdminReviewItem } from "@/lib/admin/reviews";
 import type { AdminUserDetailWorkspaceData } from "@/lib/admin/users";
-import { USER_STATUS_LABELS, userStatusBadgeVariant } from "@/lib/admin/users-shared";
-import { defaultLanguage } from "@/lib/i18n/config";
+import { USER_STATUS_LABELS, humanizeEnum, userStatusBadgeVariant } from "@/lib/admin/users-shared";
 import type { AdminUserCountsDto, AdminUserProfileDto } from "@/src/apis/types";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { updateAdminUserStatusAction } from "@/app/reports/actions";
 import { ReportHistoryList } from "@/app/reports/ReportHistoryList";
 import { revokeAdminUserSessionsAction } from "../actions";
-
-const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
+import { DateValue, Field, ReasonInput, Section } from "./UserDetailParts";
+import { UserDeletionSection } from "./UserDeletionSection";
 
 const ACTIVITY_COUNTS: ReadonlyArray<[keyof AdminUserCountsDto, string]> = [
   ["publishedJourneys", "Published journeys"],
@@ -43,12 +39,6 @@ const ACTIVITY_COUNTS: ReadonlyArray<[keyof AdminUserCountsDto, string]> = [
   ["reportsFiled", "Reports filed"],
 ];
 
-/** `USER_SESSIONS_REVOKED` → "User sessions revoked". */
-function humanizeEnum(value: string): string {
-  const words = value.toLowerCase().replaceAll("_", " ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
 function Placeholder() {
   return <span className="text-muted-foreground">—</span>;
 }
@@ -57,70 +47,12 @@ function Text({ value }: { value: string | null | undefined }) {
   return value ? <span className="break-all">{value}</span> : <Placeholder />;
 }
 
-function DateValue({ value, withTime = false }: { value: string | null; withTime?: boolean }) {
-  const timestamp = value ? Date.parse(value) : null;
-
-  return withTime ? (
-    <LocalizedDateTime lang={ADMIN_DISPLAY_LANGUAGE} timestamp={timestamp} fallback="—" />
-  ) : (
-    <LocalizedDate lang={ADMIN_DISPLAY_LANGUAGE} timestamp={timestamp} fallback="—" />
-  );
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-sm">{children}</dd>
-    </div>
-  );
-}
-
 function Unavailable({ what }: { what: string }) {
   return <p className="text-xs text-muted-foreground">Could not load {what}.</p>;
 }
 
 function Empty({ children }: { children: ReactNode }) {
   return <p className="text-xs text-muted-foreground">{children}</p>;
-}
-
-/** A history section; "View all" appears once there is something to see. */
-function Section({
-  title,
-  total,
-  viewAllHref,
-  children,
-}: {
-  title: string;
-  total: number | null;
-  viewAllHref?: string;
-  children: ReactNode;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        {viewAllHref && total !== null && total > 0 ? (
-          <CardAction>
-            <Link href={viewAllHref} className="text-xs text-primary hover:underline">
-              View all {total}
-            </Link>
-          </CardAction>
-        ) : null}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
-  );
-}
-
-function ReasonInput({ id }: { id: string }) {
-  return (
-    <div className="grid gap-1.5">
-      <Label htmlFor={id}>Reason (optional)</Label>
-      <Input id={id} name="reason" maxLength={1000} />
-      <p className="text-xs text-muted-foreground">Saved in the audit log.</p>
-    </div>
-  );
 }
 
 function displayName(profile: AdminUserProfileDto): string {
@@ -166,6 +98,9 @@ function AccountActions({
             <ReasonInput id="user-unban-reason" />
           </ConfirmActionForm>
         ) : (
+          // ACTIVE, INACTIVE and PENDING_DELETION. The API bans a pending
+          // account and the ban cancels its deletion; unban does not apply
+          // to it (409), so only the banned branch offers it.
           <ConfirmActionForm
             action={updateAdminUserStatusAction}
             fields={{ ...fields, status: "banned" }}
@@ -173,7 +108,11 @@ function AccountActions({
             triggerVariant="destructive"
             disabled={disabled}
             title={`Ban ${label}?`}
-            description={`Bans ${label} (${profile.userId}). All of their sessions are revoked immediately.`}
+            description={`Bans ${label} (${profile.userId}). All of their sessions are revoked immediately.${
+              profile.status === "PENDING_DELETION"
+                ? " The scheduled deletion is cancelled."
+                : ""
+            }`}
             confirmLabel="Ban"
           >
             <ReasonInput id="user-ban-reason" />
@@ -680,6 +619,8 @@ export function AdminUserDetailPageView({
         returnTo={returnTo}
         sessionUserId={sessionUserId}
       />
+
+      {data.detail.deletion ? <UserDeletionSection deletion={data.detail.deletion} /> : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <AccountCard data={data} />

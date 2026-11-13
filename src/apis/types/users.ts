@@ -5,14 +5,17 @@
 import type {
   AdminUserAuthEventPageDto,
   AdminUserCountsDto as GeneratedAdminUserCountsDto,
+  AdminUserDeletionDto as GeneratedAdminUserDeletionDto,
   AdminUserDetailDto,
   AdminUserListItemDto as GeneratedAdminUserListItemDto,
   AdminUserPageDto,
   AdminUserProfileDto as GeneratedAdminUserProfileDto,
   AdminUserSessionsRevokeResultDto,
+  AdminUserStorageDto as GeneratedAdminUserStorageDto,
   AdminUserStatusDto,
   AdminUserSummaryDto as GeneratedAdminUserSummaryDto,
   UpdateAdminUserStatusDto as GeneratedUpdateAdminUserStatusDto,
+  UpdateAdminUserStorageAllowanceDto as GeneratedUpdateAdminUserStorageAllowanceDto,
 } from "../generated/core";
 import type { PageCounts } from "./shared";
 
@@ -36,3 +39,12 @@ export type AdminUserProfileDto = GeneratedAdminUserProfileDto;
 export type AdminUserCountsDto = GeneratedAdminUserCountsDto;
 export type AdminUserDetailDataDto = AdminUserDetailDto;
 export type AdminUserSessionsRevokeDataDto = AdminUserSessionsRevokeResultDto;
+
+/** The pending deletion request, set only while the account is
+ * `PENDING_DELETION`. */
+export type AdminUserDeletionDto = GeneratedAdminUserDeletionDto;
+
+/** An account's backup usage and allowance; `quotaOverrideBytes` is `null`
+ * when the plan decides. */
+export type AdminUserStorageDto = GeneratedAdminUserStorageDto;
+export type UpdateAdminUserStorageAllowanceDto = GeneratedUpdateAdminUserStorageAllowanceDto;
