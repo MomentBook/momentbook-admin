@@ -83,6 +83,21 @@ export interface ConsentStatusDto {
   requiresAction: boolean;
 }
 
+export interface AccountDeletionStateDto {
+  /**
+   * When the deletion was requested.
+   * @format date-time
+   * @example "2026-11-13T09:30:00.000Z"
+   */
+  requestedAt: string;
+  /**
+   * When the account is deleted for good unless it is restored before (`POST /core/users/me/deletion/cancel`).
+   * @format date-time
+   * @example "2026-11-27T09:30:00.000Z"
+   */
+  scheduledAt: string;
+}
+
 export interface MyProfileDto {
   /**
    * Account id (UUID).
@@ -122,10 +137,10 @@ export interface MyProfileDto {
    */
   isGuest: boolean;
   /**
-   * Account status.
+   * Account status. `PENDING_DELETION`: the owner asked to delete the account; `deletion` (on `GET` and the cancel) says when it goes.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
   /**
    * When the account was created.
    * @format date-time
@@ -140,6 +155,8 @@ export interface MyProfileDto {
   updatedAt: string;
   /** Required-consent status of the account. */
   consents: ConsentStatusDto;
+  /** When the account is scheduled for deletion (`status` `PENDING_DELETION`): when it was requested and when it goes unless restored (`POST /core/users/me/deletion/cancel`). `null` for any other status. */
+  deletion: AccountDeletionStateDto | null;
 }
 
 export interface PictureUpdateDto {
@@ -216,10 +233,10 @@ export interface UserProfileDto {
    */
   isGuest: boolean;
   /**
-   * Account status.
+   * Account status. `PENDING_DELETION`: the owner asked to delete the account; `deletion` (on `GET` and the cancel) says when it goes.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
   /**
    * When the account was created.
    * @format date-time
@@ -246,21 +263,6 @@ export interface RequestAccountDeletionDto {
     | "PRIVACY"
     | "NEW_ACCOUNT"
     | "OTHER";
-}
-
-export interface AccountDeletionStateDto {
-  /**
-   * When the deletion was requested.
-   * @format date-time
-   * @example "2026-11-13T09:30:00.000Z"
-   */
-  requestedAt: string;
-  /**
-   * When the account is deleted for good unless it is restored before (`POST /core/users/me/deletion/cancel`).
-   * @format date-time
-   * @example "2026-11-27T09:30:00.000Z"
-   */
-  scheduledAt: string;
 }
 
 export interface UserSummaryDto {
@@ -916,6 +918,26 @@ export interface AdminUserStorageDto {
   quotaOverrideBytes: number | null;
 }
 
+export interface AdminUserDeletionDto {
+  /**
+   * When the owner asked to delete the account.
+   * @format date-time
+   * @example "2026-10-01T09:30:00.000Z"
+   */
+  requestedAt: string;
+  /**
+   * When the account is deleted for good unless its owner restores it before.
+   * @format date-time
+   * @example "2026-10-15T09:30:00.000Z"
+   */
+  scheduledAt: string;
+  /**
+   * The reason the owner picked (`NOT_USING`, `HARD_TO_USE`, `MISSING_FEATURE`, `PRIVACY`, `NEW_ACCOUNT` or `OTHER`); `null` when none.
+   * @example "NOT_USING"
+   */
+  reasonCode: string | null;
+}
+
 export interface AdminUserDetailDto {
   /** Account profile. */
   profile: AdminUserProfileDto;
@@ -931,6 +953,8 @@ export interface AdminUserDetailDto {
   counts: AdminUserCountsDto;
   /** The account's backup storage usage and allowance. */
   storage: AdminUserStorageDto;
+  /** The pending deletion request of an account scheduled for deletion (`profile.status` `PENDING_DELETION`); `null` otherwise. */
+  deletion: AdminUserDeletionDto | null;
 }
 
 export interface UpdateAdminUserStatusDto {
@@ -5171,7 +5195,7 @@ export interface AdminMetricsDailyDto {
 
 export interface AdminMetricsUsersDto {
   /**
-   * All accounts (every role), the sum of the four statuses.
+   * All accounts (every role), whatever their status: the four below plus accounts pending deletion.
    * @example 1500
    */
   total: number;
@@ -5267,6 +5291,44 @@ export interface AdminMetricsOperationsDto {
   erasureOverdue: number;
 }
 
+export interface AdminMetricsDeletionReasonDto {
+  /**
+   * The reason the owner picked (`NOT_USING`, `HARD_TO_USE`, `MISSING_FEATURE`, `PRIVACY`, `NEW_ACCOUNT` or `OTHER`); `null` for requests without one.
+   * @example "NOT_USING"
+   */
+  reasonCode: string | null;
+  /**
+   * Deletion requests made in the window with this reason.
+   * @example 4
+   */
+  count: number;
+}
+
+export interface AdminMetricsDeletionsDto {
+  /**
+   * Account deletion requests made in the window.
+   * @example 12
+   */
+  requested: number;
+  /**
+   * Requests the owner cancelled by restoring the account in the window (a ban cancels a request too, and is not counted).
+   * @example 3
+   */
+  restored: number;
+  /**
+   * Requests that ended in the deletion in the window: at the end of the grace period, or by the immediate deletion (`DELETE /core/users/me`) of an account already pending. An immediate deletion with no request is not counted.
+   * @example 5
+   */
+  executed: number;
+  /**
+   * Requests made in the window whose account is still waiting for its deletion date.
+   * @example 4
+   */
+  pending: number;
+  /** Requests made in the window by reason, most frequent first; requests without a reason under `null`. */
+  reasons: AdminMetricsDeletionReasonDto[];
+}
+
 export interface AdminMetricsDto {
   /**
    * When the figures were computed.
@@ -5299,6 +5361,8 @@ export interface AdminMetricsDto {
   reports: AdminMetricsReportsDto;
   /** Counts that need an engineer, not an admin action. */
   operations: AdminMetricsOperationsDto;
+  /** Account deletion requests over the window (`from` to `to`), the same days as `daily`. */
+  deletions: AdminMetricsDeletionsDto;
 }
 
 export interface AdminNotificationSkipDto {

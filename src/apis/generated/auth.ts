@@ -105,6 +105,21 @@ export interface ConsentStatusDto {
   requiresAction: boolean;
 }
 
+export interface AccountDeletionStateDto {
+  /**
+   * When the deletion was requested.
+   * @format date-time
+   * @example "2026-11-13T09:30:00.000Z"
+   */
+  requestedAt: string;
+  /**
+   * When the account is deleted for good unless it is restored before (`POST /core/users/me/deletion/cancel`).
+   * @format date-time
+   * @example "2026-11-27T09:30:00.000Z"
+   */
+  scheduledAt: string;
+}
+
 export interface AuthSessionDto {
   /** The signed-in account. */
   user: AuthUserDto;
@@ -135,6 +150,8 @@ export interface AuthSessionDto {
    * @example false
    */
   created: boolean;
+  /** Set when the account is scheduled for deletion: when it was requested and when it goes unless restored. Show the restore screen (`POST /core/users/me/deletion/cancel`); the session works only for that and `GET /core/users/profile/me` until then. `null` for any other account. */
+  deletion: AccountDeletionStateDto | null;
 }
 
 export interface AppleFullName {
