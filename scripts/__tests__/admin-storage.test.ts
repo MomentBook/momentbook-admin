@@ -205,3 +205,20 @@ describe("parseAllowanceGigabytes", () => {
     expect(await parse(" 5 ")).toEqual({ ok: true, bytes: 5368709120 });
   });
 });
+
+describe("allowanceBadgeLabel", () => {
+  it("is the whole percent used", async () => {
+    const { allowanceBadgeLabel } = await import("@/lib/admin/storage-shared");
+
+    expect(allowanceBadgeLabel(50, 100)).toBe("50%");
+    expect(allowanceBadgeLabel(120, 100)).toBe("120%");
+    expect(allowanceBadgeLabel(0, 100)).toBe("0%");
+  });
+
+  it("says there is no allowance instead of 0% when the allowance is 0", async () => {
+    const { allowanceBadgeLabel } = await import("@/lib/admin/storage-shared");
+
+    expect(allowanceBadgeLabel(0, 0)).toBe("No allowance");
+    expect(allowanceBadgeLabel(500, 0)).toBe("No allowance");
+  });
+});

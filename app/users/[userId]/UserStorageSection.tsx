@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import {
   allowanceTone,
   formatBytes,
-  usagePercent,
+  allowanceBadgeLabel,
   type AllowanceTone,
 } from "@/lib/admin/storage-shared";
 import type { AdminUserStorageDto } from "@/src/apis/types";
@@ -54,7 +54,7 @@ export function UserStorageSection({
                 variant={TONE_BADGE_VARIANT[allowanceTone(storage.usedBytes, storage.quotaBytes)]}
                 className="tabular-nums"
               >
-                {usagePercent(storage.usedBytes, storage.quotaBytes)}%
+                {allowanceBadgeLabel(storage.usedBytes, storage.quotaBytes)}
               </Badge>
             </span>
           </Field>
@@ -97,8 +97,9 @@ export function UserStorageSection({
                   max={1024}
                   step="any"
                   required
+                  aria-describedby="user-allowance-amount-hint"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p id="user-allowance-amount-hint" className="text-xs text-muted-foreground">
                   From 0 to 1024 GB; decimals are fine. 0 stops new backups for this account.
                 </p>
               </div>

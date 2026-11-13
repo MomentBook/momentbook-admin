@@ -312,14 +312,15 @@ describe("updateAdminUserStorageAllowanceAction", () => {
     expect(await run(allowanceForm())).toBe("REDIRECT:/users?error=user_not_found");
   });
 
-  it("409 and 403 are banners with the API message, not a logout", async () => {
+  it.each([
+    [409, "The target account is deleted."],
+    [403, "Forbidden resource."],
+  ])("%i is a banner with the API message, not a logout", async (status, message) => {
     signedIn();
-    updateAdminUserStorageAllowance.mockRejectedValue(
-      new ApiError("The target account is deleted.", 409),
-    );
+    updateAdminUserStorageAllowance.mockRejectedValue(new ApiError(message, status));
 
     expect(await run(allowanceForm())).toBe(
-      "REDIRECT:/users/u-1?error=allowance_update_failed&message=The+target+account+is+deleted.",
+      `REDIRECT:/users/u-1?error=allowance_update_failed&message=${message.replaceAll(" ", "+")}`,
     );
     expect(clearAdminSession).not.toHaveBeenCalled();
   });

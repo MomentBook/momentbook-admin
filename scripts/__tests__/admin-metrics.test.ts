@@ -262,3 +262,28 @@ describe("deletionReasonShare", () => {
     expect(deletionReasonShare(0, 0)).toBe("—");
   });
 });
+
+describe("deletionScheduledAccounts", () => {
+  const users = { total: 100, active: 80, inactive: 5, banned: 3, deleted: 7 };
+
+  it("is what the four statuses leave of the total", async () => {
+    const { deletionScheduledAccounts } = await import("@/lib/admin/metrics-shared");
+
+    expect(deletionScheduledAccounts({ ...users, total: 100 })).toBe(5);
+    expect(deletionScheduledAccounts({ ...users, total: 95 })).toBe(0);
+  });
+
+  it("never goes below 0", async () => {
+    const { deletionScheduledAccounts } = await import("@/lib/admin/metrics-shared");
+
+    expect(deletionScheduledAccounts({ ...users, total: 90 })).toBe(0);
+  });
+
+  it("is 0 when everything is 0", async () => {
+    const { deletionScheduledAccounts } = await import("@/lib/admin/metrics-shared");
+
+    expect(
+      deletionScheduledAccounts({ total: 0, active: 0, inactive: 0, banned: 0, deleted: 0 }),
+    ).toBe(0);
+  });
+});

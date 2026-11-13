@@ -184,3 +184,16 @@ export function permissionMatrix(permissions: AdminNotificationPermissionDto[]):
 export function deletionReasonShare(count: number, requested: number): string {
   return formatRate(count, requested);
 }
+
+/** Accounts scheduled for deletion, as the part of `users.total` the four
+ * status counts leave. Derived from the same snapshot so the card's rows always
+ * add up; never below 0. */
+export function deletionScheduledAccounts(users: {
+  total: number;
+  active: number;
+  inactive: number;
+  banned: number;
+  deleted: number;
+}): number {
+  return Math.max(0, users.total - (users.active + users.inactive + users.banned + users.deleted));
+}

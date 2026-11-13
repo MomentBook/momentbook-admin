@@ -66,7 +66,7 @@ Component use:
   received and filed, sign-in events with IP, and a private-journey count.
   Below the header, an account scheduled for deletion shows a read-only
   "Deletion scheduled" section (requested, deletes on, reason). A "Backup
-  storage" section shows used (with the tone badge), photos and the allowance,
+  storage" section shows used (with the tone badge: the percentage, or "No allowance" when it is 0), photos and the allowance,
   and changes it: "Set allowance" in GB (0 stops new backups) or "Use the
   plan's allowance", each confirmed in a dialog with a required reason
   (ADR 0013). Admins never see chat bodies or private journey contents
@@ -74,7 +74,7 @@ Component use:
 - `/comments`: comment moderation with `active` (default), `deleted` and `all`
   tabs, user and journey filters, and a confirmed delete.
 - `/metrics`: UTC-day charts over 7, 30 or 90 days, queue health, users by
-  status, an Operations card for engineers, an "Account deletions" section
+  status (with a "Deletion scheduled" row, so the rows add up to the total), an Operations card for engineers, an "Account deletions" section
   (requested, restored by owner and deleted over the window, "Scheduled now",
   and the reasons given), and a Notifications section
   (per-category sends, skips and opt-outs, device permission, and the

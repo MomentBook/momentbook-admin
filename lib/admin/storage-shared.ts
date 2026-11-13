@@ -96,3 +96,9 @@ export function parseAllowanceGigabytes(raw: string): AllowanceGigabytesResult {
 
   return { ok: true, bytes };
 }
+
+/** The badge text next to the used figure: the whole percent, or "No
+ * allowance" when the allowance is 0 (a percentage of nothing says nothing). */
+export function allowanceBadgeLabel(usedBytes: number, quotaBytes: number): string {
+  return quotaBytes > 0 ? `${usagePercent(usedBytes, quotaBytes)}%` : "No allowance";
+}

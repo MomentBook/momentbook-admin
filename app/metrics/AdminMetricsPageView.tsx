@@ -13,6 +13,7 @@ import {
 } from "@/lib/admin/paths";
 import {
   METRICS_DAY_OPTIONS,
+  deletionScheduledAccounts,
   formatDurationSeconds,
   formatMetricsDay,
   summarizeDailySeries,
@@ -156,6 +157,12 @@ function UsersByStatusCard({ users }: { users: AdminMetricsDataDto["users"] }) {
     { label: "Inactive", status: "inactive", value: users.inactive },
     { label: "Banned", status: "banned", value: users.banned },
     { label: "Deleted", status: "deleted", value: users.deleted },
+    // What the four leave of the total, so the rows always add up.
+    {
+      label: "Deletion scheduled",
+      status: "pending_deletion",
+      value: deletionScheduledAccounts(users),
+    },
   ];
 
   return (

@@ -45,9 +45,9 @@ function ConfirmSubmitButton({
 }
 
 /**
- * A server-action form behind a confirmation dialog, for the irreversible or
- * outward-facing actions only (ban, unban, approve without translation,
- * delete article). The form and its hidden fields live inside the dialog,
+ * A server-action form behind a confirmation dialog, for the irreversible,
+ * outward-facing or otherwise consequential actions (ban, unban, approve
+ * without translation, delete article, change an account's storage allowance). The form and its hidden fields live inside the dialog,
  * so nothing is submitted until the admin confirms.
  */
 export function ConfirmActionForm({

@@ -53,10 +53,11 @@ account deletion (decisions 5, 7, 8, 9). Amends [0001](0001-admin-app-ownership-
      request, and only a form that names `set` or `plan` sends one.
    - A smaller allowance than the account's usage deletes nothing; its next
      backups are refused. The dialog says so.
+   - The badge next to the used figure shows the percentage, or "No allowance"
+     (same destructive tone) when the allowance is 0.
 6. **No new visual pattern.** The page reuses Metrics' section headings and
    tiles, the Users table, `Badge` variants and `Card`. The bucket share is a
    percentage, with no bar and no chart library.
-
 7. **The deletion section is read-only.** An account scheduled for deletion
    (`PENDING_DELETION`, 14-day grace period) shows a "Deletion scheduled"
    section on its user page: when it was requested, when it is deleted, and the
@@ -65,7 +66,9 @@ account deletion (decisions 5, 7, 8, 9). Amends [0001](0001-admin-app-ownership-
 8. **Deletions in Metrics.** "Account deletions" shows requested, restored by
    owner and deleted over the selected period, "Scheduled now" (not limited to
    the period), and the reasons given with their share of the requests. It
-   reads the same metrics call: no new call.
+   reads the same metrics call: no new call. "Users by status" gains a
+   "Deletion scheduled" row, derived as the total minus the four other rows so
+   the card always adds up (not from the deletion figures, a different query).
 9. **One stat tile** (`components/stat-tile.tsx`) serves Storage and Metrics.
 
 ## Alternatives Considered
