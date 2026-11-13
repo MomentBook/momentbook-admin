@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LocalizedDateTime } from "@/components/LocalizedTime";
+import { StatTile } from "@/components/stat-tile";
 import { cn } from "@/lib/utils";
 import {
   buildAdminMetricsHref,
@@ -72,15 +73,6 @@ function WindowChips({ days }: { days: MetricsDays }) {
         </Link>
       ))}
     </nav>
-  );
-}
-
-function TotalTile({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col gap-0.5 rounded-md border p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-lg font-semibold">{COUNT_FORMATTER.format(value)}</span>
-    </div>
   );
 }
 
@@ -301,7 +293,7 @@ export function AdminMetricsPageView({
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           {WINDOW_TOTALS.map((tile) => (
-            <TotalTile
+            <StatTile
               key={tile.key}
               label={tile.label}
               value={summarizeDailySeries(series(tile.key)).total}

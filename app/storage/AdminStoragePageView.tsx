@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { StatTile } from "@/components/stat-tile";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { buildAdminUserHref } from "@/lib/admin/paths";
 import { formatRate } from "@/lib/admin/metrics-shared";
 import {
@@ -23,23 +23,6 @@ const TONE_BADGE_VARIANT: Record<AllowanceTone, "secondary" | "outline" | "destr
   near: "outline",
   at: "destructive",
 };
-
-function StatTile({
-  label,
-  value,
-  alert = false,
-}: {
-  label: string;
-  value: string;
-  alert?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-0.5 rounded-md border p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("text-lg font-semibold", alert && "text-destructive")}>{value}</span>
-    </div>
-  );
-}
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
