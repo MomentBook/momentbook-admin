@@ -22,7 +22,8 @@ Scripts: `yarn dev`, `yarn build`, `yarn lint`, `yarn test` (`vitest run`),
 only, never edited by hand; `API_SPEC_DIR=<dir>` reads committed documents
 instead of the dev server; ADR 0012).
 The edit hook runs eslint on each edited file in the background and reports
-only errors.
+only errors. It exists only in a Claude Code session started in this
+repository; a session that works here over ssh runs `yarn lint` itself.
 
 shadcn components are added only with `npx shadcn@4.22.1 add <name>`. Rewrite
 its `import { cn } from "cn"` to `@/lib/utils`, do not keep the `cn` package,
