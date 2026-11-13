@@ -23,6 +23,7 @@ import {
 import { defaultLanguage } from "@/lib/i18n/config";
 import { parseApiTime } from "@/lib/view-helpers";
 import type { AdminMetricsDataDto, AdminNotificationMetricsDataDto } from "@/src/apis/types";
+import { AccountDeletionsSection } from "./AccountDeletionsSection";
 import { DailyBarChart } from "./DailyBarChart";
 import { NotificationMetricsSection } from "./NotificationMetricsSection";
 
@@ -341,6 +342,8 @@ export function AdminMetricsPageView({
           <OperationsCard operations={data.operations} />
         </div>
       </section>
+
+      <AccountDeletionsSection deletions={data.deletions} days={data.days} />
 
       <NotificationMetricsSection data={notifications} />
     </div>

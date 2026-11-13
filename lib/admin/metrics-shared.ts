@@ -176,3 +176,11 @@ export function permissionMatrix(permissions: AdminNotificationPermissionDto[]):
     return [{ platform, total: rows.reduce((sum, row) => sum + row.devices, 0), counts }];
   });
 }
+
+// ─── Account deletions ──────────────────────
+
+/** A reason's part of the deletion requests, as a percentage; a dash when
+ * nothing was requested. */
+export function deletionReasonShare(count: number, requested: number): string {
+  return formatRate(count, requested);
+}

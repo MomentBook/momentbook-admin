@@ -246,3 +246,19 @@ describe("loadAdminNotificationMetricsData", () => {
     });
   });
 });
+
+describe("deletionReasonShare", () => {
+  it("is the reason's part of the requests as a percentage", async () => {
+    const { deletionReasonShare } = await import("@/lib/admin/metrics-shared");
+
+    expect(deletionReasonShare(1, 4)).toBe("25%");
+    expect(deletionReasonShare(1, 3)).toBe("33.3%");
+    expect(deletionReasonShare(4, 4)).toBe("100%");
+  });
+
+  it("is a dash when nothing was requested", async () => {
+    const { deletionReasonShare } = await import("@/lib/admin/metrics-shared");
+
+    expect(deletionReasonShare(0, 0)).toBe("—");
+  });
+});
