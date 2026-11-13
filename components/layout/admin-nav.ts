@@ -3,6 +3,7 @@ import {
   ClipboardCheck,
   FileText,
   Flag,
+  HardDrive,
   Inbox,
   MessageSquare,
   ScrollText,
@@ -18,6 +19,7 @@ export type AdminNavKey =
   | "users"
   | "articles"
   | "metrics"
+  | "storage"
   | "audit";
 
 export const ADMIN_NAV_ITEMS: ReadonlyArray<{
@@ -33,5 +35,6 @@ export const ADMIN_NAV_ITEMS: ReadonlyArray<{
   { key: "users", label: "Users", href: "/users", icon: Users },
   { key: "articles", label: "Articles", href: "/articles", icon: FileText },
   { key: "metrics", label: "Metrics", href: "/metrics", icon: ChartColumn },
+  { key: "storage", label: "Storage", href: "/storage", icon: HardDrive },
   { key: "audit", label: "Audit log", href: "/audit-log", icon: ScrollText },
 ];

@@ -7,3 +7,4 @@ export * from "./comments";
 export * from "./audit";
 export * from "./metrics";
 export * from "./auth";
+export * from "./storage";

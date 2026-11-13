@@ -3,10 +3,12 @@ import {
   ADMIN_AUDIT_LOG_PATH,
   ADMIN_COMMENTS_PATH,
   ADMIN_METRICS_PATH,
+  ADMIN_STORAGE_PATH,
   ADMIN_USERS_PATH,
   buildAdminAuditLogHref,
   buildAdminCommentsHref,
   buildAdminMetricsHref,
+  buildAdminStorageHref,
   buildAdminUserHref,
   buildAdminUsersHref,
   buildAdminArticleTableDetailHref,
@@ -114,6 +116,7 @@ describe("operator surface paths", () => {
     expect(ADMIN_COMMENTS_PATH).toBe("/comments");
     expect(ADMIN_METRICS_PATH).toBe("/metrics");
     expect(ADMIN_AUDIT_LOG_PATH).toBe("/audit-log");
+    expect(ADMIN_STORAGE_PATH).toBe("/storage");
   });
 
   it("buildAdminUsersHref omits defaults", () => {
@@ -141,6 +144,10 @@ describe("operator surface paths", () => {
     expect(buildAdminCommentsHref({ publicId: "p1", mutation: "comment_deleted" })).toBe(
       "/comments?publicId=p1&mutation=comment_deleted",
     );
+  });
+
+  it("buildAdminStorageHref is the bare path", () => {
+    expect(buildAdminStorageHref()).toBe("/storage");
   });
 
   it("buildAdminMetricsHref omits unset days", () => {
@@ -203,6 +210,7 @@ describe("operator surface paths", () => {
       "users",
       "articles",
       "metrics",
+      "storage",
       "audit",
     ]);
   });
