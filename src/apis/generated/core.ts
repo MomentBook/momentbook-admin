@@ -10,12 +10,54 @@
  * ---------------------------------------------------------------
  */
 
+/** `SANDBOX` for a test purchase (the stores' sandboxes, TestFlight, license testers). */
+export enum BillingEnvironment {
+  PRODUCTION = "PRODUCTION",
+  SANDBOX = "SANDBOX",
+}
+
+/** The state of the subscription as the store last confirmed it. `ACTIVE` includes a subscription that was cancelled and is still paid for (`autoRenew` is then false); `GRACE` is the billing grace period; `ON_HOLD` is a failed payment the store is still retrying. */
+export enum StorageSubscriptionState {
+  ACTIVE = "ACTIVE",
+  GRACE = "GRACE",
+  ON_HOLD = "ON_HOLD",
+  PAUSED = "PAUSED",
+  EXPIRED = "EXPIRED",
+  REVOKED = "REVOKED",
+}
+
+/** How often the product renews. */
+export enum BillingPeriod {
+  MONTHLY = "MONTHLY",
+  YEARLY = "YEARLY",
+}
+
+/** The store that sells the product. */
+export enum BillingStore {
+  APPLE = "APPLE",
+  GOOGLE = "GOOGLE",
+}
+
 /** Where the name came from. */
 export enum PlaceNameSource {
   GOOGLE_PLACES = "GOOGLE_PLACES",
   REVERSE_GEOCODE = "REVERSE_GEOCODE",
   USER_INPUT = "USER_INPUT",
   AI_SUGGESTION = "AI_SUGGESTION",
+}
+
+/** `NONE`: nothing was asked for. `PENDING`: being written (an earlier result, if any, is still returned). `READY`: written. `FAILED`: the server gave up; ask again with `POST …/insights`. */
+export enum JourneyInsightStatus {
+  NONE = "NONE",
+  PENDING = "PENDING",
+  READY = "READY",
+  FAILED = "FAILED",
+}
+
+/** The on-device engine that looked at the photo: Apple Vision on iOS, ML Kit on Android. */
+export enum PhotoAnalysisProvider {
+  APPLE_VISION = "APPLE_VISION",
+  MLKIT = "MLKIT",
 }
 
 export interface HealthDto {
@@ -69,6 +111,21 @@ export interface ConsentStatusDto {
   requiresAction: boolean;
 }
 
+export interface AccountDeletionStateDto {
+  /**
+   * When the deletion was requested.
+   * @format date-time
+   * @example "2026-11-13T09:30:00.000Z"
+   */
+  requestedAt: string;
+  /**
+   * When the account is deleted for good unless it is restored before (`POST /core/users/me/deletion/cancel`).
+   * @format date-time
+   * @example "2026-11-27T09:30:00.000Z"
+   */
+  scheduledAt: string;
+}
+
 export interface MyProfileDto {
   /**
    * Account id (UUID).
@@ -108,10 +165,10 @@ export interface MyProfileDto {
    */
   isGuest: boolean;
   /**
-   * Account status.
+   * Account status. `PENDING_DELETION`: the owner asked to delete the account; `deletion` (on `GET` and the cancel) says when it goes.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
   /**
    * When the account was created.
    * @format date-time
@@ -126,6 +183,8 @@ export interface MyProfileDto {
   updatedAt: string;
   /** Required-consent status of the account. */
   consents: ConsentStatusDto;
+  /** When the account is scheduled for deletion (`status` `PENDING_DELETION`): when it was requested and when it goes unless restored (`POST /core/users/me/deletion/cancel`). `null` for any other status. */
+  deletion: AccountDeletionStateDto | null;
 }
 
 export interface PictureUpdateDto {
@@ -202,10 +261,10 @@ export interface UserProfileDto {
    */
   isGuest: boolean;
   /**
-   * Account status.
+   * Account status. `PENDING_DELETION`: the owner asked to delete the account; `deletion` (on `GET` and the cancel) says when it goes.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
   /**
    * When the account was created.
    * @format date-time
@@ -218,6 +277,20 @@ export interface UserProfileDto {
    * @example "2026-03-02T12:00:00.000Z"
    */
   updatedAt: string;
+}
+
+export interface RequestAccountDeletionDto {
+  /**
+   * The reason the member picked, if any. There is no free-text reason.
+   * @example "NOT_USING"
+   */
+  reasonCode?:
+    | "NOT_USING"
+    | "HARD_TO_USE"
+    | "MISSING_FEATURE"
+    | "PRIVACY"
+    | "NEW_ACCOUNT"
+    | "OTHER";
 }
 
 export interface UserSummaryDto {
@@ -340,6 +413,32 @@ export interface BlockStatusDto {
   isBlocked: boolean;
 }
 
+export interface UserStorageDto {
+  /**
+   * Bytes the account's backup holds: every photo original uploaded to its private journeys, and every photo presigned and not yet uploaded (a reservation holds its bytes until it is uploaded, removed, or released after 7 days untouched).
+   * @min 0
+   * @example 1288490188
+   */
+  usedBytes: number;
+  /**
+   * The photos `usedBytes` counts, uploaded and reserved.
+   * @min 0
+   * @example 1234
+   */
+  photoCount: number;
+  /**
+   * The account's backup storage allowance in bytes: an amount set for this account when there is one, else its plan's.
+   * @min 0
+   * @example 5368709120
+   */
+  quotaBytes: number;
+  /**
+   * The account's storage plan (`free` unless it has another). `quotaBytes` may differ from the plan's when an amount is set for the account.
+   * @example "free"
+   */
+  planKey: string;
+}
+
 export interface AdminUserListItemDto {
   /**
    * Account id.
@@ -377,7 +476,7 @@ export interface AdminUserListItemDto {
    * Account status.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
   /**
    * Account role.
    * @example "USER"
@@ -434,7 +533,9 @@ export interface AdminUserAuthEventDto {
     | "REVOKE"
     | "LINK"
     | "RATE_LIMITED"
-    | "VERIFY_FAILED";
+    | "VERIFY_FAILED"
+    | "REFRESH_REUSE"
+    | "SENSITIVE_ACTION_BYPASS";
   /**
    * Outcome.
    * @example "SUCCESS"
@@ -541,7 +642,7 @@ export interface AdminUserProfileDto {
    * Account status.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
   /**
    * Account role.
    * @example "USER"
@@ -813,6 +914,58 @@ export interface AdminUserCountsDto {
   reportsFiled: number;
 }
 
+export interface AdminUserStorageDto {
+  /**
+   * Bytes the account's backup holds: every photo original uploaded to its private journeys plus every photo presigned and not yet uploaded.
+   * @min 0
+   * @example 1288490188
+   */
+  usedBytes: number;
+  /**
+   * The photos `usedBytes` counts, uploaded and reserved.
+   * @min 0
+   * @example 1234
+   */
+  photoCount: number;
+  /**
+   * The account's backup allowance in bytes now: the override when there is one, else its plan's quota.
+   * @min 0
+   * @example 5368709120
+   */
+  quotaBytes: number;
+  /**
+   * The account's storage plan (the default plan when it has none). `quotaBytes` differs from the plan's quota when an override is set.
+   * @example "free"
+   */
+  planKey: string;
+  /**
+   * The allowance an operator set for this account, in bytes, or `null` when the plan decides. Change it with `PATCH /core/admin/users/{userId}/storage-allowance`.
+   * @min 0
+   * @example 10737418240
+   */
+  quotaOverrideBytes: number | null;
+}
+
+export interface AdminUserDeletionDto {
+  /**
+   * When the owner asked to delete the account.
+   * @format date-time
+   * @example "2026-10-01T09:30:00.000Z"
+   */
+  requestedAt: string;
+  /**
+   * When the account is deleted for good unless its owner restores it before.
+   * @format date-time
+   * @example "2026-10-15T09:30:00.000Z"
+   */
+  scheduledAt: string;
+  /**
+   * The reason the owner picked (`NOT_USING`, `HARD_TO_USE`, `MISSING_FEATURE`, `PRIVACY`, `NEW_ACCOUNT` or `OTHER`); `null` when none.
+   * @example "NOT_USING"
+   */
+  reasonCode: string | null;
+}
+
 export interface AdminUserDetailDto {
   /** Account profile. */
   profile: AdminUserProfileDto;
@@ -826,6 +979,10 @@ export interface AdminUserDetailDto {
   consents: AdminUserConsentDto[];
   /** Activity counts. */
   counts: AdminUserCountsDto;
+  /** The account's backup storage usage and allowance. */
+  storage: AdminUserStorageDto;
+  /** The pending deletion request of an account scheduled for deletion (`profile.status` `PENDING_DELETION`); `null` otherwise. */
+  deletion: AdminUserDeletionDto | null;
 }
 
 export interface UpdateAdminUserStatusDto {
@@ -860,6 +1017,23 @@ export interface AdminUserStatusDto {
    * @example "BANNED"
    */
   status: "BANNED" | "ACTIVE" | "INACTIVE";
+}
+
+export interface UpdateAdminUserStorageAllowanceDto {
+  /**
+   * The account's backup allowance in bytes, replacing its plan's quota, or `null` to clear the override so the plan decides again. An integer from 0 to 1099511627776 (1 TiB); 0 stops new backups for the account.
+   * @min 0
+   * @max 1099511627776
+   * @example 10737418240
+   */
+  quotaOverrideBytes: number | null;
+  /**
+   * Why the allowance changes, trimmed, 1 to 500 characters. Stored in the admin action log.
+   * @minLength 1
+   * @maxLength 500
+   * @example "Support ticket: restoring a full trip backup"
+   */
+  reason: string;
 }
 
 export interface RevokeAdminUserSessionsDto {
@@ -1719,6 +1893,35 @@ export interface SignupConsentsDto {
   version: string;
 }
 
+export interface UserConsentDto {
+  /**
+   * The consent item key (a `key` of `GET /core/consent-templates/signup`, or a feature consent such as `ai-suggestions-v1`).
+   * @example "ai-suggestions-v1"
+   */
+  consentType: string;
+  /**
+   * The account's current answer.
+   * @example true
+   */
+  agreement: boolean;
+  /**
+   * Whether the item was required when it was answered.
+   * @example false
+   */
+  isRequired: boolean;
+  /**
+   * When the answer was last changed.
+   * @format date-time
+   * @example "2026-11-14T02:11:45.000Z"
+   */
+  updatedAt: string;
+}
+
+export interface UserConsentListDto {
+  /** Every consent item the account has answered. An item it never answered is absent, which means "not agreed". */
+  items: UserConsentDto[];
+}
+
 export interface UserConsentItemUpdateDto {
   /**
    * Whether the user agrees to this item.
@@ -1865,7 +2068,7 @@ export interface AdminUserSummaryDto {
    * Account status now.
    * @example "ACTIVE"
    */
-  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED";
+  status: "ACTIVE" | "INACTIVE" | "DELETED" | "BANNED" | "PENDING_DELETION";
 }
 
 export interface AdminReportJourneyReviewDto {
@@ -2681,6 +2884,172 @@ export interface CommitPrivateJourneyAssetResultDto {
 export interface CommittedPrivateJourneyAssetsDto {
   /** One entry per requested photo, in request order. */
   committed: CommitPrivateJourneyAssetResultDto[];
+}
+
+/** One thing a photo shows. */
+export interface PhotoCategoryScoreDto {
+  /**
+   * A photo category id of the app's category set: `food`, `drink`, `beach`, `water`, `mountain`, `snow`, `nature`, `desert`, `sunset`, `night`, `cityscape`, `architecture`, `museum_art`, `nightlife`, `amusement`, `animal`, `people`, `transport`, `indoor`, `activity`, `document`. An id the server does not know is dropped.
+   * @maxLength 40
+   * @example "food"
+   */
+  id: string;
+  /**
+   * How strongly the photo shows it, 0 to 1.
+   * @min 0
+   * @max 1
+   * @example 0.82
+   */
+  score: number;
+}
+
+/** What one photo shows, as the owner's phone judged it. */
+export interface PhotoAnalysisItemDto {
+  /**
+   * The photo's `photoId` in the private journey document. An entry for a photo the document does not list is dropped.
+   * @pattern ^[A-Za-z0-9_-]{1,122}$
+   * @example "7c1e2d3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f"
+   */
+  photoId: string;
+  /**
+   * The on-device engine that looked at the photo: Apple Vision on iOS, ML Kit on Android.
+   * @example "APPLE_VISION"
+   */
+  provider: PhotoAnalysisProvider;
+  /**
+   * The version of the engine that ran.
+   * @maxLength 32
+   * @example "rev2"
+   */
+  engineVersion: string;
+  /**
+   * The version of the app's category set and label tables that produced `categories`.
+   * @min 1
+   * @example 1
+   */
+  categoryVersion: number;
+  /** What the photo shows, the strongest first: at most 8 categories. Empty when the photo shows none of them. */
+  categories: PhotoCategoryScoreDto[];
+}
+
+export interface PutPhotoAnalysisRequestDto {
+  /** The journey's analysed photos, at most 500. The list replaces what was stored for the journey before; a photo named twice keeps its last entry. */
+  items: PhotoAnalysisItemDto[];
+}
+
+export interface RequestJourneyInsightDto {
+  /**
+   * The title the app gave the journey when it was created (for example its date range). A title is suggested only while the stored title is empty or still equal to this.
+   * @maxLength 200
+   * @example "2026.10.14 - 10.18 여정"
+   */
+  defaultTitle: string;
+}
+
+/** What was suggested for one moment. */
+export interface JourneyInsightMomentDto {
+  /**
+   * The moment's `id` in the private journey document.
+   * @example "moment_01HZX"
+   */
+  momentId: string;
+  /**
+   * Up to two theme ids for the moment.
+   * @example ["food"]
+   */
+  themes: string[];
+  /**
+   * A suggested caption (at most 80 characters); `null` when the owner already wrote one or removed the suggestion. Show it only while the moment's own caption is empty.
+   * @example "호시우 광장에서의 아침 식사"
+   */
+  caption: string | null;
+}
+
+/** What was written for a journey from what its photos show. Kept apart from the journey document: show a value from here only where the owner entered none. */
+export interface JourneyInsightDto {
+  /**
+   * `NONE`: nothing was asked for. `PENDING`: being written (an earlier result, if any, is still returned). `READY`: written. `FAILED`: the server gave up; ask again with `POST …/insights`.
+   * @example "READY"
+   */
+  status: JourneyInsightStatus;
+  /**
+   * The language the text is written in (a supported language code); `null` with `NONE`.
+   * @example "ko"
+   */
+  language: string | null;
+  /**
+   * When the returned result was written; `null` before that.
+   * @format date-time
+   * @example "2026-11-14T02:11:45.000Z"
+   */
+  generatedAt: string | null;
+  /**
+   * The `defaultTitle` of the request. Show `title` only while the journey's stored title is empty or equal to this.
+   * @example "2026.10.14 - 10.18 여정"
+   */
+  defaultTitle: string | null;
+  /**
+   * Up to three theme ids for the journey, from: `food`, `drinks`, `beach`, `water`, `mountain`, `snow`, `nature`, `desert`, `sunset`, `night`, `city`, `architecture`, `art`, `nightlife`, `amusement`, `animals`, `people`, `activity`. Show a label per id; ignore an id the app does not know.
+   * @example ["food","city"]
+   */
+  themes: string[];
+  /**
+   * A suggested title (at most 40 characters); `null` when none was written or the owner removed it.
+   * @example "리스본에서의 이틀"
+   */
+  title: string | null;
+  /**
+   * A suggested description (at most 200 characters); `null` when none was written or the owner removed it. Show it only while the journey's own description is empty.
+   * @example "광장과 골목을 걸으며 먹고 쉬었다."
+   */
+  description: string | null;
+  /** Moments with a theme or a caption; a moment that has neither is left out. */
+  moments: JourneyInsightMomentDto[];
+}
+
+export interface HideJourneyInsightDto {
+  /**
+   * `true` removes the suggested title for good.
+   * @example true
+   */
+  title?: boolean;
+  /**
+   * `true` removes the suggested description for good.
+   * @example false
+   */
+  description?: boolean;
+  /**
+   * Moments whose suggested caption is removed for good (their themes stay).
+   * @example ["moment_01HZX"]
+   */
+  momentIds?: string[];
+}
+
+/** One journey that suggestions were asked for. */
+export interface JourneyInsightIndexItemDto {
+  /**
+   * The journey's id.
+   * @format uuid
+   * @example "0199a1b2-3c4d-4e5f-8a9b-0c1d2e3f4a5b"
+   */
+  journeyId: string;
+  /**
+   * The state of the suggestions, as `GET …/insights` returns it; never `NONE` here.
+   * @example "READY"
+   */
+  status: JourneyInsightStatus;
+  /**
+   * When the entry last changed: a result was written, something was removed, or a new attempt was scheduled. Compare for equality with the value last seen and read `GET …/insights` again when it differs (the text may still be the same).
+   * @format date-time
+   * @example "2026-11-14T02:11:45.000Z"
+   */
+  updatedAt: string;
+}
+
+/** The account's journeys that suggestions were asked for. */
+export interface JourneyInsightIndexDto {
+  /** One entry per journey, in no particular order. */
+  items: JourneyInsightIndexItemDto[];
 }
 
 export interface PublicationDto {
@@ -4640,7 +5009,8 @@ export interface AdminAuditLogItemDto {
     | "COMMENT_DELETED"
     | "ARTICLE_CREATED"
     | "ARTICLE_UPDATED"
-    | "ARTICLE_DELETED";
+    | "ARTICLE_DELETED"
+    | "USER_STORAGE_QUOTA_CHANGED";
   /**
    * Kind of the thing acted on.
    * @example "USER"
@@ -4699,6 +5069,115 @@ export interface AdminAuditLogPageDto {
   limit: number;
 }
 
+export interface AdminStorageBucketDto {
+  /**
+   * Upper bound of the bucket in bytes, included: an account using exactly this much is counted here, not in the next bucket. `null` for the last bucket, which holds every account above the previous bound.
+   * @example 1073741824
+   */
+  upToBytes: number | null;
+  /**
+   * Accounts whose backup usage falls in the bucket.
+   * @example 42
+   */
+  accounts: number;
+}
+
+export interface AdminStorageTopAccountDto {
+  /**
+   * Id (UUID) of the account.
+   * @format uuid
+   * @example "0199a1b2-7d8e-7f01-9a2b-3c4d5e6f7a8b"
+   */
+  userId: string;
+  /**
+   * The account name, `null` when it has none.
+   * @example "Alice"
+   */
+  name: string | null;
+  /**
+   * Bytes the account's backup holds.
+   * @example 4294967296
+   */
+  usedBytes: number;
+  /**
+   * Photos in the account backup.
+   * @example 900
+   */
+  photoCount: number;
+  /**
+   * The account's allowance in bytes: its override, else its plan's quota.
+   * @example 5368709120
+   */
+  quotaBytes: number;
+}
+
+export interface AdminStoragePlanDto {
+  /**
+   * Plan key.
+   * @example "free"
+   */
+  key: string;
+  /**
+   * The plan's allowance in bytes.
+   * @example 5368709120
+   */
+  quotaBytes: number;
+  /**
+   * Whether accounts without a plan of their own get this plan.
+   * @example true
+   */
+  isDefault: boolean;
+  /**
+   * Whether a store subscription can buy this plan.
+   * @example false
+   */
+  isPurchasable: boolean;
+  /**
+   * Accounts on the plan (accounts with none count for the default plan). Deleted accounts are left out.
+   * @example 1200
+   */
+  accounts: number;
+}
+
+export interface AdminStorageMetricsDto {
+  /**
+   * Bytes held by the backups of all accounts that are not deleted.
+   * @example 483183820800
+   */
+  totalBytes: number;
+  /**
+   * Photos in those backups.
+   * @example 120000
+   */
+  totalPhotos: number;
+  /**
+   * Accounts with at least one photo in their backup.
+   * @example 800
+   */
+  accountsWithBackups: number;
+  /**
+   * Bytes of the public copies of published journeys, summed over the publications whose size is recorded. Publications made before the size was recorded are not counted until they are published again.
+   * @example 21474836480
+   */
+  publishedBytes: number;
+  /** Accounts with a backup by usage: 100 MiB, 500 MiB, 1 GiB, 2.5 GiB, 5 GiB, and above 5 GiB, in this order. */
+  buckets: AdminStorageBucketDto[];
+  /**
+   * Accounts using at least 80% and less than 100% of their allowance (an operator's override counts).
+   * @example 17
+   */
+  nearLimit: number;
+  /**
+   * Accounts using 100% or more of their allowance.
+   * @example 3
+   */
+  atLimit: number;
+  /** The 20 accounts with the largest backups, largest first (equal sizes by account id). */
+  topAccounts: AdminStorageTopAccountDto[];
+  /** Every storage plan with the accounts on it. */
+  plans: AdminStoragePlanDto[];
+}
+
 export interface AdminMetricsDailyDto {
   /**
    * The UTC day, `YYYY-MM-DD`. Days are UTC calendar days.
@@ -4744,7 +5223,7 @@ export interface AdminMetricsDailyDto {
 
 export interface AdminMetricsUsersDto {
   /**
-   * All accounts (every role), the sum of the four statuses.
+   * All accounts (every role), whatever their status: the four below plus accounts pending deletion.
    * @example 1500
    */
   total: number;
@@ -4840,6 +5319,44 @@ export interface AdminMetricsOperationsDto {
   erasureOverdue: number;
 }
 
+export interface AdminMetricsDeletionReasonDto {
+  /**
+   * The reason the owner picked (`NOT_USING`, `HARD_TO_USE`, `MISSING_FEATURE`, `PRIVACY`, `NEW_ACCOUNT` or `OTHER`); `null` for requests without one.
+   * @example "NOT_USING"
+   */
+  reasonCode: string | null;
+  /**
+   * Deletion requests made in the window with this reason.
+   * @example 4
+   */
+  count: number;
+}
+
+export interface AdminMetricsDeletionsDto {
+  /**
+   * Account deletion requests made in the window.
+   * @example 12
+   */
+  requested: number;
+  /**
+   * Requests the owner cancelled by restoring the account in the window (a ban cancels a request too, and is not counted).
+   * @example 3
+   */
+  restored: number;
+  /**
+   * Requests that ended in the deletion in the window: at the end of the grace period, or by the immediate deletion (`DELETE /core/users/me`) of an account already pending. An immediate deletion with no request is not counted.
+   * @example 5
+   */
+  executed: number;
+  /**
+   * Requests pending now: accounts scheduled for deletion at this moment, whatever day the request was made. A current number, not limited to the window.
+   * @example 4
+   */
+  pending: number;
+  /** Requests made in the window by reason, most frequent first; requests without a reason under `null`. */
+  reasons: AdminMetricsDeletionReasonDto[];
+}
+
 export interface AdminMetricsDto {
   /**
    * When the figures were computed.
@@ -4872,6 +5389,8 @@ export interface AdminMetricsDto {
   reports: AdminMetricsReportsDto;
   /** Counts that need an engineer, not an admin action. */
   operations: AdminMetricsOperationsDto;
+  /** Account deletion requests. `requested`, `restored`, `executed` and `reasons` count the window (`from` to `to`), the same days as `daily`; `pending` is the current number of requests pending now, whatever day they were made. */
+  deletions: AdminMetricsDeletionsDto;
 }
 
 export interface AdminNotificationSkipDto {
@@ -5022,6 +5541,325 @@ export interface AdminNotificationMetricsDto {
   permissions: AdminNotificationPermissionDto[];
   /** Return after a first engagement notice, target against holdout, by category; a cohort with no account has no entry. The audience widens only when the target returns more by day 30 than the holdout and opt-outs do not rise (ADR-0096). */
   retention: AdminNotificationRetentionDto[];
+}
+
+export interface StoragePlanProductDto {
+  /**
+   * The store that sells the product.
+   * @example "GOOGLE"
+   */
+  store: BillingStore;
+  /**
+   * The product's id in the store: an App Store subscription product, or a Google Play subscription.
+   * @example "storage_plus"
+   */
+  productId: string;
+  /**
+   * The Google Play base plan of the subscription that has this period. `null` for the App Store, where each period is a product of its own.
+   * @example "monthly"
+   */
+  basePlanId: string | null;
+  /**
+   * How often the product renews.
+   * @example "MONTHLY"
+   */
+  period: BillingPeriod;
+}
+
+export interface StoragePlanDto {
+  /**
+   * The plan's key.
+   * @example "plus"
+   */
+  key: string;
+  /**
+   * The backup storage allowance of the plan, in bytes.
+   * @min 0
+   * @example 53687091200
+   */
+  quotaBytes: number;
+  /**
+   * Whether this is the plan of an account that has bought none.
+   * @example false
+   */
+  isDefault: boolean;
+  /**
+   * Whether a store subscription can buy the plan.
+   * @example true
+   */
+  isPurchasable: boolean;
+  /** The store products that buy the plan. Empty for a plan that is not sold, and for every plan while the server has no store configured: offer no purchase then. */
+  products: StoragePlanProductDto[];
+}
+
+export interface StoragePlansDto {
+  /**
+   * The account's billing token. Pass it to the store with every purchase (App Store `appAccountToken`, Google Play `obfuscatedAccountId`): a purchase is matched to its account by it. It is created on the first call and never changes, and it is not the user id.
+   * @format uuid
+   * @example "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b"
+   */
+  accountToken: string;
+  /** Every storage plan, smallest first. */
+  plans: StoragePlanDto[];
+}
+
+export interface VerifyAppleSubscriptionDto {
+  /**
+   * The purchase's signed transaction (JWS), as StoreKit gives it to the app.
+   * @maxLength 20000
+   */
+  signedTransaction: string;
+}
+
+export interface UserSubscriptionDto {
+  /**
+   * The state of the subscription as the store last confirmed it. `ACTIVE` includes a subscription that was cancelled and is still paid for (`autoRenew` is then false); `GRACE` is the billing grace period; `ON_HOLD` is a failed payment the store is still retrying.
+   * @example "ACTIVE"
+   */
+  state: StorageSubscriptionState;
+  /**
+   * Whether the subscription raises the account's storage allowance now (`ACTIVE` and `GRACE` do).
+   * @example true
+   */
+  grantsStorage: boolean;
+  /**
+   * The plan the product buys.
+   * @example "plus"
+   */
+  planKey: string;
+  /**
+   * The store the subscription was bought in. It is managed and cancelled there.
+   * @example "GOOGLE"
+   */
+  store: BillingStore;
+  /**
+   * The store's product id.
+   * @example "storage_plus"
+   */
+  productId: string;
+  /**
+   * The Google Play base plan; `null` for the App Store.
+   * @example "monthly"
+   */
+  basePlanId: string | null;
+  /**
+   * How often the product renews; `null` when the product is no longer listed.
+   * @example "MONTHLY"
+   */
+  period: "MONTHLY" | "YEARLY" | null;
+  /**
+   * Whether the store will renew it at the end of the period. False once it was cancelled.
+   * @example true
+   */
+  autoRenew: boolean;
+  /**
+   * When the paid period ends (in the grace period: when the grace period does). `null` when the store gave no date.
+   * @format date-time
+   * @example "2026-12-14T09:30:00.000Z"
+   */
+  currentPeriodEndAt: string | null;
+  /**
+   * `SANDBOX` for a test purchase (the stores' sandboxes, TestFlight, license testers).
+   * @example "PRODUCTION"
+   */
+  environment: BillingEnvironment;
+}
+
+export interface MySubscriptionDto {
+  /** The account's storage subscription: the one that raises its allowance, else the one the store confirmed last. `null` when it never had one. */
+  subscription: UserSubscriptionDto | null;
+}
+
+export interface VerifyGoogleSubscriptionDto {
+  /**
+   * The purchase token Google Play gave the app's purchase.
+   * @maxLength 4000
+   */
+  purchaseToken: string;
+  /**
+   * The Google Play subscription that was bought (`productId` of `GET /core/storage/plans`). A purchase of another product is refused.
+   * @maxLength 200
+   * @example "storage_plus"
+   */
+  productId: string;
+}
+
+export interface AppleServerNotificationDto {
+  /** The notification, signed by the App Store (JWS): a `responseBodyV2`. */
+  signedPayload: string;
+}
+
+export interface GooglePlayPushMessageDto {
+  /** The `DeveloperNotification`, as base64-encoded JSON. */
+  data: string;
+  /**
+   * Pub/Sub's id of the message: the same for every delivery.
+   * @example "136969346945"
+   */
+  messageId: string;
+}
+
+export interface GooglePlayPushDto {
+  /** The Pub/Sub message. */
+  message: GooglePlayPushMessageDto;
+  /**
+   * The Pub/Sub subscription that pushed the message.
+   * @example "projects/myproject/subscriptions/mysubscription"
+   */
+  subscription: string;
+}
+
+export interface AdminSubscriptionDto {
+  /**
+   * The state of the subscription as the store last confirmed it. `ACTIVE` includes a subscription that was cancelled and is still paid for (`autoRenew` is then false); `GRACE` is the billing grace period; `ON_HOLD` is a failed payment the store is still retrying.
+   * @example "ACTIVE"
+   */
+  state: StorageSubscriptionState;
+  /**
+   * Whether the subscription raises the account's storage allowance now (`ACTIVE` and `GRACE` do).
+   * @example true
+   */
+  grantsStorage: boolean;
+  /**
+   * The plan the product buys.
+   * @example "plus"
+   */
+  planKey: string;
+  /**
+   * The store the subscription was bought in. It is managed and cancelled there.
+   * @example "GOOGLE"
+   */
+  store: BillingStore;
+  /**
+   * The store's product id.
+   * @example "storage_plus"
+   */
+  productId: string;
+  /**
+   * The Google Play base plan; `null` for the App Store.
+   * @example "monthly"
+   */
+  basePlanId: string | null;
+  /**
+   * How often the product renews; `null` when the product is no longer listed.
+   * @example "MONTHLY"
+   */
+  period: "MONTHLY" | "YEARLY" | null;
+  /**
+   * Whether the store will renew it at the end of the period. False once it was cancelled.
+   * @example true
+   */
+  autoRenew: boolean;
+  /**
+   * When the paid period ends (in the grace period: when the grace period does). `null` when the store gave no date.
+   * @format date-time
+   * @example "2026-12-14T09:30:00.000Z"
+   */
+  currentPeriodEndAt: string | null;
+  /**
+   * `SANDBOX` for a test purchase (the stores' sandboxes, TestFlight, license testers).
+   * @example "PRODUCTION"
+   */
+  environment: BillingEnvironment;
+  /**
+   * Id (UUID) of the subscription row.
+   * @format uuid
+   * @example "0199a1b2-7d8e-7f01-9a2b-3c4d5e6f7a8b"
+   */
+  id: string;
+  /**
+   * The store's reference for support: the App Store original transaction id. `null` for Google Play, whose purchase token is a credential and is never returned.
+   * @example "2000000123456789"
+   */
+  storeReference: string | null;
+  /**
+   * When the store last confirmed this state.
+   * @format date-time
+   * @example "2026-11-14T09:30:00.000Z"
+   */
+  lastVerifiedAt: string;
+  /**
+   * When this server first learned of the subscription.
+   * @format date-time
+   * @example "2026-11-14T09:00:00.000Z"
+   */
+  createdAt: string;
+}
+
+export interface AdminStoreNotificationDto {
+  /**
+   * The store that sent the notification.
+   * @example "APPLE"
+   */
+  store: BillingStore;
+  /**
+   * The event: an App Store notification type, or for Google Play `SUBSCRIPTION_<n>` (the notification type's number), `VOIDED_PURCHASE`, `TEST` or `OTHER`.
+   * @example "DID_RENEW"
+   */
+  type: string;
+  /**
+   * The App Store subtype, when the event has one.
+   * @example "VOLUNTARY"
+   */
+  subtype: string | null;
+  /**
+   * What the server did with it: `applied`, or why nothing changed (`ignored`, `unattributed`, `unknown_purchase`, `unknown_product`, `environment_not_accepted`, `pending`, `unreadable`, `other_package`). `null` while unprocessed.
+   * @example "applied"
+   */
+  outcome: string | null;
+  /**
+   * When the notification arrived.
+   * @format date-time
+   * @example "2026-11-14T09:30:00.000Z"
+   */
+  receivedAt: string;
+  /**
+   * When it was processed; `null` when processing failed and the store will deliver it again.
+   * @format date-time
+   * @example "2026-11-14T09:30:01.000Z"
+   */
+  processedAt: string | null;
+}
+
+export interface AdminUserSubscriptionsDto {
+  /** Every store subscription of the account, the one confirmed last first. */
+  subscriptions: AdminSubscriptionDto[];
+  /** The stores' ten latest notifications about those subscriptions, newest first. */
+  notifications: AdminStoreNotificationDto[];
+}
+
+export interface AdminSubscriptionGroupDto {
+  /**
+   * The store.
+   * @example "GOOGLE"
+   */
+  store: BillingStore;
+  /**
+   * `SANDBOX` for test purchases.
+   * @example "PRODUCTION"
+   */
+  environment: BillingEnvironment;
+  /**
+   * The state the store last confirmed.
+   * @example "ACTIVE"
+   */
+  state: StorageSubscriptionState;
+  /**
+   * The plan the product buys.
+   * @example "plus"
+   */
+  planKey: string;
+  /**
+   * Subscriptions in this group.
+   * @min 0
+   * @example 12
+   */
+  count: number;
+}
+
+export interface AdminSubscriptionSummaryDto {
+  /** Every subscription this server knows, counted by store, environment, state and plan. Groups with none are absent. */
+  groups: AdminSubscriptionGroupDto[];
 }
 
 export interface ApiErrorResponseDto {

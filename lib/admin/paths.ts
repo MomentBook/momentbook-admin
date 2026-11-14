@@ -6,6 +6,7 @@ export const ADMIN_REPORTS_PATH = "/reports";
 export const ADMIN_USERS_PATH = "/users";
 export const ADMIN_COMMENTS_PATH = "/comments";
 export const ADMIN_METRICS_PATH = "/metrics";
+export const ADMIN_STORAGE_PATH = "/storage";
 export const ADMIN_AUDIT_LOG_PATH = "/audit-log";
 export const ADMIN_SESSION_PATH = "/session";
 export const ADMIN_SESSION_REFRESH_PATH = "/session/refresh";
@@ -406,6 +407,10 @@ export function buildAdminMetricsHref(options?: {
   return withAdminQuery(ADMIN_METRICS_PATH, {
     days: days === null || days === undefined ? null : String(days),
   });
+}
+
+export function buildAdminStorageHref(): string {
+  return ADMIN_STORAGE_PATH;
 }
 
 export function buildAdminAuditLogHref(options?: {

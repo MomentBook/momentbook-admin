@@ -201,6 +201,46 @@ describe("resolveUserBanner", () => {
     ).toMatchObject({ tone: "success", message: expect.stringContaining("banned") });
   });
 
+  it("an updated allowance says so", async () => {
+    expect(await resolve({ mutation: "storage_allowance_updated" })).toEqual({
+      tone: "success",
+      message: "Allowance updated.",
+    });
+  });
+
+  it("each allowance validation error has its own message", async () => {
+    const messages = await Promise.all(
+      [
+        "allowance_empty",
+        "allowance_not_a_number",
+        "allowance_out_of_range",
+        "allowance_reason_required",
+        "allowance_reason_too_long",
+        "allowance_choice_missing",
+      ].map((error) => resolve({ error })),
+    );
+
+    for (const banner of messages) {
+      expect(banner).toMatchObject({ tone: "error" });
+    }
+    expect(new Set(messages.map((banner) => banner?.message)).size).toBe(6);
+    expect(messages[2]?.message).toBe("The allowance must be from 0 to 1024 GB.");
+    expect(messages[3]?.message).toBe("Give a reason for the change.");
+  });
+
+  it("a refused allowance change shows the API message after the fixed sentence", async () => {
+    expect(
+      await resolve({ error: "allowance_update_failed", message: "The target account is deleted." }),
+    ).toEqual({
+      tone: "error",
+      message: "The allowance could not be changed. The target account is deleted.",
+    });
+    expect(await resolve({ error: "allowance_update_failed" })).toEqual({
+      tone: "error",
+      message: "The allowance could not be changed.",
+    });
+  });
+
   it("returns null without a known code", async () => {
     expect(await resolve({})).toBeNull();
   });

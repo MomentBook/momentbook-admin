@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LocalizedDateTime } from "@/components/LocalizedTime";
+import { StatTile } from "@/components/stat-tile";
 import { cn } from "@/lib/utils";
 import {
   buildAdminMetricsHref,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/admin/paths";
 import {
   METRICS_DAY_OPTIONS,
+  deletionScheduledAccounts,
   formatDurationSeconds,
   formatMetricsDay,
   summarizeDailySeries,
@@ -22,6 +24,7 @@ import {
 import { defaultLanguage } from "@/lib/i18n/config";
 import { parseApiTime } from "@/lib/view-helpers";
 import type { AdminMetricsDataDto, AdminNotificationMetricsDataDto } from "@/src/apis/types";
+import { AccountDeletionsSection } from "./AccountDeletionsSection";
 import { DailyBarChart } from "./DailyBarChart";
 import { NotificationMetricsSection } from "./NotificationMetricsSection";
 
@@ -72,15 +75,6 @@ function WindowChips({ days }: { days: MetricsDays }) {
         </Link>
       ))}
     </nav>
-  );
-}
-
-function TotalTile({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col gap-0.5 rounded-md border p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-lg font-semibold">{COUNT_FORMATTER.format(value)}</span>
-    </div>
   );
 }
 
@@ -163,6 +157,12 @@ function UsersByStatusCard({ users }: { users: AdminMetricsDataDto["users"] }) {
     { label: "Inactive", status: "inactive", value: users.inactive },
     { label: "Banned", status: "banned", value: users.banned },
     { label: "Deleted", status: "deleted", value: users.deleted },
+    // What the four leave of the total, so the rows always add up.
+    {
+      label: "Deletion scheduled",
+      status: "pending_deletion",
+      value: deletionScheduledAccounts(users),
+    },
   ];
 
   return (
@@ -301,7 +301,7 @@ export function AdminMetricsPageView({
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           {WINDOW_TOTALS.map((tile) => (
-            <TotalTile
+            <StatTile
               key={tile.key}
               label={tile.label}
               value={summarizeDailySeries(series(tile.key)).total}
@@ -349,6 +349,8 @@ export function AdminMetricsPageView({
           <OperationsCard operations={data.operations} />
         </div>
       </section>
+
+      <AccountDeletionsSection deletions={data.deletions} days={data.days} />
 
       <NotificationMetricsSection data={notifications} />
     </div>

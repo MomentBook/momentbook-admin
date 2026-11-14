@@ -27,6 +27,7 @@ export const ADMIN_AUDIT_ACTION_LABELS: Record<AdminAuditAction, string> = {
   ARTICLE_CREATED: "Article created",
   ARTICLE_UPDATED: "Article updated",
   ARTICLE_DELETED: "Article deleted",
+  USER_STORAGE_QUOTA_CHANGED: "Storage allowance changed",
 };
 
 export const ADMIN_AUDIT_TARGET_TYPE_LABELS: Record<AdminAuditTargetType, string> = {
