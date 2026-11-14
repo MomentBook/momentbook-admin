@@ -91,7 +91,8 @@ describe("audit filters", () => {
     expect(parseAuditTargetTypeFilter("COMMENT")).toBe("COMMENT");
     expect(parseAuditTargetTypeFilter("JOURNEY")).toBeUndefined();
     expect(parseAuditTargetTypeFilter(null)).toBeUndefined();
-    expect(Object.keys(ADMIN_AUDIT_ACTION_LABELS)).toHaveLength(11);
+    expect(Object.keys(ADMIN_AUDIT_ACTION_LABELS)).toHaveLength(12);
+    expect(ADMIN_AUDIT_ACTION_LABELS.USER_STORAGE_QUOTA_CHANGED).toBe("Storage allowance changed");
   });
 
   it("summarizes details as plain key: value text", async () => {

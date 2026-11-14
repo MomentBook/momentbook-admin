@@ -4,6 +4,8 @@
 
 import type {
   AdminMetricsDailyDto as GeneratedAdminMetricsDailyDto,
+  AdminMetricsDeletionReasonDto as GeneratedAdminMetricsDeletionReasonDto,
+  AdminMetricsDeletionsDto as GeneratedAdminMetricsDeletionsDto,
   AdminMetricsDto,
   AdminNotificationCategoryMetricsDto as GeneratedAdminNotificationCategoryMetricsDto,
   AdminNotificationMetricsDto,
@@ -14,6 +16,12 @@ import type {
 
 export type AdminMetricsDataDto = AdminMetricsDto;
 export type AdminMetricsDailyDto = GeneratedAdminMetricsDailyDto;
+
+/** Account deletion figures: `requested`, `restored`, `executed` and `reasons`
+ * count over the selected window; `pending` is the accounts scheduled for
+ * deletion now, whatever the window. */
+export type AdminMetricsDeletionsDto = GeneratedAdminMetricsDeletionsDto;
+export type AdminMetricsDeletionReasonDto = GeneratedAdminMetricsDeletionReasonDto;
 
 // ─── Notification metrics (GET /core/admin/metrics/notifications, ADR-0096) ───
 

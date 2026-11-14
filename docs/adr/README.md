@@ -29,6 +29,7 @@ ADR during startup.
 | [0005](0005-moderation-workspace-and-review-evidence.md) | Active, amended by [0010](0010-server-side-review-counts-and-workspace-shell.md) | Moderation workspace and evidence | `/`, `/reviews`, review detail, evidence grouping, or review mutations change. |
 | [0010](0010-server-side-review-counts-and-workspace-shell.md) | Active | Server-side review counts and workspace shell | Attention counts, sidebar badges, queue tabs/totals, overview loading, `WorkspaceShell`, or backend call budget change. |
 | [0011](0011-operator-surfaces-users-comments-metrics-audit.md) | Active | Operator surfaces | `/users`, `/comments`, `/metrics`, `/audit-log`, user sanctions or sign-out, comment moderation, or the visibility boundary change. |
+| [0013](0013-storage-overview.md) | Active | Storage overview | `/storage`, the byte formatting, the allowance figures, or where an account's allowance is changed. |
 | [0006](0006-editorial-articles-and-guide-support.md) | Active | Editorial articles and guide support | `/articles`, article editor/list/actions, markdown parsing, or editorial helpers change. |
 | [0009](0009-reports-moderation-and-user-sanction.md) | Active, amended by [0010](0010-server-side-review-counts-and-workspace-shell.md) | Reports moderation and user sanctions | `/reports`, reports queues, report detail, user ban/unban, or moderation status changes. |
 
@@ -36,7 +37,7 @@ ADR during startup.
 
 - MomentBook Admin is a standalone Next.js admin-only app backed by the Nest API.
 - The app owns `/` (attention overview), `/reviews`, `/reports`, `/comments`,
-  `/users`, `/articles`, `/metrics`, `/audit-log`, `/login`, and the `/session*` routes only, at the root of the admin origin.
+  `/users`, `/articles`, `/metrics`, `/storage`, `/audit-log`, `/login`, and the `/session*` routes only, at the root of the admin origin.
 - Public journey consumption, public guides, SEO rendering, sitemaps,
   analytics, localized public chrome, marketing, recap, archive, and community
   UX belong to the public MomentBook web app.

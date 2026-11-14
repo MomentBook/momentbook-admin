@@ -37,8 +37,9 @@ Component use:
 | Status chips, filter chips | `Badge` (filter chips are links) |
 | Notices and mutation results | `Alert` with `AlertTitle className="line-clamp-none"` |
 | Metrics, panels | `Card` |
+| One figure (Storage, Metrics) | `StatTile` (`components/stat-tile.tsx`) |
 | Queues | `Table` with link pagination (server-rendered; no client table engine) |
-| Irreversible or outward-facing actions | `ConfirmActionForm` (`components/confirm-action-form.tsx`, `AlertDialog`) |
+| Irreversible, outward-facing or consequential actions (ban, sign out, allowance) | `ConfirmActionForm` (`components/confirm-action-form.tsx`, `AlertDialog`) |
 | Fullscreen photo inspection | `LightboxPhotoTile` (`Dialog`) |
 | Forms | native `<form action={serverAction}>` with `Input`, `Textarea`, `Select`, `Label` |
 
@@ -63,13 +64,36 @@ Component use:
   filters) and account detail: profile, both emails, sign-in methods,
   sessions and devices, moderation history, public journeys, comments, reports
   received and filed, sign-in events with IP, and a private-journey count.
-  Admins never see chat bodies or private journey contents (ADR 0011).
+  Below the header, an account scheduled for deletion shows a read-only
+  "Deletion scheduled" section (requested, deletes on, reason). A "Backup
+  storage" section shows used (with the tone badge: the percentage, or "No allowance" when it is 0), photos and the allowance,
+  and changes it: "Set allowance" in GB (0 stops new backups) or "Use the
+  plan's allowance", each confirmed in a dialog with a required reason
+  (ADR 0013). A "Storage subscription" section lists the account's
+  subscriptions as the API stores them (plan, state, store, period, what
+  its date means in that state, when the store last confirmed it, a "Test
+  purchase" badge for the sandbox; a Google Play purchase token is never
+  shown) and the recent store notifications about them. Its one action,
+  "Check with the store", has the API read them back from their stores; it
+  sets nothing a store did not say, so it asks no reason and writes no audit
+  entry. An operator cannot grant, extend, cancel or refund a subscription
+  here: the stores do that, and the section says so. Admins never see chat bodies or private journey contents
+  (ADR 0011).
 - `/comments`: comment moderation with `active` (default), `deleted` and `all`
   tabs, user and journey filters, and a confirmed delete.
 - `/metrics`: UTC-day charts over 7, 30 or 90 days, queue health, users by
-  status, an Operations card for engineers, and a Notifications section
+  status (with a "Deletion scheduled" row, so the rows add up to the total), an Operations card for engineers, an "Account deletions" section
+  (requested, restored by owner and deleted over the window, "Scheduled now",
+  and the reasons given), and a Notifications section
   (per-category sends, skips and opt-outs, device permission, and the
   engagement holdout's 7- and 30-day return).
+- `/storage`: read-only backup storage overview: totals, accounts at or near
+  their allowance, accounts by backup size, the 20 largest backups (linked to
+  the account), the plans with their account counts (ADR 0013), and the
+  storage subscriptions: how many raise an allowance, are held without
+  raising one (a payment being retried, a pause) or have ended, counting
+  real purchases only, with test purchases counted apart and a table by
+  store, state and plan.
 - `/audit-log`: admin actions with filters; targets link to their screen.
 - `/articles`: editorial article management for published-only markdown
   guide records, with language/category filters, pagination, derived
@@ -102,8 +126,8 @@ Component use:
   only translations pending for more than six hours — and the tile and tab say
   so in one line (ADR 0010).
 - **Call budget.** Every page adds its own calls to the 4 attention calls:
-  `/users` 1, `/users/[userId]` 1 + 6, `/comments` 1, `/metrics` 2,
-  `/audit-log` 1 (ADR 0011; the older pages are in ADR 0010).
+  `/users` 1, `/users/[userId]` 1 + 7, `/comments` 1, `/metrics` 2,
+  `/storage` 2, `/audit-log` 1 (ADR 0011; the older pages are in ADR 0010).
 - **Queue.** Every tab uses the API order (first published, newest first).
   Rows carry the queue context (`status`, `page`) for the back link.
 - **Decisions.** Approve, Reject, and Move to pending are direct submit

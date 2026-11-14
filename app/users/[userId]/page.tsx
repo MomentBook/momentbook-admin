@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { buildNoIndexRobots } from "@/lib/seo/public-metadata";
 import { isBackendApiError } from "@/lib/api/client";
+import { loadAdminUserSubscriptionsOrNull } from "@/lib/admin/subscriptions";
 import { loadAdminUserDetailWorkspaceData } from "@/lib/admin/users";
 import { buildAdminUserHref, buildAdminUsersHref } from "@/lib/admin/paths";
 import { loadWorkspacePage, readQueryParam } from "@/app/_workspace/workspace-data";
@@ -40,7 +41,14 @@ export default async function AdminUserDetailPage({
   try {
     result = await loadWorkspacePage({
       returnTo,
-      load: (accessToken) => loadAdminUserDetailWorkspaceData(accessToken, userId),
+      load: async (accessToken) => {
+        const [detail, subscriptions] = await Promise.all([
+          loadAdminUserDetailWorkspaceData(accessToken, userId),
+          loadAdminUserSubscriptionsOrNull(accessToken, userId),
+        ]);
+
+        return { detail, subscriptions };
+      },
     });
   } catch (error) {
     if (isBackendApiError(error)) {
@@ -65,7 +73,8 @@ export default async function AdminUserDetailPage({
     <WorkspaceShell active="users" counts={result.counts} session={result.session}>
       <AdminUserDetailPageView
         banner={banner}
-        data={result.data}
+        data={result.data.detail}
+        subscriptions={result.data.subscriptions}
         returnTo={returnTo}
         sessionUserId={result.session.userId}
       />

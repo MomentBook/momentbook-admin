@@ -29,9 +29,17 @@ describe("user directory parsers", () => {
     expect(parseUserStatusFilter("active")).toBe("ACTIVE");
     expect(parseUserStatusFilter("inactive")).toBe("INACTIVE");
     expect(parseUserStatusFilter("deleted")).toBe("DELETED");
+    expect(parseUserStatusFilter("pending_deletion")).toBe("PENDING_DELETION");
     expect(parseUserStatusFilter("x")).toBeUndefined();
     expect(parseUserStatusFilter("BANNED")).toBeUndefined();
     expect(parseUserStatusFilter(undefined)).toBeUndefined();
+  });
+
+  it("shows a scheduled deletion with its own label and the outline badge", async () => {
+    const { USER_STATUS_LABELS, userStatusBadgeVariant } = await import("@/lib/admin/users-shared");
+
+    expect(USER_STATUS_LABELS.PENDING_DELETION).toBe("Deletion scheduled");
+    expect(userStatusBadgeVariant("PENDING_DELETION")).toBe("outline");
   });
 
   it("parseUserRoleFilter only accepts admin", async () => {
@@ -85,5 +93,31 @@ describe("loadAdminUsersWorkspaceData", () => {
       limit: 20,
     });
     expect(result).toMatchObject({ total: 0, page: 2, pages: 1, users: [] });
+  });
+});
+
+describe("deletion reason labels", () => {
+  it("labels each code the API sends", async () => {
+    const { deletionReasonLabel } = await import("@/lib/admin/users-shared");
+
+    expect(deletionReasonLabel("NOT_USING")).toBe("Doesn't use it");
+    expect(deletionReasonLabel("HARD_TO_USE")).toBe("Hard to use");
+    expect(deletionReasonLabel("MISSING_FEATURE")).toBe("Missing a feature");
+    expect(deletionReasonLabel("PRIVACY")).toBe("Privacy concern");
+    expect(deletionReasonLabel("NEW_ACCOUNT")).toBe("Switching account");
+    expect(deletionReasonLabel("OTHER")).toBe("Other");
+  });
+
+  it("reads no code as not given", async () => {
+    const { deletionReasonLabel } = await import("@/lib/admin/users-shared");
+
+    expect(deletionReasonLabel(null)).toBe("Not given");
+  });
+
+  it("humanizes a code it does not know", async () => {
+    const { deletionReasonLabel, humanizeEnum } = await import("@/lib/admin/users-shared");
+
+    expect(deletionReasonLabel("TOO_EXPENSIVE")).toBe("Too expensive");
+    expect(humanizeEnum("USER_SESSIONS_REVOKED")).toBe("User sessions revoked");
   });
 });

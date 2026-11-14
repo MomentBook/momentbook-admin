@@ -31,11 +31,11 @@ and keep `radix-ui` at `~1.6.7`.
 ## Boundary
 Admin-only, at the root of the admin origin: `/` (attention overview),
 `/reviews`, `/reports`, `/comments`, `/users`, `/articles`, `/metrics`,
-`/audit-log`, `/login`, `/session*`.
+`/storage`, `/audit-log`, `/login`, `/session*`.
 Do not expand into public UX. Ownership transfers require an ADR.
 
 ## Architecture
-Design decisions: `docs/adr/README.md` (12 ADRs). Product and UX intent:
+Design decisions: `docs/adr/README.md` (13 ADRs). Product and UX intent:
 `docs/DESIGN.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->

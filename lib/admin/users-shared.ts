@@ -11,6 +11,7 @@ export const USER_STATUS_LABELS: Record<AdminUserStatus, string> = {
   INACTIVE: "Inactive",
   BANNED: "Banned",
   DELETED: "Deleted",
+  PENDING_DELETION: "Deletion scheduled",
 };
 
 export function userStatusBadgeVariant(
@@ -51,4 +52,27 @@ export function parseUserStatusFilter(raw?: string | null): AdminUserStatus | un
 
 export function parseUserRoleFilter(raw?: string | null): AdminUserRole | undefined {
   return raw === "admin" ? "ADMIN" : undefined;
+}
+
+/** `USER_SESSIONS_REVOKED` → "User sessions revoked". */
+export function humanizeEnum(value: string): string {
+  const words = value.toLowerCase().replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** The reasons a person can give when scheduling their account for deletion. */
+const DELETION_REASON_LABELS: Record<string, string> = {
+  NOT_USING: "Doesn't use it",
+  HARD_TO_USE: "Hard to use",
+  MISSING_FEATURE: "Missing a feature",
+  PRIVACY: "Privacy concern",
+  NEW_ACCOUNT: "Switching account",
+  OTHER: "Other",
+};
+
+/** A deletion reason as the operator reads it. `null` is a person who skipped
+ * the question; a code this map does not know is humanized, not hidden. */
+export function deletionReasonLabel(code: string | null): string {
+  if (code === null) return "Not given";
+  return DELETION_REASON_LABELS[code] ?? humanizeEnum(code);
 }
