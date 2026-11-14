@@ -53,11 +53,23 @@ export function periodEndLabel(subscription: { state: string; autoRenew: boolean
     case "PAUSED":
       return "Paid period ended";
     case "EXPIRED":
-    case "REVOKED":
       return "Ended";
+    case "REVOKED":
+      // A refund or a revocation can come in the middle of a paid period:
+      // the date is then still ahead, and is not when the subscription ended.
+      return "Paid period was until";
     default:
       return "Period end";
   }
+}
+
+const STILL_CHANGING_STATES = new Set(["ACTIVE", "GRACE", "ON_HOLD", "PAUSED"]);
+
+/** Whether "Check with the store" would ask anything: the server reads back
+ * only the subscriptions that can still change in their store, never one
+ * that has ended. */
+export function canAskStoreAgain(subscriptions: ReadonlyArray<{ state: string }>): boolean {
+  return subscriptions.some((subscription) => STILL_CHANGING_STATES.has(subscription.state));
 }
 
 export type SubscriptionGroup = {

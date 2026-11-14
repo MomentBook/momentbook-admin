@@ -62,8 +62,27 @@ describe("periodEndLabel", () => {
     expect(periodEndLabel({ state: "ON_HOLD", autoRenew: true })).toBe("Paid period ended");
     expect(periodEndLabel({ state: "PAUSED", autoRenew: true })).toBe("Paid period ended");
     expect(periodEndLabel({ state: "EXPIRED", autoRenew: false })).toBe("Ended");
-    expect(periodEndLabel({ state: "REVOKED", autoRenew: false })).toBe("Ended");
+    // A refund in the middle of a period leaves a date that is still ahead.
+    expect(periodEndLabel({ state: "REVOKED", autoRenew: false })).toBe("Paid period was until");
     expect(periodEndLabel({ state: "SOMETHING_NEW", autoRenew: true })).toBe("Period end");
+  });
+});
+
+describe("canAskStoreAgain", () => {
+  it("is true while a subscription can still change in its store", async () => {
+    const { canAskStoreAgain } = await import("@/lib/admin/subscriptions-shared");
+
+    for (const state of ["ACTIVE", "GRACE", "ON_HOLD", "PAUSED"]) {
+      expect(canAskStoreAgain([{ state: "EXPIRED" }, { state }])).toBe(true);
+    }
+  });
+
+  it("is false when every subscription has ended, or there is none: the server asks about neither", async () => {
+    const { canAskStoreAgain } = await import("@/lib/admin/subscriptions-shared");
+
+    expect(canAskStoreAgain([{ state: "EXPIRED" }, { state: "REVOKED" }])).toBe(false);
+    expect(canAskStoreAgain([])).toBe(false);
+    expect(canAskStoreAgain([{ state: "SOMETHING_NEW" }])).toBe(false);
   });
 });
 
@@ -147,7 +166,8 @@ describe("resolveUserBanner for the subscription check", () => {
 
     expect(resolveUserBanner({ ...none, mutation: "subscriptions_checked" })).toEqual({
       tone: "success",
-      message: "Checked with the store. The subscriptions below are what it says now.",
+      message:
+        "Asked the store about the subscriptions that can still change. What is stored now is below.",
     });
   });
 
@@ -168,5 +188,13 @@ describe("resolveUserBanner for the subscription check", () => {
       tone: "error",
       message: "The store could not be asked. Billing is not configured for this store",
     });
+    // The server's own words for an outage are the same sentence: said once.
+    expect(
+      resolveUserBanner({
+        ...none,
+        error: "subscriptions_check_failed",
+        message: "The store could not be asked",
+      }),
+    ).toEqual({ tone: "error", message: "The store could not be asked." });
   });
 });

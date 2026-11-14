@@ -49,13 +49,17 @@ export function resolveUserBanner(options: {
   if (options.mutation === "subscriptions_checked") {
     return {
       tone: "success",
-      message: "Checked with the store. The subscriptions below are what it says now.",
+      message:
+        "Asked the store about the subscriptions that can still change. What is stored now is below.",
     };
   }
 
   if (options.error === "subscriptions_check_failed") {
     const base = "The store could not be asked.";
-    return { tone: "error", message: options.message ? `${base} ${options.message}` : base };
+    // The server's words for an outage are this same sentence: say it once.
+    const reason = options.message?.trim().replace(/\.$/, "");
+    const repeats = reason === base.replace(/\.$/, "");
+    return { tone: "error", message: reason && !repeats ? `${base} ${reason}` : base };
   }
 
   if (options.error === "user_not_found") {

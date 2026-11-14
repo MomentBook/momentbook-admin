@@ -1,6 +1,7 @@
 import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { Badge } from "@/components/ui/badge";
 import {
+  canAskStoreAgain,
   periodEndLabel,
   periodLabel,
   storeLabel,
@@ -55,7 +56,9 @@ function Subscription({ subscription }: { subscription: AdminSubscriptionDto }) 
           <DateValue value={subscription.createdAt} withTime />
         </Field>
         <Field label="Store reference">
-          {subscription.storeReference ? (
+          {/* Only the App Store's id: a Google Play purchase token is a
+              credential and is never shown, whatever the API answers. */}
+          {subscription.store === "APPLE" && subscription.storeReference ? (
             <span className="break-all font-mono text-xs">{subscription.storeReference}</span>
           ) : (
             <span className="text-xs text-muted-foreground">Not shown</span>
@@ -77,7 +80,7 @@ function Notification({ notification }: { notification: AdminStoreNotificationDt
         </span>{" "}
         <span className="text-xs text-muted-foreground">
           {storeLabel(notification.store)}
-          {notification.outcome ? `, ${notification.outcome}` : ", not processed yet"}
+          {notification.outcome ? `, ${notification.outcome}` : ", not processed"}
         </span>
       </span>
       <span className="text-xs text-muted-foreground">
@@ -129,14 +132,21 @@ export function UserSubscriptionSection({
           </ul>
         )}
 
-        {subscriptions.length > 0 ? (
+        {subscriptions.length > 0 && !canAskStoreAgain(subscriptions) ? (
+          <p className="text-xs text-muted-foreground">
+            Every subscription here has ended. An ended subscription is not asked about again;
+            a new purchase arrives from the store by itself.
+          </p>
+        ) : null}
+
+        {canAskStoreAgain(subscriptions) ? (
           <div className="flex flex-col items-start gap-1.5">
             <ConfirmActionForm
               action={resyncAdminUserSubscriptionsAction}
               fields={{ userId, returnTo }}
               triggerLabel="Check with the store"
               title={`Check the subscriptions of ${label} with the store?`}
-              description={`Reads the subscriptions of ${label} (${userId}) back from their stores and stores what the stores say now. It changes nothing a store did not say, and is not written to the audit log.`}
+              description={`Reads the subscriptions of ${label} (${userId}) that can still change (active, grace period, on hold, paused) back from their stores and stores what the stores say now. Ended ones are not asked about. It changes nothing a store did not say, and is not written to the audit log.`}
               confirmLabel="Check with the store"
             />
             <p className="text-xs text-muted-foreground">

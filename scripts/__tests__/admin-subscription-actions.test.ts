@@ -47,8 +47,8 @@ class ApiError extends Error {
 
 function form(fields: Record<string, string> = {}) {
   const formData = new FormData();
-  formData.set("returnTo", "/users/u-1");
-  formData.set("userId", "u-1");
+  formData.set("returnTo", "/users/0192f3a4-5b6c-7d8e-9f01-000000000001");
+  formData.set("userId", "0192f3a4-5b6c-7d8e-9f01-000000000001");
 
   for (const [key, value] of Object.entries(fields)) {
     formData.set(key, value);
@@ -89,9 +89,20 @@ describe("resyncAdminUserSubscriptionsAction", () => {
 
     expect(resyncAdminUserSubscriptions).toHaveBeenCalledWith({
       accessToken: "token",
-      userId: "u-1",
+      userId: "0192f3a4-5b6c-7d8e-9f01-000000000001",
     });
-    expect(result).toBe("REDIRECT:/users/u-1?mutation=subscriptions_checked");
+    expect(result).toBe("REDIRECT:/users/0192f3a4-5b6c-7d8e-9f01-000000000001?mutation=subscriptions_checked");
+  });
+
+  it("sends nothing for an id that is not a user id", async () => {
+    signedIn();
+
+    for (const userId of ["..", "u-1", "0192f3a4-5b6c-7d8e-9f01-000000000001/../x"]) {
+      const result = await run(form({ userId }));
+
+      expect(result).toContain("error=missing_user_id");
+    }
+    expect(resyncAdminUserSubscriptions).not.toHaveBeenCalled();
   });
 
   it("sends nothing without a user id", async () => {
@@ -100,7 +111,7 @@ describe("resyncAdminUserSubscriptionsAction", () => {
     const result = await run(form({ userId: " " }));
 
     expect(resyncAdminUserSubscriptions).not.toHaveBeenCalled();
-    expect(result).toBe("REDIRECT:/users/u-1?error=missing_user_id");
+    expect(result).toBe("REDIRECT:/users/0192f3a4-5b6c-7d8e-9f01-000000000001?error=missing_user_id");
   });
 
   it("an expired admin session signs out and returns to the page after login", async () => {
@@ -133,7 +144,7 @@ describe("resyncAdminUserSubscriptionsAction", () => {
 
     expect(clearAdminSession).not.toHaveBeenCalled();
     expect(result).toBe(
-      "REDIRECT:/users/u-1?error=subscriptions_check_failed&message=The+store+could+not+be+reached.",
+      "REDIRECT:/users/0192f3a4-5b6c-7d8e-9f01-000000000001?error=subscriptions_check_failed&message=The+store+could+not+be+reached.",
     );
   });
 
@@ -143,6 +154,6 @@ describe("resyncAdminUserSubscriptionsAction", () => {
 
     const result = await run(form());
 
-    expect(result).toBe("REDIRECT:/users/u-1?error=subscriptions_check_failed");
+    expect(result).toBe("REDIRECT:/users/0192f3a4-5b6c-7d8e-9f01-000000000001?error=subscriptions_check_failed");
   });
 });

@@ -17,6 +17,10 @@ function readText(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+// The API's ids are UUIDs. Anything else is refused here: a value such as
+// ".." would fold the request path onto another route.
+const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function buildReturnEntries(extra: Record<string, string | null | undefined>) {
   return {
     mutation: null,
@@ -37,7 +41,7 @@ export async function resyncAdminUserSubscriptionsAction(formData: FormData): Pr
     sanitizeAdminPath(readText(formData.get("returnTo"))) ?? ADMIN_USERS_PATH;
   const userId = readText(formData.get("userId"));
 
-  if (!userId) {
+  if (!USER_ID.test(userId)) {
     redirect(withAdminQuery(nextPath, buildReturnEntries({ error: "missing_user_id" })));
   }
 
