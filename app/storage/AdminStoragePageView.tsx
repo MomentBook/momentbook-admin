@@ -13,7 +13,12 @@ import {
   usagePercent,
   type AllowanceTone,
 } from "@/lib/admin/storage-shared";
-import type { AdminStorageDataDto } from "@/src/apis/types";
+import {
+  storeLabel,
+  subscriptionStateLabel,
+  summarizeSubscriptionGroups,
+} from "@/lib/admin/subscriptions-shared";
+import type { AdminStorageDataDto, AdminSubscriptionSummaryDataDto } from "@/src/apis/types";
 
 const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
 const count = (value: number) => COUNT_FORMATTER.format(value);
@@ -163,7 +168,73 @@ function PlansTable({ plans }: { plans: AdminStorageDataDto["plans"] }) {
   );
 }
 
-export function AdminStoragePageView({ data }: { data: AdminStorageDataDto }) {
+/** Storage subscriptions by store, state and plan. Test purchases are listed
+ * with the rest and counted apart, never in the three production figures. */
+function SubscriptionsSection({
+  subscriptions,
+}: {
+  subscriptions: AdminSubscriptionSummaryDataDto | null;
+}) {
+  if (subscriptions === null) {
+    return (
+      <Section id="subscriptions" title="Subscriptions">
+        <p className="text-xs text-muted-foreground">Could not load the subscription counts.</p>
+      </Section>
+    );
+  }
+
+  const summary = summarizeSubscriptionGroups(subscriptions.groups);
+
+  return (
+    <Section id="subscriptions" title="Subscriptions">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatTile label="Raising an allowance" value={count(summary.granting)} />
+        <StatTile label="Held, not raising one" value={count(summary.heldNotGranting)} />
+        <StatTile label="Ended" value={count(summary.over)} />
+        <StatTile label="Test purchases" value={count(summary.sandbox)} />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        The first three count real purchases only. &quot;Held&quot; is a payment a store is still
+        retrying, or a pause. Subscriptions are changed and refunded in the stores.
+      </p>
+      {summary.rows.length === 0 ? null : (
+        <TableCard title="By store and state">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Store</TableHead>
+                <TableHead>State</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Purchases</TableHead>
+                <TableHead className="text-right">Subscriptions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {summary.rows.map((row) => (
+                <TableRow key={`${row.environment}-${row.store}-${row.state}-${row.planKey}`}>
+                  <TableCell>{storeLabel(row.store)}</TableCell>
+                  <TableCell>{subscriptionStateLabel(row.state)}</TableCell>
+                  <TableCell className="font-mono text-xs">{row.planKey}</TableCell>
+                  <TableCell>{row.environment === "PRODUCTION" ? "Real" : "Test"}</TableCell>
+                  <TableCell className="text-right tabular-nums">{count(row.count)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableCard>
+      )}
+    </Section>
+  );
+}
+
+export function AdminStoragePageView({
+  data,
+  subscriptions,
+}: {
+  data: AdminStorageDataDto;
+  /** Subscription counts; `null` when they could not be loaded. */
+  subscriptions: AdminSubscriptionSummaryDataDto | null;
+}) {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold tracking-tight">Storage</h1>
@@ -194,6 +265,7 @@ export function AdminStoragePageView({ data }: { data: AdminStorageDataDto }) {
       <BucketsTable data={data} />
       <TopAccountsTable accounts={data.topAccounts} />
       <PlansTable plans={data.plans} />
+      <SubscriptionsSection subscriptions={subscriptions} />
     </div>
   );
 }

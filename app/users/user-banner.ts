@@ -10,8 +10,8 @@ const ALLOWANCE_ERROR_MESSAGES: Record<string, string> = {
   allowance_choice_missing: "Choose Set allowance or Use the plan's allowance.",
 };
 
-/** Banner for the user detail page: sign-out and allowance results first, then
- * the shared ban/unban banner. */
+/** Banner for the user detail page: sign-out, allowance and subscription-check
+ * results first, then the shared ban/unban banner. */
 export function resolveUserBanner(options: {
   mutation: string | null;
   error: string | null;
@@ -43,6 +43,18 @@ export function resolveUserBanner(options: {
 
   if (options.error === "allowance_update_failed") {
     const base = "The allowance could not be changed.";
+    return { tone: "error", message: options.message ? `${base} ${options.message}` : base };
+  }
+
+  if (options.mutation === "subscriptions_checked") {
+    return {
+      tone: "success",
+      message: "Checked with the store. The subscriptions below are what it says now.",
+    };
+  }
+
+  if (options.error === "subscriptions_check_failed") {
+    const base = "The store could not be asked.";
     return { tone: "error", message: options.message ? `${base} ${options.message}` : base };
   }
 

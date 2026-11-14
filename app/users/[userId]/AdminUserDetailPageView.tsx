@@ -17,7 +17,11 @@ import { COMMENT_DELETED_BY_LABELS } from "@/lib/admin/comments-shared";
 import { getAdminReviewStatusLabel, normalizeAdminReviewItem } from "@/lib/admin/reviews";
 import type { AdminUserDetailWorkspaceData } from "@/lib/admin/users";
 import { USER_STATUS_LABELS, humanizeEnum, userStatusBadgeVariant } from "@/lib/admin/users-shared";
-import type { AdminUserCountsDto, AdminUserProfileDto } from "@/src/apis/types";
+import type {
+  AdminUserCountsDto,
+  AdminUserProfileDto,
+  AdminUserSubscriptionsDataDto,
+} from "@/src/apis/types";
 import type { AdminDashboardBanner } from "@/app/_workspace/workspace-data";
 import { updateAdminUserStatusAction } from "@/app/reports/actions";
 import { ReportHistoryList } from "@/app/reports/ReportHistoryList";
@@ -25,6 +29,7 @@ import { revokeAdminUserSessionsAction } from "../actions";
 import { DateValue, Field, ReasonInput, Section } from "./UserDetailParts";
 import { UserDeletionSection } from "./UserDeletionSection";
 import { UserStorageSection } from "./UserStorageSection";
+import { UserSubscriptionSection } from "./UserSubscriptionSection";
 
 const ACTIVITY_COUNTS: ReadonlyArray<[keyof AdminUserCountsDto, string]> = [
   ["publishedJourneys", "Published journeys"],
@@ -602,11 +607,14 @@ function AuthEventsSection({ data }: { data: AdminUserDetailWorkspaceData }) {
 export function AdminUserDetailPageView({
   banner,
   data,
+  subscriptions,
   returnTo,
   sessionUserId,
 }: {
   banner: AdminDashboardBanner | null;
   data: AdminUserDetailWorkspaceData;
+  /** The account's storage subscriptions; `null` when they could not be loaded. */
+  subscriptions: AdminUserSubscriptionsDataDto | null;
   returnTo: string;
   sessionUserId: string;
 }) {
@@ -636,6 +644,12 @@ export function AdminUserDetailPageView({
           returnTo={returnTo}
           label={profile.name || profile.email || profile.userId}
           disabledReason={profile.status === "DELETED" ? "Deleted account." : null}
+        />
+        <UserSubscriptionSection
+          data={subscriptions}
+          userId={profile.userId}
+          returnTo={returnTo}
+          label={profile.name || profile.email || profile.userId}
         />
         <ModerationSection data={data} userId={profile.userId} />
         <ReportsSection data={data} userId={profile.userId} />

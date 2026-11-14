@@ -10,6 +10,34 @@
  * ---------------------------------------------------------------
  */
 
+/** `SANDBOX` for a test purchase (the stores' sandboxes, TestFlight, license testers). */
+export enum BillingEnvironment {
+  PRODUCTION = "PRODUCTION",
+  SANDBOX = "SANDBOX",
+}
+
+/** The state of the subscription as the store last confirmed it. `ACTIVE` includes a subscription that was cancelled and is still paid for (`autoRenew` is then false); `GRACE` is the billing grace period; `ON_HOLD` is a failed payment the store is still retrying. */
+export enum StorageSubscriptionState {
+  ACTIVE = "ACTIVE",
+  GRACE = "GRACE",
+  ON_HOLD = "ON_HOLD",
+  PAUSED = "PAUSED",
+  EXPIRED = "EXPIRED",
+  REVOKED = "REVOKED",
+}
+
+/** How often the product renews. */
+export enum BillingPeriod {
+  MONTHLY = "MONTHLY",
+  YEARLY = "YEARLY",
+}
+
+/** The store that sells the product. */
+export enum BillingStore {
+  APPLE = "APPLE",
+  GOOGLE = "GOOGLE",
+}
+
 /** Where the name came from. */
 export enum PlaceNameSource {
   GOOGLE_PLACES = "GOOGLE_PLACES",
@@ -5321,7 +5349,7 @@ export interface AdminMetricsDeletionsDto {
    */
   executed: number;
   /**
-   * Requests made in the window whose account is still waiting for its deletion date.
+   * Requests pending now: accounts scheduled for deletion at this moment, whatever day the request was made. A current number, not limited to the window.
    * @example 4
    */
   pending: number;
@@ -5361,7 +5389,7 @@ export interface AdminMetricsDto {
   reports: AdminMetricsReportsDto;
   /** Counts that need an engineer, not an admin action. */
   operations: AdminMetricsOperationsDto;
-  /** Account deletion requests over the window (`from` to `to`), the same days as `daily`. */
+  /** Account deletion requests. `requested`, `restored`, `executed` and `reasons` count the window (`from` to `to`), the same days as `daily`; `pending` is the current number of requests pending now, whatever day they were made. */
   deletions: AdminMetricsDeletionsDto;
 }
 
@@ -5513,6 +5541,325 @@ export interface AdminNotificationMetricsDto {
   permissions: AdminNotificationPermissionDto[];
   /** Return after a first engagement notice, target against holdout, by category; a cohort with no account has no entry. The audience widens only when the target returns more by day 30 than the holdout and opt-outs do not rise (ADR-0096). */
   retention: AdminNotificationRetentionDto[];
+}
+
+export interface StoragePlanProductDto {
+  /**
+   * The store that sells the product.
+   * @example "GOOGLE"
+   */
+  store: BillingStore;
+  /**
+   * The product's id in the store: an App Store subscription product, or a Google Play subscription.
+   * @example "storage_plus"
+   */
+  productId: string;
+  /**
+   * The Google Play base plan of the subscription that has this period. `null` for the App Store, where each period is a product of its own.
+   * @example "monthly"
+   */
+  basePlanId: string | null;
+  /**
+   * How often the product renews.
+   * @example "MONTHLY"
+   */
+  period: BillingPeriod;
+}
+
+export interface StoragePlanDto {
+  /**
+   * The plan's key.
+   * @example "plus"
+   */
+  key: string;
+  /**
+   * The backup storage allowance of the plan, in bytes.
+   * @min 0
+   * @example 53687091200
+   */
+  quotaBytes: number;
+  /**
+   * Whether this is the plan of an account that has bought none.
+   * @example false
+   */
+  isDefault: boolean;
+  /**
+   * Whether a store subscription can buy the plan.
+   * @example true
+   */
+  isPurchasable: boolean;
+  /** The store products that buy the plan. Empty for a plan that is not sold, and for every plan while the server has no store configured: offer no purchase then. */
+  products: StoragePlanProductDto[];
+}
+
+export interface StoragePlansDto {
+  /**
+   * The account's billing token. Pass it to the store with every purchase (App Store `appAccountToken`, Google Play `obfuscatedAccountId`): a purchase is matched to its account by it. It is created on the first call and never changes, and it is not the user id.
+   * @format uuid
+   * @example "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b"
+   */
+  accountToken: string;
+  /** Every storage plan, smallest first. */
+  plans: StoragePlanDto[];
+}
+
+export interface VerifyAppleSubscriptionDto {
+  /**
+   * The purchase's signed transaction (JWS), as StoreKit gives it to the app.
+   * @maxLength 20000
+   */
+  signedTransaction: string;
+}
+
+export interface UserSubscriptionDto {
+  /**
+   * The state of the subscription as the store last confirmed it. `ACTIVE` includes a subscription that was cancelled and is still paid for (`autoRenew` is then false); `GRACE` is the billing grace period; `ON_HOLD` is a failed payment the store is still retrying.
+   * @example "ACTIVE"
+   */
+  state: StorageSubscriptionState;
+  /**
+   * Whether the subscription raises the account's storage allowance now (`ACTIVE` and `GRACE` do).
+   * @example true
+   */
+  grantsStorage: boolean;
+  /**
+   * The plan the product buys.
+   * @example "plus"
+   */
+  planKey: string;
+  /**
+   * The store the subscription was bought in. It is managed and cancelled there.
+   * @example "GOOGLE"
+   */
+  store: BillingStore;
+  /**
+   * The store's product id.
+   * @example "storage_plus"
+   */
+  productId: string;
+  /**
+   * The Google Play base plan; `null` for the App Store.
+   * @example "monthly"
+   */
+  basePlanId: string | null;
+  /**
+   * How often the product renews; `null` when the product is no longer listed.
+   * @example "MONTHLY"
+   */
+  period: "MONTHLY" | "YEARLY" | null;
+  /**
+   * Whether the store will renew it at the end of the period. False once it was cancelled.
+   * @example true
+   */
+  autoRenew: boolean;
+  /**
+   * When the paid period ends (in the grace period: when the grace period does). `null` when the store gave no date.
+   * @format date-time
+   * @example "2026-12-14T09:30:00.000Z"
+   */
+  currentPeriodEndAt: string | null;
+  /**
+   * `SANDBOX` for a test purchase (the stores' sandboxes, TestFlight, license testers).
+   * @example "PRODUCTION"
+   */
+  environment: BillingEnvironment;
+}
+
+export interface MySubscriptionDto {
+  /** The account's storage subscription: the one that raises its allowance, else the one the store confirmed last. `null` when it never had one. */
+  subscription: UserSubscriptionDto | null;
+}
+
+export interface VerifyGoogleSubscriptionDto {
+  /**
+   * The purchase token Google Play gave the app's purchase.
+   * @maxLength 4000
+   */
+  purchaseToken: string;
+  /**
+   * The Google Play subscription that was bought (`productId` of `GET /core/storage/plans`). A purchase of another product is refused.
+   * @maxLength 200
+   * @example "storage_plus"
+   */
+  productId: string;
+}
+
+export interface AppleServerNotificationDto {
+  /** The notification, signed by the App Store (JWS): a `responseBodyV2`. */
+  signedPayload: string;
+}
+
+export interface GooglePlayPushMessageDto {
+  /** The `DeveloperNotification`, as base64-encoded JSON. */
+  data: string;
+  /**
+   * Pub/Sub's id of the message: the same for every delivery.
+   * @example "136969346945"
+   */
+  messageId: string;
+}
+
+export interface GooglePlayPushDto {
+  /** The Pub/Sub message. */
+  message: GooglePlayPushMessageDto;
+  /**
+   * The Pub/Sub subscription that pushed the message.
+   * @example "projects/myproject/subscriptions/mysubscription"
+   */
+  subscription: string;
+}
+
+export interface AdminSubscriptionDto {
+  /**
+   * The state of the subscription as the store last confirmed it. `ACTIVE` includes a subscription that was cancelled and is still paid for (`autoRenew` is then false); `GRACE` is the billing grace period; `ON_HOLD` is a failed payment the store is still retrying.
+   * @example "ACTIVE"
+   */
+  state: StorageSubscriptionState;
+  /**
+   * Whether the subscription raises the account's storage allowance now (`ACTIVE` and `GRACE` do).
+   * @example true
+   */
+  grantsStorage: boolean;
+  /**
+   * The plan the product buys.
+   * @example "plus"
+   */
+  planKey: string;
+  /**
+   * The store the subscription was bought in. It is managed and cancelled there.
+   * @example "GOOGLE"
+   */
+  store: BillingStore;
+  /**
+   * The store's product id.
+   * @example "storage_plus"
+   */
+  productId: string;
+  /**
+   * The Google Play base plan; `null` for the App Store.
+   * @example "monthly"
+   */
+  basePlanId: string | null;
+  /**
+   * How often the product renews; `null` when the product is no longer listed.
+   * @example "MONTHLY"
+   */
+  period: "MONTHLY" | "YEARLY" | null;
+  /**
+   * Whether the store will renew it at the end of the period. False once it was cancelled.
+   * @example true
+   */
+  autoRenew: boolean;
+  /**
+   * When the paid period ends (in the grace period: when the grace period does). `null` when the store gave no date.
+   * @format date-time
+   * @example "2026-12-14T09:30:00.000Z"
+   */
+  currentPeriodEndAt: string | null;
+  /**
+   * `SANDBOX` for a test purchase (the stores' sandboxes, TestFlight, license testers).
+   * @example "PRODUCTION"
+   */
+  environment: BillingEnvironment;
+  /**
+   * Id (UUID) of the subscription row.
+   * @format uuid
+   * @example "0199a1b2-7d8e-7f01-9a2b-3c4d5e6f7a8b"
+   */
+  id: string;
+  /**
+   * The store's reference for support: the App Store original transaction id. `null` for Google Play, whose purchase token is a credential and is never returned.
+   * @example "2000000123456789"
+   */
+  storeReference: string | null;
+  /**
+   * When the store last confirmed this state.
+   * @format date-time
+   * @example "2026-11-14T09:30:00.000Z"
+   */
+  lastVerifiedAt: string;
+  /**
+   * When this server first learned of the subscription.
+   * @format date-time
+   * @example "2026-11-14T09:00:00.000Z"
+   */
+  createdAt: string;
+}
+
+export interface AdminStoreNotificationDto {
+  /**
+   * The store that sent the notification.
+   * @example "APPLE"
+   */
+  store: BillingStore;
+  /**
+   * The event: an App Store notification type, or for Google Play `SUBSCRIPTION_<n>` (the notification type's number), `VOIDED_PURCHASE`, `TEST` or `OTHER`.
+   * @example "DID_RENEW"
+   */
+  type: string;
+  /**
+   * The App Store subtype, when the event has one.
+   * @example "VOLUNTARY"
+   */
+  subtype: string | null;
+  /**
+   * What the server did with it: `applied`, or why nothing changed (`ignored`, `unattributed`, `unknown_purchase`, `unknown_product`, `environment_not_accepted`, `pending`, `unreadable`, `other_package`). `null` while unprocessed.
+   * @example "applied"
+   */
+  outcome: string | null;
+  /**
+   * When the notification arrived.
+   * @format date-time
+   * @example "2026-11-14T09:30:00.000Z"
+   */
+  receivedAt: string;
+  /**
+   * When it was processed; `null` when processing failed and the store will deliver it again.
+   * @format date-time
+   * @example "2026-11-14T09:30:01.000Z"
+   */
+  processedAt: string | null;
+}
+
+export interface AdminUserSubscriptionsDto {
+  /** Every store subscription of the account, the one confirmed last first. */
+  subscriptions: AdminSubscriptionDto[];
+  /** The stores' ten latest notifications about those subscriptions, newest first. */
+  notifications: AdminStoreNotificationDto[];
+}
+
+export interface AdminSubscriptionGroupDto {
+  /**
+   * The store.
+   * @example "GOOGLE"
+   */
+  store: BillingStore;
+  /**
+   * `SANDBOX` for test purchases.
+   * @example "PRODUCTION"
+   */
+  environment: BillingEnvironment;
+  /**
+   * The state the store last confirmed.
+   * @example "ACTIVE"
+   */
+  state: StorageSubscriptionState;
+  /**
+   * The plan the product buys.
+   * @example "plus"
+   */
+  planKey: string;
+  /**
+   * Subscriptions in this group.
+   * @min 0
+   * @example 12
+   */
+  count: number;
+}
+
+export interface AdminSubscriptionSummaryDto {
+  /** Every subscription this server knows, counted by store, environment, state and plan. Groups with none are absent. */
+  groups: AdminSubscriptionGroupDto[];
 }
 
 export interface ApiErrorResponseDto {
