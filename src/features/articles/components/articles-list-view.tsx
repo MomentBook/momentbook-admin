@@ -1,234 +1,111 @@
 import Link from "next/link";
+import { FilterTabs } from "@/components/filter-tabs";
+import { FlashBanner } from "@/components/flash-banner";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { UrlPagination } from "@/components/url-pagination";
+import { formatCount } from "@/lib/format/number";
+import { languageList } from "@/lib/i18n";
+import type { Flash } from "@/lib/navigation/flash";
 import {
   buildAdminArticleDetailHref,
   buildAdminArticleNewHref,
   buildAdminArticleWorkspaceHref,
 } from "@/lib/navigation/paths";
-import { type AdminEditorialArticleDashboardData } from "@/features/articles/loader";
 import { getEditorialCategoryLabel } from "@/entities/article/copy";
 import { editorialArticleCategories } from "@/entities/article/types";
-import { languageList } from "@/lib/i18n";
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { AdminEditorialArticleDashboardData } from "@/features/articles/loader";
+import { ArticlesTable, type ArticleRow } from "./articles-table";
 
-function formatAdminDate(value: string): string {
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return value;
-  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(timestamp);
-}
-
-type AdminArticleListPageViewProps = {
-  banner: AdminDashboardBanner | null;
-  dashboard: AdminEditorialArticleDashboardData;
-};
-
-export function AdminArticleListPageView({
+export function ArticlesListView({
   banner,
-  dashboard,
-}: AdminArticleListPageViewProps) {
-  const currentWorkspaceHref = buildAdminArticleWorkspaceHref({
-    page: dashboard.page,
-    lang: dashboard.language,
-    category: dashboard.category,
-  });
+  data,
+}: {
+  banner: Flash | null;
+  data: AdminEditorialArticleDashboardData;
+}) {
+  const { language, category } = data;
+  const listHref = (page?: number) =>
+    buildAdminArticleWorkspaceHref({ page, lang: language, category });
+  const currentHref = listHref(data.page);
+  const rows: ArticleRow[] = data.items.map((item) => ({
+    ...item,
+    detailHref: buildAdminArticleDetailHref(item.id, { returnTo: currentHref }),
+  }));
 
   return (
     <div className="flex flex-col gap-4">
-        {/* Header */}
-        <Card>
-          <CardContent className="flex items-center justify-between gap-2 pt-6">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Editorial admin</span>
-              <h1 className="text-2xl font-semibold tracking-tight">Articles</h1>
-              <p className="text-sm text-muted-foreground">
-                {dashboard.total} published records
-              </p>
-            </div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Articles</h1>
+          <p className="text-sm text-muted-foreground">
+            {formatCount(data.total)} published records
+          </p>
+        </div>
+        <Button asChild size="sm">
+          <Link href={buildAdminArticleNewHref()}>New article</Link>
+        </Button>
+      </div>
 
-            <Link href={buildAdminArticleNewHref()}>
-              <Button size="sm">New article</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <FlashBanner flash={banner} />
 
-        {/* Banner */}
-        {banner ? (
-          <Alert variant={banner.tone === "error" ? "destructive" : "default"}>
-            <AlertDescription>{banner.message}</AlertDescription>
-          </Alert>
-        ) : null}
+      <div className="flex flex-col gap-3">
+        <FilterTabs
+          label="Language"
+          variant="pill"
+          items={[
+            {
+              label: "All",
+              href: buildAdminArticleWorkspaceHref({ category }),
+              active: !language,
+            },
+            ...languageList.map((option) => ({
+              label: option.toUpperCase(),
+              href: buildAdminArticleWorkspaceHref({ lang: option, category }),
+              active: language === option,
+            })),
+          ]}
+        />
+        <FilterTabs
+          label="Category"
+          variant="pill"
+          items={[
+            {
+              label: "All",
+              href: buildAdminArticleWorkspaceHref({ lang: language }),
+              active: !category,
+            },
+            ...editorialArticleCategories.map((option) => ({
+              label: getEditorialCategoryLabel(option),
+              href: buildAdminArticleWorkspaceHref({ lang: language, category: option }),
+              active: category === option,
+            })),
+          ]}
+        />
+      </div>
 
-        {/* Filters */}
-        <Card>
-          <CardContent className="flex flex-col gap-2 pt-6">
-            {/* Language filter */}
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Language</span>
-              <div className="flex flex-wrap gap-1">
-                <Link
-                  href={buildAdminArticleWorkspaceHref({ category: dashboard.category })}
-                >
-                  <Badge variant={!dashboard.language ? "default" : "outline"}>
-                    All
-                  </Badge>
-                </Link>
-                {languageList.map((language) => (
-                  <Link
-                    key={language}
-                    href={buildAdminArticleWorkspaceHref({
-                      page: 1,
-                      lang: language,
-                      category: dashboard.category,
-                    })}
-                  >
-                    <Badge
-                      variant={dashboard.language === language ? "default" : "outline"}
-                    >
-                      {language.toUpperCase()}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Category filter */}
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Category</span>
-              <div className="flex flex-wrap gap-1">
-                <Link
-                  href={buildAdminArticleWorkspaceHref({ lang: dashboard.language })}
-                >
-                  <Badge variant={!dashboard.category ? "default" : "outline"}>
-                    All
-                  </Badge>
-                </Link>
-                {editorialArticleCategories.map((category) => (
-                  <Link
-                    key={category}
-                    href={buildAdminArticleWorkspaceHref({
-                      page: 1,
-                      lang: dashboard.language,
-                      category,
-                    })}
-                  >
-                    <Badge
-                      variant={dashboard.category === category ? "default" : "outline"}
-                    >
-                      {getEditorialCategoryLabel(category)}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Article table or empty state */}
-        {dashboard.items.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-              <h3 className="text-lg font-semibold">No articles match the current filters.</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Widen the language or category filters, or create a new article.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Language</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Route</TableHead>
-                      <TableHead>Reading time</TableHead>
-                      <TableHead>Published</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dashboard.items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <Link
-                            href={buildAdminArticleDetailHref(item.id, {
-                              returnTo: currentWorkspaceHref,
-                            })}
-                            className="text-primary hover:underline"
-                          >
-                            {item.title}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{item.language.toUpperCase()}</Badge>
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {getEditorialCategoryLabel(item.category)}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-xs text-muted-foreground">
-                            /{item.language}/guides/{item.slug}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {item.readingMinutes} min
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {formatAdminDate(item.publishedAt)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pagination */}
-        {dashboard.pages > 1 ? (
-          <div className="flex items-center justify-between gap-2">
-            <Link
-              href={buildAdminArticleWorkspaceHref({
-                page: Math.max(1, dashboard.page - 1),
-                lang: dashboard.language,
-                category: dashboard.category,
-              })}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={dashboard.page <= 1}
-              >
-                Previous
-              </Button>
-            </Link>
-            <span className="text-xs text-muted-foreground">
-              Page {dashboard.page} of {dashboard.pages}
-            </span>
-            <Link
-              href={buildAdminArticleWorkspaceHref({
-                page: Math.min(dashboard.pages, dashboard.page + 1),
-                lang: dashboard.language,
-                category: dashboard.category,
-              })}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={dashboard.page >= dashboard.pages}
-              >
-                Next
-              </Button>
-            </Link>
+      {rows.length > 0 ? (
+        <>
+          <div className="overflow-x-auto rounded-md border">
+            <ArticlesTable rows={rows} />
           </div>
-        ) : null}
+          <UrlPagination page={data.page} pages={data.pages} hrefFor={listHref} />
+        </>
+      ) : (
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyTitle>No articles match the current filters.</EmptyTitle>
+            <EmptyDescription>
+              Widen the language or category filters, or create a new article.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
     </div>
   );
 }

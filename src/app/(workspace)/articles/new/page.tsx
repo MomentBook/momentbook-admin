@@ -1,81 +1,51 @@
 import type { Metadata } from "next";
+import { renderWorkspacePage } from "@/components/layout/workspace-page";
+import { resolveSupportedLanguage } from "@/lib/i18n";
+import { loadArticleEditorParams } from "@/lib/navigation/article-routes";
 import {
   buildAdminArticleNewHref,
   buildAdminArticleWorkspaceHref,
   sanitizeAdminPath,
 } from "@/lib/navigation/paths";
-import { isBackendApiError } from "@/lib/api/client";
-import { resolveSupportedLanguage } from "@/lib/i18n";
-import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
-import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { WorkspaceError } from "@/components/layout/workspace-error";
-import { resolveArticleBanner } from "@/features/articles/flash";
 import { createEditorialArticleAction } from "@/features/articles/actions";
-import { EditorialArticleEditorPageView } from "@/features/articles/components/article-editor-view";
+import { ArticleEditorView } from "@/features/articles/components/article-editor-view";
+import { resolveArticleBanner } from "@/features/articles/flash";
 
 export const metadata: Metadata = {
   title: "Create Article",
 };
 
-export default async function AdminNewArticlePage({
+export default async function ArticleCreatePage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolvedSearchParams = await searchParams;
-  const returnTo =
-    sanitizeAdminPath(readQueryParam(resolvedSearchParams.returnTo)) ??
-    buildAdminArticleWorkspaceHref();
-  const suggestedTranslationGroupId = readQueryParam(
-    resolvedSearchParams.translationGroupId,
-  );
-  const suggestedLanguage = resolveSupportedLanguage(
-    readQueryParam(resolvedSearchParams.language),
-  );
+  const query = loadArticleEditorParams(await searchParams);
+  const listHref = buildAdminArticleWorkspaceHref();
+  const returnTo = sanitizeAdminPath(query.returnTo) ?? listHref;
+  const suggestedLanguage = resolveSupportedLanguage(query.language);
   const nextPath = buildAdminArticleNewHref({
-    returnTo: returnTo === buildAdminArticleWorkspaceHref() ? null : returnTo,
-    translationGroupId: suggestedTranslationGroupId,
+    returnTo: returnTo === listHref ? null : returnTo,
+    translationGroupId: query.translationGroupId,
     language: suggestedLanguage,
   });
-  const banner = resolveArticleBanner({
-    error: readQueryParam(resolvedSearchParams.error),
-    message: readQueryParam(resolvedSearchParams.message),
-    mutation: readQueryParam(resolvedSearchParams.mutation),
-    articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
-  });
-  let result;
 
-  try {
-    result = await loadWorkspacePage({
-      returnTo: nextPath,
-      load: async () => null,
-    });
-  } catch (error) {
-    if (isBackendApiError(error)) {
-      return (
-        <WorkspaceError
-          heading="The article editor is temporarily unavailable."
-          message={error.message}
-          statusCode={error.statusCode}
-        />
-      );
-    }
-
-    throw error;
-  }
-
-  return (
-    <WorkspaceShell active="articles" counts={result.counts} session={result.session}>
-      <EditorialArticleEditorPageView
+  return renderWorkspacePage({
+    active: "articles",
+    errorHeading: "The article editor is temporarily unavailable.",
+    returnTo: nextPath,
+    // Nothing to load: the shell's counts and the session are enough.
+    load: async () => null,
+    render: () => (
+      <ArticleEditorView
         article={null}
-        banner={banner}
+        banner={resolveArticleBanner(query)}
         nextPath={nextPath}
         returnTo={returnTo}
         saveAction={createEditorialArticleAction}
         suggestedLanguage={suggestedLanguage}
-        suggestedTranslationGroupId={suggestedTranslationGroupId}
-        title="Create article"
+        suggestedTranslationGroupId={query.translationGroupId}
       />
-    </WorkspaceShell>
-  );
+    ),
+  });
 }

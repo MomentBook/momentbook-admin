@@ -24,7 +24,9 @@ export type ApiRefusal = { message: string; statusCode: number; errorCode?: stri
 
 export type AdminActionOptions<I> = {
   formData: FormData;
-  /** The page to return to when `returnTo` is missing or not an admin path. */
+  /** The form field naming the page to return to. Default: `returnTo`. */
+  returnField?: string;
+  /** The page to return to when that field is missing or not an admin path. */
   fallbackPath: string;
   /** Reads the form before the session is asked for. A failed read returns
    * with `error=<code>`: the first issue's message when it is an error code
@@ -32,6 +34,9 @@ export type AdminActionOptions<I> = {
   fields: z.ZodType<I>;
   /** Banner messages some input error codes carry. */
   inputMessages?: Readonly<Record<string, string>>;
+  /** The query for a failed read, in place of `error=<code>`: for forms whose
+   * checks speak in sentences. */
+  onInvalid?: (error: z.ZodError) => QueryEntries;
   /** The query keys every outcome owns, in the order the URL lists them; a key
    * an outcome does not set is removed. Default: `mutation`, `error`,
    * `message`. */
@@ -112,7 +117,8 @@ function failureQuery(error: string, message: string | null | undefined): QueryE
 export async function runAdminAction<I>(options: AdminActionOptions<I>): Promise<never> {
   const cookieStore = await cookies();
   const returnPath =
-    sanitizeAdminPath(readFormText(options.formData, "returnTo")) ?? options.fallbackPath;
+    sanitizeAdminPath(readFormText(options.formData, options.returnField ?? "returnTo")) ??
+    options.fallbackPath;
   const baseQuery = options.baseQuery?.(options.formData) ?? DEFAULT_BASE_QUERY;
   const land = (outcome: ActionOutcome): never =>
     redirect(withAdminQuery(outcome.path ?? returnPath, { ...baseQuery, ...outcome.query }));
@@ -120,6 +126,10 @@ export async function runAdminAction<I>(options: AdminActionOptions<I>): Promise
   const parsed = options.fields.safeParse(readFormFields(options.formData));
 
   if (!parsed.success) {
+    if (options.onInvalid) {
+      return land({ query: options.onInvalid(parsed.error) });
+    }
+
     const code = readIssueCode(parsed.error);
     return land({ query: failureQuery(code, options.inputMessages?.[code]) });
   }

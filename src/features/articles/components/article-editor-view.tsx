@@ -1,33 +1,17 @@
-import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BackLink } from "@/components/back-link";
+import { Field } from "@/components/detail-parts";
+import { FlashBanner } from "@/components/flash-banner";
+import { Time } from "@/components/time";
 import { Button } from "@/components/ui/button";
-import { buildAdminArticleWorkspaceHref } from "@/lib/navigation/paths";
+import { Card, CardContent } from "@/components/ui/card";
+import type { Flash } from "@/lib/navigation/flash";
 import { getEditorialCategoryLabel } from "@/entities/article/copy";
 import type { EditorialArticleRecord } from "@/entities/article/types";
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
-import { EditorialArticleEditorForm } from "./article-editor-form";
+import { ArticleEditorForm } from "./article-editor-form";
 
-function formatAdminDate(value: string | null | undefined): string {
-  if (!value) return "Not available";
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return value;
-  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(timestamp);
-}
-
-type EditorialArticleEditorPageViewProps = {
-  article: EditorialArticleRecord | null;
-  banner: AdminDashboardBanner | null;
-  deleteAction?: (formData: FormData) => Promise<never>;
-  nextPath: string;
-  returnTo: string;
-  saveAction: (formData: FormData) => Promise<never>;
-  suggestedLanguage?: string | null;
-  suggestedTranslationGroupId?: string | null;
-  title?: string;
-};
-
-export function EditorialArticleEditorPageView({
+/** The article editor: what the record is (language, slug and group are
+ * fixed once created), then the form. An edit also offers deleting. */
+export function ArticleEditorView({
   article,
   banner,
   deleteAction,
@@ -36,97 +20,76 @@ export function EditorialArticleEditorPageView({
   saveAction,
   suggestedLanguage,
   suggestedTranslationGroupId,
-  title,
-}: EditorialArticleEditorPageViewProps) {
-  const translationGroupId =
-    article?.translationGroupId ?? suggestedTranslationGroupId ?? "Assigned on create";
-  const workspaceHref = returnTo || buildAdminArticleWorkspaceHref();
-  const headerTitle = title ?? (article ? "Edit article" : "Create article");
-  const submitLabel = article ? "Save article" : "Create article";
+}: {
+  article: EditorialArticleRecord | null;
+  banner: Flash | null;
+  deleteAction?: (formData: FormData) => Promise<never>;
+  /** This page's own URL, where a refused save returns. */
+  nextPath: string;
+  /** The article list this editor was opened from. */
+  returnTo: string;
+  saveAction: (formData: FormData) => Promise<never>;
+  suggestedLanguage?: string | null;
+  suggestedTranslationGroupId?: string | null;
+}) {
   const formId = article ? `article-editor-${article.id}` : "article-editor-new";
+  const translationGroupId = article?.translationGroupId ?? suggestedTranslationGroupId ?? null;
 
   return (
     <div className="flex flex-col gap-4">
-        {/* Header */}
-        <Card>
-          <CardContent className="flex items-center justify-between gap-2 pt-6">
-            <div className="flex flex-col gap-1">
-              <Link href={workspaceHref} className="text-sm text-primary hover:underline">
-                Back to articles
-              </Link>
-              <span className="text-xs text-muted-foreground">Editorial admin</span>
-              <h1 className="text-2xl font-semibold tracking-tight">{headerTitle}</h1>
-              <p className="text-sm text-muted-foreground">
-                Markdown body is the canonical content source.
-              </p>
-            </div>
+      <BackLink href={returnTo} label="Back to articles" />
 
-            <button
-              form={formId}
-              type="submit"
-              className="border-0 bg-transparent p-0"
-            >
-              <Button size="sm">{submitLabel}</Button>
-            </button>
-          </CardContent>
-        </Card>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {article ? "Edit article" : "Create article"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Markdown body is the canonical content source.
+          </p>
+        </div>
+        <Button type="submit" form={formId} size="sm">
+          {article ? "Save article" : "Create article"}
+        </Button>
+      </div>
 
-        {/* Banner */}
-        {banner ? (
-          <Alert variant={banner.tone === "error" ? "destructive" : "default"}>
-            <AlertDescription>{banner.message}</AlertDescription>
-          </Alert>
-        ) : null}
+      <FlashBanner flash={banner} />
 
-        {/* Metadata summary */}
-        <Card>
-          <CardContent className="pt-6">
-            <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="flex justify-between gap-4 sm:flex-col">
-                <dt className="text-sm text-muted-foreground">Language</dt>
-                <dd className="text-sm">
-                  {article?.language ?? suggestedLanguage ?? "Choose on create"}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4 sm:flex-col">
-                <dt className="text-sm text-muted-foreground">Slug</dt>
-                <dd className="text-sm">
-                  {article?.slug ?? "Optional on create"}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4 sm:flex-col">
-                <dt className="text-sm text-muted-foreground">Translation group</dt>
-                <dd className="text-sm">{translationGroupId}</dd>
-              </div>
-              <div className="flex justify-between gap-4 sm:flex-col">
-                <dt className="text-sm text-muted-foreground">Category</dt>
-                <dd className="text-sm">
-                  {article ? getEditorialCategoryLabel(article.category) : "Set in form"}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4 sm:flex-col">
-                <dt className="text-sm text-muted-foreground">Published</dt>
-                <dd className="text-sm">{formatAdminDate(article?.publishedAt)}</dd>
-              </div>
-              <div className="flex justify-between gap-4 sm:flex-col">
-                <dt className="text-sm text-muted-foreground">Updated</dt>
-                <dd className="text-sm">{formatAdminDate(article?.updatedAt)}</dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardContent className="pt-6">
+          <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Field label="Language">
+              {article?.language ?? suggestedLanguage ?? "Choose on create"}
+            </Field>
+            <Field label="Slug">
+              <span className="break-all">{article?.slug ?? "Optional on create"}</span>
+            </Field>
+            <Field label="Translation group">
+              <span className="break-all">{translationGroupId ?? "Assigned on create"}</span>
+            </Field>
+            <Field label="Category">
+              {article ? getEditorialCategoryLabel(article.category) : "Set in form"}
+            </Field>
+            <Field label="Published">
+              <Time value={article?.publishedAt} fallback="Not available" />
+            </Field>
+            <Field label="Updated">
+              <Time value={article?.updatedAt} fallback="Not available" />
+            </Field>
+          </dl>
+        </CardContent>
+      </Card>
 
-        {/* Editor form */}
-        <EditorialArticleEditorForm
-          article={article}
-          deleteAction={deleteAction}
-          formId={formId}
-          nextPath={nextPath}
-          returnTo={returnTo}
-          saveAction={saveAction}
-          suggestedLanguage={suggestedLanguage}
-          translationGroupId={article?.translationGroupId ?? suggestedTranslationGroupId ?? null}
-        />
+      <ArticleEditorForm
+        article={article}
+        deleteAction={deleteAction}
+        formId={formId}
+        nextPath={nextPath}
+        returnTo={returnTo}
+        saveAction={saveAction}
+        suggestedLanguage={suggestedLanguage}
+        translationGroupId={translationGroupId}
+      />
     </div>
   );
 }

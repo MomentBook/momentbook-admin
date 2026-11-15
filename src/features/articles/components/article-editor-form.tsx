@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useMemo, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { useDeferredValue, useRef, useTransition, type FormEvent } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -15,18 +21,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { EditorialMarkdownContent } from "./markdown-preview";
-import { parseEditorialBody } from "@/entities/article/body";
-import { buildAdminArticleWorkspaceHref } from "@/lib/navigation/paths";
+import { Textarea } from "@/components/ui/textarea";
+import { languageList, languages } from "@/lib/i18n";
 import {
   editorialArticleCategories,
-  type EditorialArticleCategory,
   type EditorialArticleRecord,
 } from "@/entities/article/types";
-import { languageList, languages } from "@/lib/i18n";
-import { ConfirmActionForm } from "@/components/confirm-action-form";
+import { articleCreateFields } from "@/features/articles/schema";
+import { MarkdownPreview } from "./markdown-preview";
 
-type EditorialArticleEditorFormProps = {
+type ArticleEditorFormProps = {
   article: EditorialArticleRecord | null;
   deleteAction?: (formData: FormData) => Promise<never>;
   formId: string;
@@ -37,26 +41,20 @@ type EditorialArticleEditorFormProps = {
   translationGroupId?: string | null;
 };
 
-function insertSnippet(
-  textarea: HTMLTextAreaElement,
-  currentValue: string,
-  snippet: string,
-): string {
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  return `${currentValue.slice(0, start)}${snippet}${currentValue.slice(end)}`;
-}
+const SNIPPETS = [
+  { label: "Heading", text: "## Section title\n\n" },
+  { label: "List", text: "- Bullet point\n- Another point\n" },
+  { label: "Image", text: "![Meaningful alt](https://example.com/guide-cover.jpg)\n" },
+] as const;
 
-function SubmitButton({ label }: { label: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "Saving..." : label}
-    </Button>
-  );
-}
-
-export function EditorialArticleEditorForm({
+/**
+ * The article form. The fields are checked as they are left and again on
+ * save, with the same rules the server action applies (`schema.ts`); the
+ * save itself is the server action, which returns to this page with a
+ * banner when the API refuses it. An edit shows language and slug but never
+ * sends them.
+ */
+export function ArticleEditorForm({
   article,
   deleteAction,
   formId,
@@ -65,221 +63,203 @@ export function EditorialArticleEditorForm({
   saveAction,
   suggestedLanguage,
   translationGroupId,
-}: EditorialArticleEditorFormProps) {
-  const isEditing = Boolean(article);
-  const [titleText, setTitleText] = useState(article?.title ?? "");
-  const [bodyText, setBodyText] = useState(article?.body ?? "");
-  const [selectedLanguage, setSelectedLanguage] = useState(
-    article?.language ?? suggestedLanguage ?? "en",
-  );
-  const [slugText, setSlugText] = useState(article?.slug ?? "");
-  const [selectedCategory, setSelectedCategory] = useState<EditorialArticleCategory>(
-    article?.category ?? "travel-guide",
-  );
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const deferredBodyText = useDeferredValue(bodyText);
-  const blocks = useMemo(
-    () => parseEditorialBody(deferredBodyText),
-    [deferredBodyText],
-  );
-  const currentTranslationGroupId = article?.translationGroupId ?? translationGroupId ?? "";
-  const routeLanguage = article?.language ?? selectedLanguage;
-  const routeSlug = article?.slug ?? slugText.trim();
-  const routePreview = routeSlug
-    ? `/${routeLanguage}/guides/${routeSlug}`
-    : `/${routeLanguage}/guides/<generated-on-save>`;
-  const submitLabel = isEditing ? "Save article" : "Create article";
+}: ArticleEditorFormProps) {
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+  const [saving, startSaving] = useTransition();
+  const form = useForm({
+    resolver: zodResolver(articleCreateFields),
+    mode: "onTouched",
+    defaultValues: {
+      language: article?.language ?? suggestedLanguage ?? "en",
+      category: article?.category ?? "travel-guide",
+      title: article?.title ?? "",
+      slug: article?.slug ?? "",
+      body: article?.body ?? "",
+    },
+  });
+  const [language, slug, body] = useWatch({
+    control: form.control,
+    name: ["language", "slug", "body"],
+  });
+  const previewBody = useDeferredValue(body);
+  const { ref: registerBody, ...bodyField } = form.register("body");
+  const groupId = article?.translationGroupId ?? translationGroupId ?? "";
+  const routeSlug = slug?.trim();
+  const routePreview = `/${language}/guides/${routeSlug || "<generated-on-save>"}`;
+  const errors = form.formState.errors;
 
-  const handleInsert = (snippet: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      setBodyText((current) => `${current}${current ? "\n\n" : ""}${snippet}`);
-      return;
-    }
-    const nextValue = insertSnippet(textarea, bodyText, snippet);
-    setBodyText(nextValue);
+  // The checked fields go to the server action as the form posts them, so
+  // the Select's hidden input and the hidden fields travel too.
+  const save = (event: FormEvent<HTMLFormElement>) => {
+    const element = event.currentTarget;
+
+    return form.handleSubmit(() => {
+      startSaving(() => saveAction(new FormData(element)));
+    })(event);
+  };
+
+  const insert = (snippet: string) => {
+    const current = form.getValues("body") ?? "";
+    const textarea = bodyRef.current;
+    const start = textarea?.selectionStart ?? current.length;
+    const end = textarea?.selectionEnd ?? current.length;
+    const options = { shouldDirty: true, shouldValidate: form.formState.isSubmitted };
+
+    form.setValue("body", `${current.slice(0, start)}${snippet}${current.slice(end)}`, options);
     requestAnimationFrame(() => {
-      const cursor = textarea.selectionStart + snippet.length;
-      textarea.focus();
-      textarea.setSelectionRange(cursor, cursor);
+      const cursor = start + snippet.length;
+      textarea?.focus();
+      textarea?.setSelectionRange(cursor, cursor);
     });
   };
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,21rem)]">
-      <form id={formId} action={saveAction}>
+      <form id={formId} noValidate onSubmit={save}>
         <input type="hidden" name="nextPath" value={nextPath} />
         <input type="hidden" name="returnTo" value={returnTo} />
         {article ? <input type="hidden" name="articleId" value={article.id} /> : null}
-        {!isEditing && currentTranslationGroupId ? (
-          <input type="hidden" name="translationGroupId" value={currentTranslationGroupId} />
+        {!article && groupId ? (
+          <input type="hidden" name="translationGroupId" value={groupId} />
         ) : null}
 
         <div className="flex flex-col gap-4">
-          {/* Article metadata */}
           <Card>
-            <CardContent className="flex flex-col gap-2 pt-6">
-              <span className="text-xs text-muted-foreground">Writing studio</span>
-              <h3 className="text-lg font-semibold">Article body</h3>
-
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  name="title"
-                  value={titleText}
-                  onChange={(e) => setTitleText(e.target.value)}
-                  placeholder="Guide title"
-                  required
-                />
+            <CardContent className="flex flex-col gap-4 pt-6">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs text-muted-foreground">Writing studio</span>
+                <h2 className="text-lg font-semibold">Article</h2>
               </div>
 
-              <div className="flex gap-2">
-                {!article ? (
+              <Field data-invalid={Boolean(errors.title)}>
+                <FieldLabel htmlFor="title">Title</FieldLabel>
+                <Input
+                  id="title"
+                  placeholder="Guide title"
+                  aria-invalid={Boolean(errors.title)}
+                  {...form.register("title")}
+                />
+                <FieldError errors={[errors.title]} />
+              </Field>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                {article ? (
                   <>
-                    <div className="flex-1 space-y-2">
-                      <Label htmlFor="language">Language</Label>
-                      <Select
-                        name="language"
-                        value={selectedLanguage}
-                        onValueChange={setSelectedLanguage}
-                      >
-                        <SelectTrigger>
+                    <Field>
+                      <FieldLabel>Language</FieldLabel>
+                      <p className="text-sm">{article.language.toUpperCase()}</p>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Slug</FieldLabel>
+                      <p className="break-all text-sm">{article.slug}</p>
+                    </Field>
+                  </>
+                ) : (
+                  <>
+                    <Controller
+                      control={form.control}
+                      name="language"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel htmlFor="language">Language</FieldLabel>
+                          <Select name={field.name} value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger id="language" aria-invalid={fieldState.invalid}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {languageList.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option.toUpperCase()}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FieldError errors={[fieldState.error]} />
+                        </Field>
+                      )}
+                    />
+                    <Field data-invalid={Boolean(errors.slug)}>
+                      <FieldLabel htmlFor="slug">Slug</FieldLabel>
+                      <Input id="slug" placeholder="Optional slug" {...form.register("slug")} />
+                      <FieldError errors={[errors.slug]} />
+                    </Field>
+                  </>
+                )}
+                <Controller
+                  control={form.control}
+                  name="category"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="category">Category</FieldLabel>
+                      <Select name={field.name} value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="category" aria-invalid={fieldState.invalid}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {languageList.map((lang) => (
-                            <SelectItem key={lang} value={lang}>
-                              {lang.toUpperCase()}
+                          {editorialArticleCategories.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <Label htmlFor="slug">Slug</Label>
-                      <Input
-                        id="slug"
-                        name="slug"
-                        value={slugText}
-                        onChange={(e) => setSlugText(e.target.value)}
-                        placeholder="Optional slug"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex-1">
-                      <span className="text-xs text-muted-foreground">Language</span>
-                      <p className="text-sm">{article.language.toUpperCase()}</p>
-                    </div>
-                    <div className="flex-1">
-                      <span className="text-xs text-muted-foreground">Slug</span>
-                      <p className="text-sm">{article.slug}</p>
-                    </div>
-                  </>
-                )}
-                <div className="flex-1 space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    name="category"
-                    value={selectedCategory}
-                    onValueChange={(val) => setSelectedCategory(val as EditorialArticleCategory)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {editorialArticleCategories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>
 
-          {/* Markdown editor */}
           <Card>
-            <CardContent className="flex flex-col gap-2 pt-6">
-              <span className="text-xs text-muted-foreground">Markdown body</span>
-              <h3 className="text-lg font-semibold">Compose</h3>
-              <p className="text-xs text-muted-foreground">
-                The first markdown image becomes the cover image. Use{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                  ![meaningful alt](https://...)
-                </code>
-                . Image URLs must be absolute.
-              </p>
-
-              {/* Toolbar */}
-              <div className="flex flex-wrap gap-1.5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleInsert("## Section title\n\n")}
-                >
-                  Heading
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleInsert("- Bullet point\n- Another point\n")}
-                >
-                  List
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    handleInsert("![Meaningful alt](https://example.com/guide-cover.jpg)\n")
-                  }
-                >
-                  Image
-                </Button>
+            <CardContent className="flex flex-col gap-3 pt-6">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs text-muted-foreground">Markdown body</span>
+                <h2 className="text-lg font-semibold">Compose</h2>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="body">Body</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {SNIPPETS.map((snippet) => (
+                  <Button
+                    key={snippet.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => insert(snippet.text)}
+                  >
+                    {snippet.label}
+                  </Button>
+                ))}
+              </div>
+
+              <Field data-invalid={Boolean(errors.body)}>
+                <FieldLabel htmlFor="body">Body</FieldLabel>
+                <FieldDescription className="text-xs">
+                  The first image becomes the cover. Write images as{" "}
+                  <code className="rounded bg-muted px-1 py-0.5">![meaningful alt](https://...)</code>{" "}
+                  with an absolute URL.
+                </FieldDescription>
                 <Textarea
                   id="body"
-                  name="body"
-                  value={bodyText}
-                  onChange={(e) => setBodyText(e.target.value)}
                   placeholder="Write the article in markdown."
                   rows={18}
-                  required
-                  ref={textareaRef as React.Ref<HTMLTextAreaElement>}
+                  aria-invalid={Boolean(errors.body)}
+                  {...bodyField}
+                  ref={(element) => {
+                    registerBody(element);
+                    bodyRef.current = element;
+                  }}
                 />
-              </div>
+                <FieldError errors={[errors.body]} />
+              </Field>
 
-              {/* Live preview */}
               <div className="min-h-[120px] rounded-lg border p-4">
-                <div className="flex flex-col gap-0.5 mb-3">
+                <div className="mb-3 flex flex-col gap-0.5">
                   <span className="text-xs text-muted-foreground">Live preview</span>
-                  <h4 className="font-semibold">Rendered body</h4>
+                  <h3 className="font-semibold">Rendered body</h3>
                 </div>
-
-                {blocks.length > 0 ? (
-                  <div>
-                    <EditorialMarkdownContent
-                      blocks={blocks}
-                      classNames={{
-                        heading: "mb-3 font-[family-name:var(--font-display)] text-foreground leading-tight",
-                        paragraph: "mb-3 text-muted-foreground leading-relaxed",
-                        list: "mb-4 pl-5 text-muted-foreground grid gap-1.5",
-                        imageFigure: "mb-4 grid gap-2",
-                        image: "w-full h-auto rounded-2xl object-cover",
-                        imageCaption: "text-[0.8rem] text-muted-foreground",
-                      }}
-                    />
-                  </div>
+                {previewBody?.trim() ? (
+                  <MarkdownPreview body={previewBody} />
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     Start typing markdown to preview the article body.
@@ -289,24 +269,23 @@ export function EditorialArticleEditorForm({
             </CardContent>
           </Card>
 
-          {/* Form actions */}
           <div className="flex items-center justify-between gap-3">
-            <Link href={returnTo || buildAdminArticleWorkspaceHref()}>
-              <Button variant="outline" size="sm">Cancel</Button>
-            </Link>
-            <SubmitButton label={submitLabel} />
+            <Button asChild variant="outline" size="sm">
+              <Link href={returnTo}>Cancel</Link>
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving..." : article ? "Save article" : "Create article"}
+            </Button>
           </div>
         </div>
       </form>
 
-      {/* Sidebar rail */}
       <div className="flex flex-col gap-3">
-        {/* Language siblings */}
         {article && article.alternates.length > 0 ? (
           <Card>
             <CardContent className="flex flex-col gap-1 pt-6">
               <span className="text-xs text-muted-foreground">Published alternates</span>
-              <h4 className="font-semibold">Language siblings</h4>
+              <h3 className="font-semibold">Language siblings</h3>
               {article.alternates.map((alternate) => (
                 <div key={`${alternate.language}-${alternate.slug}`} className="flex flex-col gap-0.5">
                   <p className="text-sm">{alternate.title}</p>
@@ -319,26 +298,22 @@ export function EditorialArticleEditorForm({
           </Card>
         ) : null}
 
-        {/* Route preview */}
         <Card>
           <CardContent className="flex flex-col gap-1 pt-6">
             <span className="text-xs text-muted-foreground">Route preview</span>
-            <h4 className="font-semibold">Published path</h4>
-            <p className="text-sm text-muted-foreground">{routePreview}</p>
+            <h3 className="font-semibold">Published path</h3>
+            <p className="break-all text-sm text-muted-foreground">{routePreview}</p>
             <p className="text-xs">
-              {routeSlug
-                ? "Uses the current slug."
-                : "Slug will be generated from the title."}
+              {routeSlug ? "Uses the current slug." : "Slug will be generated from the title."}
             </p>
           </CardContent>
         </Card>
 
-        {/* Danger zone */}
         {article && deleteAction ? (
           <Card className="border-destructive/50">
             <CardContent className="flex flex-col gap-1 pt-6">
               <span className="text-xs text-muted-foreground">Danger zone</span>
-              <h4 className="font-semibold">Delete article</h4>
+              <h3 className="font-semibold">Delete article</h3>
               <p className="text-xs text-muted-foreground">
                 This is a hard delete of the article and its published routes.
               </p>

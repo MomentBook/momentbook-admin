@@ -1,82 +1,40 @@
 import type { Metadata } from "next";
+import { renderWorkspacePage } from "@/components/layout/workspace-page";
+import { loadArticlesParams } from "@/lib/navigation/article-routes";
 import { buildAdminArticleWorkspaceHref } from "@/lib/navigation/paths";
-import { isBackendApiError } from "@/lib/api/client";
-import {
-  ADMIN_ARTICLE_PAGE_SIZE,
-  loadAdminEditorialArticleDashboard,
-  parseAdminArticleFilterCategory,
-  parseAdminArticleFilterLanguage,
-} from "@/features/articles/loader";
-import {
-  loadWorkspacePage,
-  parsePage,
-  readQueryParam,
-} from "@/lib/workspace/load-workspace-page";
-import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { WorkspaceError } from "@/components/layout/workspace-error";
+import { ADMIN_PAGE_SIZE } from "@/lib/workspace/list-page";
+import { normalizeEditorialLanguage } from "@/entities/article/records";
+import { parseEditorialArticleCategory } from "@/entities/article/types";
+import { ArticlesListView } from "@/features/articles/components/articles-list-view";
 import { resolveArticleBanner } from "@/features/articles/flash";
-import { AdminArticleListPageView } from "@/features/articles/components/articles-list-view";
+import { loadAdminEditorialArticleDashboard } from "@/features/articles/loader";
 
 export const metadata: Metadata = {
   title: "Articles",
 };
 
-export default async function AdminArticlesPage({
+export default async function ArticlesPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolvedSearchParams = await searchParams;
-  const page = parsePage(readQueryParam(resolvedSearchParams.page));
-  const language = parseAdminArticleFilterLanguage(
-    readQueryParam(resolvedSearchParams.lang),
-  );
-  const category = parseAdminArticleFilterCategory(
-    readQueryParam(resolvedSearchParams.category),
-  );
-  const returnTo = buildAdminArticleWorkspaceHref({
-    page,
-    lang: language,
-    category,
+  const query = loadArticlesParams(await searchParams);
+  const language = normalizeEditorialLanguage(query.lang);
+  const category = parseEditorialArticleCategory(query.category);
+  const returnTo = buildAdminArticleWorkspaceHref({ page: query.page, lang: language, category });
+
+  return renderWorkspacePage({
+    active: "articles",
+    errorHeading: "The articles workspace is temporarily unavailable.",
+    returnTo,
+    load: (accessToken) =>
+      loadAdminEditorialArticleDashboard({
+        accessToken,
+        page: query.page,
+        limit: ADMIN_PAGE_SIZE,
+        language,
+        category,
+      }),
+    render: (data) => <ArticlesListView banner={resolveArticleBanner(query)} data={data} />,
   });
-  const banner = resolveArticleBanner({
-    error: readQueryParam(resolvedSearchParams.error),
-    message: readQueryParam(resolvedSearchParams.message),
-    mutation: readQueryParam(resolvedSearchParams.mutation),
-    articleSlug: readQueryParam(resolvedSearchParams.articleSlug),
-  });
-
-  let result;
-
-  try {
-    result = await loadWorkspacePage({
-      returnTo,
-      load: (accessToken) =>
-        loadAdminEditorialArticleDashboard({
-          accessToken,
-          page,
-          limit: ADMIN_ARTICLE_PAGE_SIZE,
-          language,
-          category,
-        }),
-    });
-  } catch (error) {
-    if (isBackendApiError(error)) {
-      return (
-        <WorkspaceError
-          heading="The articles workspace is temporarily unavailable."
-          message={error.message}
-          statusCode={error.statusCode}
-        />
-      );
-    }
-
-    throw error;
-  }
-
-  return (
-    <WorkspaceShell active="articles" counts={result.counts} session={result.session}>
-      <AdminArticleListPageView banner={banner} dashboard={result.data} />
-    </WorkspaceShell>
-  );
 }

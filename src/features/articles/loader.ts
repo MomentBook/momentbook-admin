@@ -1,13 +1,9 @@
 import "server-only";
 
 import { getAdminArticle, listAdminArticles } from "@/lib/api/articles";
+import { isBackendApiError } from "@/lib/api/client";
 import { type Language } from "@/lib/i18n";
-import type {
-  AdminArticleDetailDto,
-  AdminArticleListItemDto,
-} from "@/lib/api/types";
 import {
-  editorialArticleCategories,
   type EditorialArticleCategory,
   type EditorialArticleListItem,
   type EditorialArticleRecord,
@@ -15,10 +11,7 @@ import {
 import {
   normalizeEditorialArticleListItem,
   normalizeEditorialArticleRecord,
-  normalizeEditorialLanguage,
 } from "@/entities/article/records";
-
-export const ADMIN_ARTICLE_PAGE_SIZE = 20;
 
 export type AdminEditorialArticleDashboardData = {
   items: EditorialArticleListItem[];
@@ -29,30 +22,6 @@ export type AdminEditorialArticleDashboardData = {
   category: EditorialArticleCategory | null;
 };
 
-function normalizeListItem(item: AdminArticleListItemDto): EditorialArticleListItem | null {
-  return normalizeEditorialArticleListItem(item);
-}
-
-function normalizeRecord(item: AdminArticleDetailDto): EditorialArticleRecord | null {
-  return normalizeEditorialArticleRecord(item);
-}
-
-export function parseAdminArticleFilterLanguage(value: string | null): Language | null {
-  return normalizeEditorialLanguage(value);
-}
-
-export function parseAdminArticleFilterCategory(
-  value: string | null,
-): EditorialArticleCategory | null {
-  if (!value) {
-    return null;
-  }
-
-  return editorialArticleCategories.includes(value as EditorialArticleCategory)
-    ? (value as EditorialArticleCategory)
-    : null;
-}
-
 export async function loadAdminEditorialArticle(options: {
   accessToken: string;
   articleId: string;
@@ -62,7 +31,24 @@ export async function loadAdminEditorialArticle(options: {
     articleId: options.articleId,
   });
 
-  return normalizeRecord(detail);
+  return normalizeEditorialArticleRecord(detail);
+}
+
+/** The article the editor opens; `null` when there is no such article (the
+ * API answers 404 for an unknown or deleted one) or its record is unusable. */
+export async function loadArticleForEditor(
+  accessToken: string,
+  articleId: string,
+): Promise<EditorialArticleRecord | null> {
+  try {
+    return await loadAdminEditorialArticle({ accessToken, articleId });
+  } catch (error) {
+    if (isBackendApiError(error) && error.statusCode === 404) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function loadAdminEditorialArticleDashboard(options: {
@@ -82,7 +68,7 @@ export async function loadAdminEditorialArticleDashboard(options: {
 
   return {
     items: list.items
-      .map((item) => normalizeListItem(item))
+      .map((item) => normalizeEditorialArticleListItem(item))
       .filter((item): item is EditorialArticleListItem => Boolean(item)),
     page: list.page,
     pages: list.pages,
