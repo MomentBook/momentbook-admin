@@ -25,7 +25,7 @@ import type {
   AdminUserSubscriptionsDataDto,
 } from "@/lib/api/types";
 import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
-import { updateAdminUserStatusAction } from "@/features/reports/actions";
+import { updateAdminUserStatusAction } from "@/entities/user/status-action";
 import { ReportHistoryList } from "@/entities/report/components/report-history-list";
 import { revokeAdminUserSessionsAction } from "@/features/users/actions";
 import { DateValue, Field, Section } from "@/components/detail-parts";

@@ -64,7 +64,7 @@ function userStatusForm(fields: Record<string, string>) {
 }
 
 async function runUserStatusAction(formData: FormData): Promise<string> {
-  const { updateAdminUserStatusAction } = await import("@/features/reports/actions");
+  const { updateAdminUserStatusAction } = await import("@/entities/user/status-action");
 
   try {
     await updateAdminUserStatusAction(formData);

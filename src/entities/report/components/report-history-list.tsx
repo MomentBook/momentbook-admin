@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { buildAdminReportDetailHref } from "@/lib/navigation/report-routes";
-import { getReportReasonLabel, getReportStatusLabel } from "@/entities/report/model";
-import type { AdminReportItemDto } from "@/lib/api/types";
-
-/** `null` means the reports endpoint failed; the panel says so instead of
- * taking the page down. */
-export type ReportHistory = { items: AdminReportItemDto[]; total: number } | null;
+import {
+  getReportReasonLabel,
+  getReportStatusLabel,
+  type ReportHistory,
+} from "@/entities/report/model";
 
 export function ReportHistoryList({
   title,

@@ -1,89 +1,36 @@
 import type { Metadata } from "next";
-import { isBackendApiError } from "@/lib/api/client";
-import {
-  ADMIN_REPORTS_PAGE_SIZE,
-  loadAdminReportsWorkspaceData,
-} from "@/features/reports/loader";
-import { loadWorkspacePage } from "@/lib/workspace/load-workspace-page";
-import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { WorkspaceError } from "@/components/layout/workspace-error";
+import { renderWorkspacePage } from "@/components/layout/workspace-page";
 import { buildAdminReportsHref, loadReportsParams } from "@/lib/navigation/report-routes";
+import { ReportsListView, type ReportFilters } from "@/features/reports/components/reports-list-view";
 import { resolveReportBanner } from "@/features/reports/flash";
-import { AdminReportsListPageView } from "@/features/reports/components/reports-list-view";
+import { loadReportsList } from "@/features/reports/loader";
 
 export const metadata: Metadata = {
   title: "Reports Moderation",
 };
 
-export default async function AdminReportsPage({
+export default async function ReportsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = loadReportsParams(await searchParams);
-  const { page } = query;
-  const status = query.status ?? undefined;
-  const targetType = query.targetType ?? undefined;
-  const reason = query.reason ?? undefined;
-  const targetId = query.targetId ?? undefined;
-  const reporterId = query.reporterId ?? undefined;
+  const filters: ReportFilters = {
+    status: query.status ?? undefined,
+    targetType: query.targetType ?? undefined,
+    reason: query.reason ?? undefined,
+    targetId: query.targetId ?? undefined,
+    reporterId: query.reporterId ?? undefined,
+  };
+  const returnTo = buildAdminReportsHref({ page: query.page, ...filters });
 
-  const returnTo = buildAdminReportsHref({
-    page,
-    status,
-    targetType,
-    reason,
-    targetId,
-    reporterId,
+  return renderWorkspacePage({
+    active: "reports",
+    errorHeading: "The reports workspace is temporarily unavailable.",
+    returnTo,
+    load: (accessToken) => loadReportsList({ accessToken, page: query.page, filters }),
+    render: (data) => (
+      <ReportsListView banner={resolveReportBanner(query)} data={data} filters={filters} />
+    ),
   });
-
-  const banner = resolveReportBanner(query);
-
-  let result;
-
-  try {
-    result = await loadWorkspacePage({
-      returnTo,
-      load: (accessToken) =>
-        loadAdminReportsWorkspaceData({
-          accessToken,
-          query: {
-            page,
-            limit: ADMIN_REPORTS_PAGE_SIZE,
-            status,
-            targetType,
-            reason,
-            targetId,
-            reporterId,
-          },
-        }),
-    });
-  } catch (err) {
-    if (isBackendApiError(err)) {
-      return (
-        <WorkspaceError
-          heading="The reports workspace is temporarily unavailable."
-          message={err.message}
-          statusCode={err.statusCode}
-        />
-      );
-    }
-
-    throw err;
-  }
-
-  return (
-    <WorkspaceShell active="reports" counts={result.counts} session={result.session}>
-      <AdminReportsListPageView
-        activeStatus={status}
-        activeTargetType={targetType}
-        activeReason={reason}
-        activeTargetId={targetId}
-        activeReporterId={reporterId}
-        banner={banner}
-        reportsData={result.data.reports}
-        stats={result.data.stats}
-      />
-    </WorkspaceShell>
-  );
 }

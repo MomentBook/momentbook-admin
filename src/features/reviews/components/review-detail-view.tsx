@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ChevronDownIcon } from "lucide-react";
 import { BackLink } from "@/components/back-link";
 import { ConfirmActionForm } from "@/components/confirm-action-form";
-import { ReasonField } from "@/components/reason-field";
 import { StatusBadge } from "@/components/status-badge";
 import { Time } from "@/components/time";
 import { Button } from "@/components/ui/button";
@@ -18,12 +17,10 @@ import type { Flash } from "@/lib/navigation/flash";
 import { buildAdminCommentsHref, buildAdminUserHref } from "@/lib/navigation/paths";
 import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import type { ReviewQueueTab } from "@/lib/navigation/review-routes";
-import {
-  ReportHistoryList,
-  type ReportHistory,
-} from "@/entities/report/components/report-history-list";
 import { getAdminReviewStatusLabel, REVIEW_STATUS_TONES } from "@/entities/journey/model";
-import { updateAdminUserStatusAction } from "@/features/reports/actions";
+import { ReportHistoryList } from "@/entities/report/components/report-history-list";
+import type { ReportHistory } from "@/entities/report/model";
+import { UserStatusForm } from "@/entities/user/components/user-status-form";
 import {
   requeueJourneyReviewAction,
   updatePublishedJourneyReviewAction,
@@ -179,8 +176,6 @@ function ContextPanel({
   journeyReports: ReportHistory;
   returnTo: string;
 }) {
-  const authorLabel = journey.authorName ?? journey.userId;
-
   return (
     <Card>
       <CardHeader>
@@ -218,17 +213,11 @@ function ContextPanel({
           history={authorReports}
           viewAllHref={buildAdminReportsHref({ targetType: "USER", targetId: journey.userId })}
         />
-        <ConfirmActionForm
-          action={updateAdminUserStatusAction}
-          fields={{ userId: journey.userId, status: "banned", returnTo }}
-          triggerLabel="Ban author"
-          triggerVariant="destructive"
-          title={`Ban ${authorLabel}?`}
-          description={`Bans ${authorLabel} (${journey.userId}). All of their sessions are revoked immediately.`}
-          confirmLabel="Ban author"
-        >
-          <ReasonField id="ban-author-reason" />
-        </ConfirmActionForm>
+        <UserStatusForm
+          user={{ id: journey.userId, label: journey.authorName ?? journey.userId }}
+          returnTo={returnTo}
+          banLabel="Ban author"
+        />
       </CardContent>
     </Card>
   );

@@ -1,82 +1,49 @@
 import "server-only";
 
-import {
-  getAdminReport,
-  getAdminReportStats,
-  listAdminReports,
-} from "@/lib/api/reports";
+import { isBackendApiError } from "@/lib/api/client";
+import { getAdminReport, getAdminReportStats, listAdminReports } from "@/lib/api/reports";
 import type {
   AdminReportDetailDataDto,
   AdminReportItemDto,
-  AdminReportsDataDto,
   AdminReportsQueryDto,
   AdminReportStatsDataDto,
-  ReportTargetType,
 } from "@/lib/api/types";
-import { orNull } from "@/lib/workspace/section-load";
+import { ADMIN_PAGE_SIZE, toListPage, type ListPage } from "@/lib/workspace/list-page";
 
-export * from "@/entities/report/model";
-
-export type AdminReportsWorkspaceData = {
-  reports: AdminReportsDataDto;
+export type ReportsList = {
+  reports: ListPage<AdminReportItemDto>;
   stats: AdminReportStatsDataDto;
 };
 
-export async function loadAdminReportsWorkspaceData(input: {
+/** One page of reports under the filters, and the counts for every status. */
+export async function loadReportsList(input: {
   accessToken: string;
-  query?: AdminReportsQueryDto;
-}): Promise<AdminReportsWorkspaceData> {
+  page: number;
+  filters: Omit<AdminReportsQueryDto, "page" | "limit">;
+}): Promise<ReportsList> {
   const [reports, stats] = await Promise.all([
     listAdminReports({
       accessToken: input.accessToken,
-      query: input.query,
+      query: { page: input.page, limit: ADMIN_PAGE_SIZE, ...input.filters },
     }),
-    getAdminReportStats({
-      accessToken: input.accessToken,
-    }),
+    getAdminReportStats({ accessToken: input.accessToken }),
   ]);
 
-  return {
-    reports,
-    stats,
-  };
+  return { reports: toListPage(reports, reports.page), stats };
 }
 
+/** One report; `null` when it no longer exists (404). */
 export async function loadAdminReportDetail(input: {
   accessToken: string;
   reportId: string;
-}): Promise<AdminReportDetailDataDto> {
-  return getAdminReport(input);
-}
+}): Promise<AdminReportDetailDataDto | null> {
+  try {
+    return await getAdminReport(input);
+  } catch (error) {
+    if (isBackendApiError(error) && error.statusCode === 404) {
+      return null;
+    }
 
-const REPORT_HISTORY_LIMIT = 5;
-
-/** The newest reports on one target or by one reporter, with the total, for
- * the context panels on the review and report detail screens. */
-export async function loadReportHistory(input: {
-  accessToken: string;
-  targetType?: ReportTargetType;
-  targetId?: string;
-  reporterId?: string;
-  limit?: number;
-}): Promise<{ items: AdminReportItemDto[]; total: number }> {
-  const reports = await listAdminReports({
-    accessToken: input.accessToken,
-    query: {
-      page: 1,
-      limit: input.limit ?? REPORT_HISTORY_LIMIT,
-      ...(input.targetType ? { targetType: input.targetType } : {}),
-      ...(input.targetId ? { targetId: input.targetId } : {}),
-      ...(input.reporterId ? { reporterId: input.reporterId } : {}),
-    },
-  });
-
-  return { items: reports.items, total: reports.total };
-}
-
-/** Report history for a secondary panel (see `orNull`). */
-export async function loadReportHistoryOrNull(
-  input: Parameters<typeof loadReportHistory>[0],
-): Promise<{ items: AdminReportItemDto[]; total: number } | null> {
-  return orNull(loadReportHistory(input));
+    throw error;
+  }
 }

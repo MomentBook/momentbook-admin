@@ -4,7 +4,7 @@ import { listAdminAuditLog } from "@/lib/api/audit";
 import { listAdminComments } from "@/lib/api/comments";
 import { listPublishedJourneys } from "@/lib/api/journeys";
 import { getAdminUser, listAdminUserAuthEvents, listAdminUsers } from "@/lib/api/users";
-import { loadReportHistoryOrNull } from "@/features/reports/loader";
+import { loadReportHistoryOrNull } from "@/entities/report/history";
 import { orNull } from "@/lib/workspace/section-load";
 import { ADMIN_USERS_PAGE_SIZE } from "@/entities/user/model";
 import type {

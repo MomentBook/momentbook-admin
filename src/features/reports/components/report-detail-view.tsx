@@ -1,80 +1,81 @@
 import Link from "next/link";
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { BackLink } from "@/components/back-link";
+import { DateValue, Field } from "@/components/detail-parts";
+import { FlashBanner } from "@/components/flash-banner";
+import { StatusBadge } from "@/components/status-badge";
+import { Time } from "@/components/time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { ConfirmActionForm } from "@/components/confirm-action-form";
-import { LocalizedDate } from "@/components/localized-time";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type {
+  AdminReportDetailDataDto,
+  AdminReportUserSummaryDto,
+} from "@/lib/api/types";
+import type { Flash } from "@/lib/navigation/flash";
 import { buildAdminUserHref } from "@/lib/navigation/paths";
-import { buildAdminReviewDetailHref } from "@/lib/navigation/review-routes";
 import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
+import { buildAdminReviewDetailHref } from "@/lib/navigation/review-routes";
+import { ReportHistoryList } from "@/entities/report/components/report-history-list";
 import {
   getReportReasonLabel,
   getReportStatusLabel,
   getReportTargetTypeLabel,
+  REPORT_STATUS_TONES,
+  type ReportHistory,
 } from "@/entities/report/model";
-import type {
-  AdminReportDetailDataDto,
-  AdminReportUserSummaryDto,
-  ReportStatus,
-} from "@/lib/api/types";
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
-import { defaultLanguage } from "@/lib/i18n";
-import {
-  updateAdminReportAction,
-  updateAdminUserStatusAction,
-} from "@/features/reports/actions";
-import { ReportHistoryList, type ReportHistory } from "@/entities/report/components/report-history-list";
+import { UserStatusForm } from "@/entities/user/components/user-status-form";
+import { ReportStatusForm } from "./report-status-form";
 
-const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
+type Journey = NonNullable<AdminReportDetailDataDto["targetPublishedJourney"]>;
 
-function badgeVariantForStatus(
-  status: ReportStatus,
-): "default" | "destructive" | "secondary" | "outline" {
-  switch (status) {
-    case "PENDING":
-      return "secondary";
-    case "REVIEWED":
-      return "outline";
-    case "RESOLVED":
-      return "default";
-    case "REJECTED":
-      return "destructive";
-    default:
-      return "outline";
-  }
-}
-
-type AdminReportDetailPageViewProps = {
-  banner: AdminDashboardBanner | null;
-  report: AdminReportDetailDataDto;
-  returnTo: string;
-  targetHistory: ReportHistory;
-  reporterHistory: ReportHistory;
-};
-
-function SanctionReasonInput() {
+function ReportSummaryCard({ report }: { report: AdminReportDetailDataDto }) {
   return (
-    <div className="grid gap-1.5">
-      <Label htmlFor="sanction-reason">Reason (optional)</Label>
-      <Input id="sanction-reason" name="reason" />
-      <p className="text-xs text-muted-foreground">Saved in the audit log.</p>
-    </div>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Report content and context</CardTitle>
+        <CardDescription>
+          Filed by reporter on <Time value={report.createdAt} />
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Reporter&apos;s explanation
+          </span>
+          <p className="mt-1.5 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm">
+            {report.description || "No additional description provided by the reporter."}
+          </p>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-4 border-t pt-4">
+          <Field label="Target type">{getReportTargetTypeLabel(report.targetType)}</Field>
+          <Field label="Target ID">
+            <span className="block truncate font-mono">{report.targetId}</span>
+          </Field>
+          <Field label="Reports on this target">
+            {report.targetReportCounts.effectiveReports} effective /{" "}
+            {report.targetReportCounts.totalReports} total
+          </Field>
+          <Field label="Last updated">
+            <DateValue value={report.updatedAt} />
+          </Field>
+          {report.resolvedAt ? (
+            <Field label="Resolved at">
+              <DateValue value={report.resolvedAt} />
+            </Field>
+          ) : null}
+          {report.resolvedAt && report.resolvedBy ? (
+            <Field label="Resolved by">
+              <span className="font-mono">{report.resolvedBy}</span>
+            </Field>
+          ) : null}
+        </dl>
+      </CardContent>
+    </Card>
   );
 }
 
-/** Ban, unban, or nothing for a deleted account — always behind a confirmation. */
-function UserSanctionControl({
+function ReportedUserCard({
   reportId,
   returnTo,
   user,
@@ -83,387 +84,166 @@ function UserSanctionControl({
   returnTo: string;
   user: AdminReportUserSummaryDto;
 }) {
-  const label = user.name || user.email || user.id;
-  const fields = { userId: user.id, reportId, returnTo };
-
-  if (user.status === "DELETED") {
-    return (
-      <Button type="button" variant="outline" size="sm" disabled>
-        Deleted account
-      </Button>
-    );
-  }
-
-  if (user.status === "BANNED") {
-    return (
-      <ConfirmActionForm
-        action={updateAdminUserStatusAction}
-        fields={{ ...fields, status: "active" }}
-        triggerLabel="Unban"
-        title={`Unban ${label}?`}
-        description={`Lifts the ban on ${label} (${user.id}). If required consents are pending, the account stays inactive until it accepts them.`}
-        confirmLabel="Unban"
-      >
-        <SanctionReasonInput />
-      </ConfirmActionForm>
-    );
-  }
-
   return (
-    <ConfirmActionForm
-      action={updateAdminUserStatusAction}
-      fields={{ ...fields, status: "banned" }}
-      triggerLabel="Ban"
-      triggerVariant="destructive"
-      title={`Ban ${label}?`}
-      description={`Bans ${label} (${user.id}). All of their sessions are revoked immediately.`}
-      confirmLabel="Ban"
-    >
-      <SanctionReasonInput />
-    </ConfirmActionForm>
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base">Reported user account</CardTitle>
+            <CardDescription>Target user account details and status</CardDescription>
+          </div>
+          <StatusBadge tone={user.status === "BANNED" ? "danger" : "success"}>
+            {user.status || "ACTIVE"}
+          </StatusBadge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <dl className="grid grid-cols-2 gap-4">
+          <Field label="Display name">
+            <Link href={buildAdminUserHref(user.id)} className="text-primary hover:underline">
+              {user.name || "Unnamed user"}
+            </Link>
+          </Field>
+          <Field label="Account email">{user.email || "—"}</Field>
+          <Field label="Provider email">{user.providerEmail || "—"}</Field>
+          <Field label="User ID">
+            <span className="block truncate font-mono">{user.id}</span>
+          </Field>
+        </dl>
+
+        <div className="flex flex-col gap-3 rounded-md border bg-muted/20 p-4">
+          <div>
+            <h2 className="text-sm font-semibold">Account sanction</h2>
+            <p className="text-xs text-muted-foreground">
+              Banning revokes all active access and refresh tokens immediately.
+            </p>
+          </div>
+          <UserStatusForm
+            user={{ id: user.id, label: user.name || user.email || user.id, status: user.status }}
+            reportId={reportId}
+            returnTo={returnTo}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
-export function AdminReportDetailPageView({
+function ReportedJourneyCard({ journey }: { journey: Journey }) {
+  const hidden = journey.visibility === "HIDDEN";
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base">Reported journey</CardTitle>
+            <CardDescription>Target publication snapshot and review status</CardDescription>
+          </div>
+          <StatusBadge tone={hidden ? "danger" : "success"}>{hidden ? "Hidden" : "Public"}</StatusBadge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <dl className="grid grid-cols-2 gap-4">
+          <Field label="Public ID">
+            <span className="font-mono">{journey.publicId}</span>
+          </Field>
+          <Field label="Review status">{journey.review.status}</Field>
+          <Field label="Published">{journey.published ? "Yes" : "No"}</Field>
+          <Field label="Author user ID">
+            <span className="block truncate font-mono">{journey.userId}</span>
+          </Field>
+          {journey.owner ? (
+            <Field label="Author">
+              <Link href={buildAdminUserHref(journey.userId)} className="text-primary hover:underline">
+                {journey.owner.name || journey.owner.email || "Unknown author"}
+              </Link>
+            </Field>
+          ) : null}
+        </dl>
+        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto sm:self-start">
+          <Link href={buildAdminReviewDetailHref(journey.publicId)} target="_blank">
+            Inspect journey in review workspace &rarr;
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReporterCard({ report }: { report: AdminReportDetailDataDto }) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Reporter</CardTitle>
+        <CardDescription>Account that submitted this report</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <dl className="flex flex-col gap-3">
+          <Field label="Name">
+            <Link href={buildAdminUserHref(report.reporterId)} className="text-primary hover:underline">
+              {report.reporter?.name || "Unnamed user"}
+            </Link>
+          </Field>
+          <Field label="Email">{report.reporter?.email || "—"}</Field>
+          <Field label="Account status">{report.reporter?.status || "ACTIVE"}</Field>
+          <Field label="Reporter ID">
+            <span className="block truncate font-mono text-muted-foreground">{report.reporterId}</span>
+          </Field>
+        </dl>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** One report: what was reported and by whom on the left, the decision and
+ * the related reports on the right. */
+export function ReportDetailView({
   banner,
   report,
   returnTo,
   targetHistory,
   reporterHistory,
-}: AdminReportDetailPageViewProps) {
-  const isJourney = report.targetType === "PUBLISHED_JOURNEY";
-  const isUser = report.targetType === "USER";
-  const targetUser = report.targetUser;
-  const isUserBanned = targetUser?.status === "BANNED";
-
+}: {
+  banner: Flash | null;
+  report: AdminReportDetailDataDto;
+  returnTo: string;
+  targetHistory: ReportHistory;
+  reporterHistory: ReportHistory;
+}) {
   return (
     <div className="flex flex-col gap-6">
-      {/* Top back & title bar */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Link
-            href={buildAdminReportsHref()}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            &larr; Back to Reports Queue
-          </Link>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <BackLink href={buildAdminReportsHref()} label="Back to reports queue" />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold tracking-tight">Report Details</h2>
-            <Badge variant={badgeVariantForStatus(report.status)} className="text-xs">
+            <h1 className="text-2xl font-semibold tracking-tight">Report details</h1>
+            <StatusBadge tone={REPORT_STATUS_TONES[report.status]}>
               {getReportStatusLabel(report.status)}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {getReportReasonLabel(report.reason)}
-            </Badge>
+            </StatusBadge>
+            <Badge variant="outline">{getReportReasonLabel(report.reason)}</Badge>
           </div>
-          <span className="font-mono text-xs text-muted-foreground">
-            ID: {report.id}
-          </span>
+          <span className="font-mono text-xs text-muted-foreground">ID: {report.id}</span>
         </div>
-
-        {banner ? (
-          <Alert
-            variant={
-              banner.tone === "error"
-                ? "destructive"
-                : banner.tone === "success"
-                  ? "default"
-                  : "default"
-            }
-          >
-            <AlertTitle className="line-clamp-none">{banner.message}</AlertTitle>
-          </Alert>
-        ) : null}
+        <FlashBanner flash={banner} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column: Report Info & Target Info */}
         <div className="flex flex-col gap-6 lg:col-span-2">
-          {/* Report Summary Card */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Report Content & Context</CardTitle>
-              <CardDescription>
-                Filed by reporter on{" "}
-                <LocalizedDate
-                  lang={ADMIN_DISPLAY_LANGUAGE}
-                  timestamp={Date.parse(report.createdAt)}
-                />
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Reporter&apos;s Explanation
-                </span>
-                <p className="mt-1.5 rounded-md bg-muted/50 p-3 text-sm text-foreground whitespace-pre-wrap">
-                  {report.description || "No additional description provided by the reporter."}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 border-t pt-4 text-xs">
-                <div>
-                  <span className="text-muted-foreground">Target Type:</span>
-                  <p className="font-medium mt-0.5">{getReportTargetTypeLabel(report.targetType)}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Target ID:</span>
-                  <p className="font-mono font-medium mt-0.5 truncate">{report.targetId}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Reports on this Target:</span>
-                  <p className="font-medium mt-0.5">
-                    {report.targetReportCounts.effectiveReports} effective / {report.targetReportCounts.totalReports} total
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Last Updated:</span>
-                  <p className="font-medium mt-0.5">
-                    <LocalizedDate
-                      lang={ADMIN_DISPLAY_LANGUAGE}
-                      timestamp={Date.parse(report.updatedAt)}
-                    />
-                  </p>
-                </div>
-              </div>
-
-              {report.resolvedAt ? (
-                <div className="rounded-md border p-3 bg-muted/30 text-xs space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Resolved At:</span>
-                    <span>
-                      <LocalizedDate
-                        lang={ADMIN_DISPLAY_LANGUAGE}
-                        timestamp={Date.parse(report.resolvedAt)}
-                      />
-                    </span>
-                  </div>
-                  {report.resolvedBy ? (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Resolved By:</span>
-                      <span className="font-mono">{report.resolvedBy}</span>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          {/* Target Entity Card */}
-          {isUser && targetUser ? (
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base">Reported User Account</CardTitle>
-                    <CardDescription>Target user account details and status</CardDescription>
-                  </div>
-                  <Badge variant={isUserBanned ? "destructive" : "default"}>
-                    {targetUser.status || "ACTIVE"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">Display Name:</span>
-                    <p className="font-medium mt-0.5">
-                      <Link
-                        href={buildAdminUserHref(targetUser.id)}
-                        className="text-primary hover:underline"
-                      >
-                        {targetUser.name || "Unnamed user"}
-                      </Link>
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Account Email:</span>
-                    <p className="font-medium mt-0.5">{targetUser.email || "—"}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Provider Email:</span>
-                    <p className="font-medium mt-0.5">{targetUser.providerEmail || "—"}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">User ID:</span>
-                    <p className="font-mono font-medium mt-0.5 truncate">{targetUser.id}</p>
-                  </div>
-                </div>
-
-                {/* User Sanction Action Form */}
-                <div className="rounded-md border p-4 bg-muted/20 space-y-3">
-                  <div>
-                    <h4 className="text-sm font-semibold">User Account Sanction (Admin Users API)</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Banning revokes all active access and refresh tokens immediately.
-                    </p>
-                  </div>
-
-                  <UserSanctionControl
-                    reportId={report.id}
-                    returnTo={returnTo}
-                    user={targetUser}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+          <ReportSummaryCard report={report} />
+          {report.targetType === "USER" && report.targetUser ? (
+            <ReportedUserCard reportId={report.id} returnTo={returnTo} user={report.targetUser} />
           ) : null}
-
-          {isJourney && report.targetPublishedJourney ? (
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base">Reported Journey</CardTitle>
-                    <CardDescription>Target publication snapshot & review status</CardDescription>
-                  </div>
-                  <Badge
-                    variant={
-                      report.targetPublishedJourney.visibility === "HIDDEN"
-                        ? "destructive"
-                        : "default"
-                    }
-                  >
-                    {report.targetPublishedJourney.visibility === "HIDDEN" ? "Hidden" : "Public"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">Public ID:</span>
-                    <p className="font-mono font-medium mt-0.5">{report.targetPublishedJourney.publicId}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Review Status:</span>
-                    <p className="font-medium mt-0.5">{report.targetPublishedJourney.review.status}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Published:</span>
-                    <p className="font-medium mt-0.5">{report.targetPublishedJourney.published ? "Yes" : "No"}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Author User ID:</span>
-                    <p className="font-mono font-medium mt-0.5 truncate">{report.targetPublishedJourney.userId}</p>
-                  </div>
-                </div>
-
-                {report.targetPublishedJourney.owner ? (
-                  <div className="rounded-md border p-3 text-xs space-y-1">
-                    <span className="text-muted-foreground">Author:</span>
-                    <p className="font-medium">
-                      <Link
-                        href={buildAdminUserHref(report.targetPublishedJourney.userId)}
-                        className="text-primary hover:underline"
-                      >
-                        {report.targetPublishedJourney.owner.name || report.targetPublishedJourney.owner.email || "Unknown Author"}
-                      </Link>
-                    </p>
-                  </div>
-                ) : null}
-
-                <div className="pt-2">
-                  <Link
-                    href={buildAdminReviewDetailHref(report.targetPublishedJourney.publicId)}
-                    target="_blank"
-                  >
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                      Inspect Journey in Review Workspace &rarr;
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+          {report.targetType === "PUBLISHED_JOURNEY" && report.targetPublishedJourney ? (
+            <ReportedJourneyCard journey={report.targetPublishedJourney} />
           ) : null}
         </div>
 
-        {/* Right Column: Moderation Decision Form & Reporter Summary */}
         <div className="flex flex-col gap-6">
-          {/* Moderation Form Card */}
-          <Card className="border-primary/40 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Moderation Decision</CardTitle>
-              <CardDescription>
-                Update the report status and record administrator findings.
-              </CardDescription>
-            </CardHeader>
-            <form action={updateAdminReportAction}>
-              <CardContent className="space-y-4">
-                <input type="hidden" name="reportId" value={report.id} />
-                <input type="hidden" name="returnTo" value={returnTo} />
-
-                {/* Status Selection */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Resolution Status
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {(
-                      [
-                        ["PENDING", "Pending"],
-                        ["REVIEWED", "Reviewed"],
-                        ["RESOLVED", "Resolved"],
-                        ["REJECTED", "Rejected"],
-                      ] as const
-                    ).map(([statusKey, statusLabel]) => (
-                      <label
-                        key={statusKey}
-                        className={`flex items-center gap-2 rounded-md border p-2.5 text-xs font-medium cursor-pointer transition-colors ${
-                          report.status === statusKey
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "hover:bg-muted"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="status"
-                          value={statusKey}
-                          defaultChecked={report.status === statusKey}
-                          className="size-3 text-primary"
-                        />
-                        <span>{statusLabel}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Admin Note */}
-                <div className="space-y-2">
-                  <label
-                    htmlFor="adminNote"
-                    className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-                  >
-                    Admin Note / Memo
-                  </label>
-                  <Textarea
-                    id="adminNote"
-                    name="adminNote"
-                    defaultValue={report.adminNote || ""}
-                    placeholder="Enter moderation remarks or reason for decision..."
-                    rows={4}
-                    className="text-xs"
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    Max 1,000 characters. Blank or empty clears the current note.
-                  </p>
-                </div>
-              </CardContent>
-
-              <CardFooter className="border-t pt-4">
-                <Button type="submit" className="w-full">
-                  Save Decision
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
-
-          {/* Report History Card */}
+          <ReportStatusForm report={report} returnTo={returnTo} />
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Report History</CardTitle>
+              <CardTitle className="text-base">Report history</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <ReportHistoryList
@@ -483,41 +263,7 @@ export function AdminReportDetailPageView({
               />
             </CardContent>
           </Card>
-
-          {/* Reporter Information Card */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Reporter Info</CardTitle>
-              <CardDescription>Account that submitted this report</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs">
-              <div>
-                <span className="text-muted-foreground">Name:</span>
-                <p className="font-medium mt-0.5">
-                  <Link
-                    href={buildAdminUserHref(report.reporterId)}
-                    className="text-primary hover:underline"
-                  >
-                    {report.reporter?.name || "Unnamed user"}
-                  </Link>
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Email:</span>
-                <p className="font-medium mt-0.5">{report.reporter?.email || "—"}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Account Status:</span>
-                <p className="font-medium mt-0.5">{report.reporter?.status || "ACTIVE"}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Reporter ID:</span>
-                <p className="font-mono text-muted-foreground mt-0.5 truncate">
-                  {report.reporterId}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <ReporterCard report={report} />
         </div>
       </div>
     </div>

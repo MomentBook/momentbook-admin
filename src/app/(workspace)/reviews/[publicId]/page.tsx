@@ -6,8 +6,8 @@ import {
   buildReviewDetailQueueLinks,
   loadReviewDetailParams,
 } from "@/lib/navigation/review-routes";
+import { loadReportHistoryOrNull } from "@/entities/report/history";
 import { resolveUserStatusBanner } from "@/entities/user/status-flash";
-import { loadReportHistoryOrNull } from "@/features/reports/loader";
 import { ReviewDetailView } from "@/features/reviews/components/review-detail-view";
 import { resolveReviewBanner } from "@/features/reviews/flash";
 import { loadAdminReviewDetail } from "@/features/reviews/loader";

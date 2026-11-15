@@ -32,7 +32,7 @@ describe("loadReportHistory", () => {
       limit: 5,
       hasMore: true,
     });
-    const { loadReportHistory } = await import("@/features/reports/loader");
+    const { loadReportHistory } = await import("@/entities/report/history");
 
     const history = await loadReportHistory({
       accessToken: "t",
@@ -56,7 +56,7 @@ describe("loadReportHistory", () => {
       limit: 3,
       hasMore: false,
     });
-    const { loadReportHistory } = await import("@/features/reports/loader");
+    const { loadReportHistory } = await import("@/entities/report/history");
 
     await loadReportHistory({ accessToken: "t", reporterId: "user-9", limit: 3 });
 
@@ -71,7 +71,7 @@ describe("loadReportHistoryOrNull", () => {
   it("returns null when the reports endpoint fails", async () => {
     const { TestBackendApiError } = await import("../__fixtures__/admin-journeys");
     listAdminReports.mockRejectedValue(new TestBackendApiError("boom", 500));
-    const { loadReportHistoryOrNull } = await import("@/features/reports/loader");
+    const { loadReportHistoryOrNull } = await import("@/entities/report/history");
 
     await expect(
       loadReportHistoryOrNull({ accessToken: "t", targetType: "USER", targetId: "u1" }),
@@ -81,7 +81,7 @@ describe("loadReportHistoryOrNull", () => {
   it("still propagates an expired session", async () => {
     const { TestBackendApiError } = await import("../__fixtures__/admin-journeys");
     listAdminReports.mockRejectedValue(new TestBackendApiError("expired", 401));
-    const { loadReportHistoryOrNull } = await import("@/features/reports/loader");
+    const { loadReportHistoryOrNull } = await import("@/entities/report/history");
 
     await expect(
       loadReportHistoryOrNull({ accessToken: "t", targetType: "USER", targetId: "u1" }),
