@@ -1,25 +1,28 @@
-import Image from "next/image";
 import Link from "next/link";
-import { CircleCheck, ImageOff, X } from "lucide-react";
+import { CircleCheckIcon, XIcon } from "lucide-react";
+import { FilterTabs } from "@/components/filter-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { LocalizedDate } from "@/components/localized-time";
-import { cn } from "@/lib/utils";
+import {
+  Empty,
+  EmptyContent,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { UrlPagination } from "@/components/url-pagination";
+import type { Flash } from "@/lib/navigation/flash";
 import {
   buildAdminReviewDetailHref,
   buildAdminReviewQueueHref,
+  REVIEW_QUEUE_TABS,
+  type ReviewQueueTab,
 } from "@/lib/navigation/review-routes";
 import { SLACK_TRANSLATION_NOTE } from "@/lib/workspace/attention";
-import type { ReviewQueuePage } from "@/features/reviews/queue-loader";
-import type { ReviewQueueTab } from "@/lib/navigation/review-routes";
-import { getAdminReviewStatusLabel, type AdminReviewStatus } from "@/features/reviews/loader";
-import { defaultLanguage } from "@/lib/i18n";
 import type { AdminReviewBanner } from "@/features/reviews/flash";
+import type { ReviewQueuePage } from "@/features/reviews/queue-loader";
 import { ReviewBanner } from "./review-flash-banner";
-
-const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
+import { ReviewQueueTable, type ReviewQueueRow } from "./review-queue-table";
 
 const TAB_LABELS: Record<ReviewQueueTab, string> = {
   pending: "Pending",
@@ -28,43 +31,6 @@ const TAB_LABELS: Record<ReviewQueueTab, string> = {
   rejected: "Rejected",
   all: "All",
 };
-
-const TAB_ORDER: ReviewQueueTab[] = ["pending", "translation", "approved", "rejected", "all"];
-
-function reviewBadgeVariant(status: AdminReviewStatus): "default" | "destructive" | "secondary" {
-  if (status === "APPROVED") return "default";
-  if (status === "REJECTED") return "destructive";
-  return "secondary";
-}
-
-function QueueTabs({ queue }: { queue: ReviewQueuePage }) {
-  return (
-    <nav aria-label="Review status" className="flex flex-wrap gap-1 border-b">
-      {TAB_ORDER.map((tab) => {
-        const active = tab === queue.tab;
-
-        return (
-          <Link
-            key={tab}
-            href={buildAdminReviewQueueHref({ status: tab, userId: queue.userId })}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm",
-              active
-                ? "border-primary font-medium text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {TAB_LABELS[tab]}
-            <Badge variant={active ? "default" : "outline"} className="tabular-nums">
-              {queue.tabTotals[tab]}
-            </Badge>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
 
 /** The author filter as a chip; following it clears the filter. */
 function AuthorFilterChip({ queue }: { queue: ReviewQueuePage }) {
@@ -82,7 +48,7 @@ function AuthorFilterChip({ queue }: { queue: ReviewQueuePage }) {
           <span className="truncate">
             Author: <span className="font-mono">{queue.userId}</span>
           </span>
-          <X aria-hidden />
+          <XIcon aria-hidden />
         </Link>
       </Badge>
     </div>
@@ -90,86 +56,39 @@ function AuthorFilterChip({ queue }: { queue: ReviewQueuePage }) {
 }
 
 function EmptyQueue({ queue }: { queue: ReviewQueuePage }) {
-  if (queue.tab === "pending" && queue.total === 0 && !queue.userId) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="flex items-center gap-3 py-8">
-          <CircleCheck className="size-6 text-emerald-600" aria-hidden />
-          <p className="font-medium">All clear — nothing waiting for review.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const allClear = queue.tab === "pending" && queue.total === 0 && !queue.userId;
 
   return (
-    <Card className="border-dashed">
-      <CardContent className="flex flex-col items-start gap-3 py-8">
-        <p className="font-medium">No journeys match this view.</p>
-        {queue.page > 1 ? (
+    <Empty className="border">
+      <EmptyHeader>
+        {allClear ? (
+          <EmptyMedia variant="icon">
+            <CircleCheckIcon className="text-emerald-600" aria-hidden />
+          </EmptyMedia>
+        ) : null}
+        <EmptyTitle>
+          {allClear ? "All clear — nothing waiting for review." : "No journeys match this view."}
+        </EmptyTitle>
+      </EmptyHeader>
+      {!allClear && queue.page > 1 ? (
+        <EmptyContent>
           <Button asChild variant="outline" size="sm">
             <Link href={buildAdminReviewQueueHref({ status: queue.tab, userId: queue.userId })}>
               Go to page 1
             </Link>
           </Button>
-        ) : null}
-      </CardContent>
-    </Card>
+        </EmptyContent>
+      ) : null}
+    </Empty>
   );
 }
 
-function Pagination({ queue }: { queue: ReviewQueuePage }) {
-  if (queue.pages <= 1) {
-    return null;
-  }
-
-  const previous = queue.page > 1 ? Math.min(queue.page - 1, queue.pages) : null;
-  const next = queue.page < queue.pages ? queue.page + 1 : null;
-
-  return (
-    <div className="flex items-center justify-between gap-2">
-      {previous ? (
-        <Button asChild variant="outline" size="sm">
-          <Link
-            href={buildAdminReviewQueueHref({
-              status: queue.tab,
-              page: previous,
-              userId: queue.userId,
-            })}
-          >
-            Previous
-          </Link>
-        </Button>
-      ) : (
-        <Button variant="outline" size="sm" disabled>
-          Previous
-        </Button>
-      )}
-      <span className="text-xs text-muted-foreground">
-        Page {queue.page} of {queue.pages}
-      </span>
-      {next ? (
-        <Button asChild variant="outline" size="sm">
-          <Link
-            href={buildAdminReviewQueueHref({ status: queue.tab, page: next, userId: queue.userId })}
-          >
-            Next
-          </Link>
-        </Button>
-      ) : (
-        <Button variant="outline" size="sm" disabled>
-          Next
-        </Button>
-      )}
-    </div>
-  );
-}
-
-export function ReviewQueuePageView({
+export function ReviewQueueView({
   banner,
   queue,
   returnTo,
 }: {
-  banner: AdminReviewBanner | null;
+  banner: AdminReviewBanner | Flash | null;
   queue: ReviewQueuePage;
   returnTo: string;
 }) {
@@ -180,6 +99,10 @@ export function ReviewQueuePageView({
     page: queue.page > 1 ? String(queue.page) : null,
     userId: queue.userId,
   };
+  const rows: ReviewQueueRow[] = queue.items.map((item) => ({
+    ...item,
+    detailHref: buildAdminReviewDetailHref(item.publicId, detailQuery),
+  }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -193,7 +116,15 @@ export function ReviewQueuePageView({
 
       <ReviewBanner banner={banner} returnTo={returnTo} />
 
-      <QueueTabs queue={queue} />
+      <FilterTabs
+        label="Review status"
+        items={REVIEW_QUEUE_TABS.map((tab) => ({
+          label: TAB_LABELS[tab],
+          href: buildAdminReviewQueueHref({ status: tab, userId: queue.userId }),
+          active: tab === queue.tab,
+          count: queue.tabTotals[tab],
+        }))}
+      />
 
       <AuthorFilterChip queue={queue} />
 
@@ -204,87 +135,18 @@ export function ReviewQueuePageView({
         </p>
       ) : null}
 
-      {queue.items.length > 0 ? (
+      {rows.length > 0 ? (
         <>
           <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">
-                    <span className="sr-only">Cover</span>
-                  </TableHead>
-                  <TableHead>Journey</TableHead>
-                  <TableHead>Author ID</TableHead>
-                  <TableHead className="text-right">Photos</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Review</TableHead>
-                  <TableHead>Translation</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {queue.items.map((item) => (
-                  <TableRow key={item.publicId}>
-                    <TableCell>
-                      <div className="relative size-12 overflow-hidden rounded-md bg-muted">
-                        {item.thumbnailUrl ? (
-                          <Image
-                            src={item.thumbnailUrl}
-                            alt=""
-                            fill
-                            sizes="48px"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <ImageOff
-                            className="absolute inset-0 m-auto size-4 text-muted-foreground"
-                            aria-hidden
-                          />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={buildAdminReviewDetailHref(item.publicId, detailQuery)}
-                        className="font-medium text-primary hover:underline"
-                      >
-                        {item.title || "Untitled journey"}
-                      </Link>
-                      <div className="font-mono text-xs text-muted-foreground">
-                        {item.publicId}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{item.userId}</TableCell>
-                    <TableCell className="text-right tabular-nums">{item.photoCount}</TableCell>
-                    <TableCell>
-                      {item.submittedAt ? (
-                        <LocalizedDate
-                          lang={ADMIN_DISPLAY_LANGUAGE}
-                          timestamp={Date.parse(item.submittedAt)}
-                        />
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={reviewBadgeVariant(item.review.status)}>
-                        {getAdminReviewStatusLabel(item.review.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {item.review.enqueueFailed ? (
-                        <Badge variant="destructive">Failed</Badge>
-                      ) : item.review.localizationPending ? (
-                        <Badge variant="secondary">Pending</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ReviewQueueTable rows={rows} />
           </div>
-          <Pagination queue={queue} />
+          <UrlPagination
+            page={queue.page}
+            pages={queue.pages}
+            hrefFor={(page) =>
+              buildAdminReviewQueueHref({ status: queue.tab, page, userId: queue.userId })
+            }
+          />
         </>
       ) : (
         <EmptyQueue queue={queue} />

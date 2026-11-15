@@ -1,12 +1,11 @@
 import "server-only";
 
 import { listPublishedJourneys } from "@/lib/api/journeys";
-import type { AttentionCounts } from "@/lib/workspace/attention";
-import { normalizeAdminReviewItem, type AdminReviewQueueItem } from "./loader";
 import type { AdminPublishedJourneyItemDto, JourneyReviewStatus } from "@/lib/api/types";
 import { REVIEW_QUEUE_TABS, type ReviewQueueTab } from "@/lib/navigation/review-routes";
-
-export const REVIEW_QUEUE_PAGE_SIZE = 20;
+import type { AttentionCounts } from "@/lib/workspace/attention";
+import { ADMIN_PAGE_SIZE, toListPage, type ListPage } from "@/lib/workspace/list-page";
+import { normalizeAdminReviewItem, type AdminReviewQueueItem } from "@/entities/journey/model";
 
 export function reviewQueueTabFilter(tab: ReviewQueueTab): {
   reviewStatus?: JourneyReviewStatus;
@@ -32,14 +31,10 @@ export type ReviewQueueItem = AdminReviewQueueItem & {
   submittedAt: string | null;
 };
 
-export type ReviewQueuePage = {
+export type ReviewQueuePage = ListPage<ReviewQueueItem> & {
   tab: ReviewQueueTab;
   /** The author filter, or `null` for every author. */
   userId: string | null;
-  items: ReviewQueueItem[];
-  total: number;
-  page: number;
-  pages: number;
   tabTotals: Record<ReviewQueueTab, number>;
 };
 
@@ -92,7 +87,7 @@ export async function loadReviewQueue(input: {
     listPublishedJourneys({
       accessToken: input.accessToken,
       page: input.page,
-      limit: REVIEW_QUEUE_PAGE_SIZE,
+      limit: ADMIN_PAGE_SIZE,
       ...reviewQueueTabFilter(input.tab),
       ...authorFilter(input.userId),
     }),
@@ -113,12 +108,9 @@ export async function loadReviewQueue(input: {
   tabTotals[input.tab] = list.total;
 
   return {
+    ...toListPage({ ...list, items: list.items.map(toReviewQueueItem) }, input.page),
     tab: input.tab,
     userId: input.userId ?? null,
-    items: list.items.map(toReviewQueueItem),
-    total: list.total,
-    page: input.page,
-    pages: Math.max(1, list.pages),
     tabTotals,
   };
 }

@@ -4,7 +4,7 @@ import {
   type FlashMessages,
   type FlashQuery,
 } from "@/lib/navigation/flash";
-import type { AdminReviewStatus } from "./loader";
+import type { AdminReviewStatus } from "@/entities/journey/model";
 
 export type AdminReviewBanner = Flash & {
   /** The journey an Undo button moves back to pending. */

@@ -12,7 +12,7 @@ import { loadAdminOverview } from "@/features/overview/loader";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AttentionOverview } from "@/features/overview/components/attention-overview";
 import { WorkspaceError } from "@/components/layout/workspace-error";
-import { parseAdminReviewStatus } from "@/features/reviews/loader";
+import { parseAdminReviewStatus } from "@/entities/journey/model";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { resolveReviewBanner } from "@/features/reviews/flash";
 

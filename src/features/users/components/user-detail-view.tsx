@@ -16,7 +16,7 @@ import {
 import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import { ADMIN_AUDIT_ACTION_LABELS } from "@/entities/audit-event/model";
 import { COMMENT_DELETED_BY_LABELS } from "@/entities/comment/model";
-import { getAdminReviewStatusLabel, normalizeAdminReviewItem } from "@/features/reviews/loader";
+import { getAdminReviewStatusLabel, normalizeAdminReviewItem } from "@/entities/journey/model";
 import type { AdminUserDetailWorkspaceData } from "@/features/users/loader";
 import { USER_STATUS_LABELS, humanizeEnum, userStatusBadgeVariant } from "@/entities/user/model";
 import type {
