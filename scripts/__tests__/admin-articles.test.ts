@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/src/configs/env.server", () => ({
+vi.mock("@/lib/env", () => ({
   ENV: { API_BASE_URL: "https://api.test" },
 }));
 
@@ -124,7 +124,7 @@ describe("article loaders", () => {
     fetchMock.mockResolvedValueOnce(
       ok({ items: [summary(), summary({ articleId: "art-2", category: "FESTIVAL" })], total: 2, page: 1, limit: 20 }),
     );
-    const { loadAdminEditorialArticleDashboard } = await import("@/lib/editorial/admin");
+    const { loadAdminEditorialArticleDashboard } = await import("@/features/articles/loader");
 
     const dashboard = await loadAdminEditorialArticleDashboard({
       accessToken: "t",
@@ -148,7 +148,7 @@ describe("article loaders", () => {
     fetchMock.mockResolvedValueOnce(
       ok({ ...summary({ category: "WELLBEING_GUIDE" }), body: "Body", alternates: [] }),
     );
-    const { loadAdminEditorialArticle } = await import("@/lib/editorial/admin");
+    const { loadAdminEditorialArticle } = await import("@/features/articles/loader");
 
     const record = await loadAdminEditorialArticle({ accessToken: "t", articleId: "art-1" });
 

@@ -11,7 +11,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "next typegen && tsc --noEmit",
-    "verify": "yarn typecheck && yarn lint && yarn test"
+    "verify": "node scripts/check-mock-paths.mjs && yarn typecheck && yarn lint && yarn test"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

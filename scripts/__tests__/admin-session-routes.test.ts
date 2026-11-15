@@ -13,7 +13,7 @@ vi.mock("next/headers", () => ({
   cookies: mocks.cookies,
 }));
 
-vi.mock("@/lib/admin/session", () => ({
+vi.mock("@/lib/auth/session", () => ({
   clearAdminSession: mocks.clearAdminSession,
   getStoredAdminSession: mocks.getStoredAdminSession,
   refreshAdminSession: mocks.refreshAdminSession,

@@ -3,15 +3,15 @@ import {
   buildAdminReportDetailHref,
   buildAdminReportsHref,
   parseAdminWorkspaceTab,
-} from "@/lib/admin/paths";
+} from "@/lib/navigation/paths";
 import {
   getReportReasonLabel,
   getReportStatusLabel,
   getReportTargetTypeLabel,
   parseReportReason,
   parseReporterId,
-} from "@/lib/admin/reports-shared";
-import { resolveReportBanner } from "@/app/reports/report-banner";
+} from "@/entities/report/model";
+import { resolveReportBanner } from "@/features/reports/flash";
 
 describe("admin reports paths and helpers", () => {
   it("parses the reports workspace tab", () => {

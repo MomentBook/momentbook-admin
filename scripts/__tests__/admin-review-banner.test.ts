@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { resolveReviewBanner } from "@/app/reviews/review-banner";
-import { resolveUserStatusBanner } from "@/app/_workspace/user-status-banner";
+import { resolveReviewBanner } from "@/features/reviews/flash";
+import { resolveUserStatusBanner } from "@/entities/user/status-flash";
 
 const noBanner = { error: null, mutation: null, reviewStatus: null, targetPublicId: null };
 

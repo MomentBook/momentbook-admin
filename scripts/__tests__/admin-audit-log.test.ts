@@ -13,7 +13,7 @@ afterEach(() => {
   vi.resetModules();
 });
 
-type Item = import("@/src/apis/types").AdminAuditLogItemDto;
+type Item = import("@/lib/api/types").AdminAuditLogItemDto;
 
 function item(overrides: Partial<Item>): Item {
   return {
@@ -33,8 +33,8 @@ function item(overrides: Partial<Item>): Item {
 
 describe("resolveAuditTargetHref", () => {
   it("links each target type to its admin page", async () => {
-    const { resolveAuditTargetHref } = await import("@/lib/admin/audit-log-shared");
-    const { buildAdminCommentsHref } = await import("@/lib/admin/paths");
+    const { resolveAuditTargetHref } = await import("@/entities/audit-event/model");
+    const { buildAdminCommentsHref } = await import("@/lib/navigation/paths");
 
     expect(resolveAuditTargetHref(item({ targetType: "USER", targetId: "u-1" }))).toBe("/users/u-1");
     expect(
@@ -61,7 +61,7 @@ describe("resolveAuditTargetHref", () => {
   });
 
   it("returns null for a comment without details.publicId and for a deleted article", async () => {
-    const { resolveAuditTargetHref } = await import("@/lib/admin/audit-log-shared");
+    const { resolveAuditTargetHref } = await import("@/entities/audit-event/model");
 
     expect(
       resolveAuditTargetHref(item({ targetType: "COMMENT", action: "COMMENT_DELETED", details: {} })),
@@ -82,7 +82,7 @@ describe("resolveAuditTargetHref", () => {
 describe("audit filters", () => {
   it("parsers keep known values and reject unknown ones", async () => {
     const { parseAuditActionFilter, parseAuditTargetTypeFilter, ADMIN_AUDIT_ACTION_LABELS } =
-      await import("@/lib/admin/audit-log-shared");
+      await import("@/entities/audit-event/model");
 
     expect(parseAuditActionFilter("USER_BANNED")).toBe("USER_BANNED");
     expect(parseAuditActionFilter("user_banned")).toBeUndefined();
@@ -96,7 +96,7 @@ describe("audit filters", () => {
   });
 
   it("summarizes details as plain key: value text", async () => {
-    const { summarizeAuditDetails } = await import("@/lib/admin/audit-log-shared");
+    const { summarizeAuditDetails } = await import("@/entities/audit-event/model");
 
     expect(summarizeAuditDetails(null)).toBeNull();
     expect(summarizeAuditDetails({})).toBeNull();
@@ -116,7 +116,7 @@ describe("loadAdminAuditLogData", () => {
       pages: 0,
       hasMore: false,
     });
-    const { loadAdminAuditLogData } = await import("@/lib/admin/audit-log");
+    const { loadAdminAuditLogData } = await import("@/features/audit-log/loader");
 
     const data = await loadAdminAuditLogData("token", {
       action: "REPORT_UPDATED",

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/src/configs/env.server", () => ({
+vi.mock("@/lib/env", () => ({
   ENV: { API_BASE_URL: "https://api.test", ADMIN_SESSION_SECRET: "test-session-secret" },
 }));
 
@@ -91,8 +91,8 @@ describe("loginAdminAction", () => {
     const cookieStore = createCookieStore();
     mocks.cookies.mockResolvedValue(cookieStore);
     fetchMock.mockResolvedValueOnce(json(authSession));
-    const { loginAdminAction } = await import("@/app/login/actions");
-    const { getStoredAdminSession } = await import("@/lib/admin/session");
+    const { loginAdminAction } = await import("@/features/auth/actions");
+    const { getStoredAdminSession } = await import("@/lib/auth/session");
 
     await expect(loginAdminAction({ error: null }, loginForm())).rejects.toThrow(
       "REDIRECT:/reports",
@@ -122,7 +122,7 @@ describe("loginAdminAction", () => {
     fetchMock.mockResolvedValueOnce(
       json({ status: "success", data: { ...authSession, user: { _id: "user-1" } } }),
     );
-    const { loginAdminAction } = await import("@/app/login/actions");
+    const { loginAdminAction } = await import("@/features/auth/actions");
 
     await expect(loginAdminAction({ error: null }, loginForm())).resolves.toEqual({
       error: "Incomplete login response.",
@@ -136,7 +136,7 @@ describe("loginAdminAction", () => {
     fetchMock.mockResolvedValueOnce(
       json({ ...authSession, accessToken: jwt({ sub: "user-1", role: "USER", exp: ACCESS_EXP }) }),
     );
-    const { loginAdminAction } = await import("@/app/login/actions");
+    const { loginAdminAction } = await import("@/features/auth/actions");
 
     await expect(loginAdminAction({ error: null }, loginForm())).resolves.toEqual({
       error: "This account does not have admin access.",
@@ -150,7 +150,7 @@ describe("session bootstrap route", () => {
     const cookieStore = createCookieStore();
     mocks.cookies.mockResolvedValue(cookieStore);
     const { POST } = await import("@/app/session/route");
-    const { getStoredAdminSession } = await import("@/lib/admin/session");
+    const { getStoredAdminSession } = await import("@/lib/auth/session");
 
     const response = await POST(
       new Request("https://admin.test/session", {

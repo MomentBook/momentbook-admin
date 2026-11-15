@@ -19,7 +19,7 @@ import {
   buildReviewDetailQueueLinks,
   buildAdminSessionRefreshHref,
   sanitizeAdminPath,
-} from "@/lib/admin/paths";
+} from "@/lib/navigation/paths";
 import { ADMIN_NAV_ITEMS } from "@/components/layout/admin-nav";
 
 describe("admin session paths", () => {

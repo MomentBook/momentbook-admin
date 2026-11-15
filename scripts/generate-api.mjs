@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 // Writes the API's data contracts as types only (`--no-client`, ADR 0012) to
-// src/apis/generated/<service>.ts. The files are committed, so a Vercel build
+// src/lib/api/generated/<service>.ts. The files are committed, so a Vercel build
 // never reaches the dev server; never edit them by hand.
 //
 // The source is the dev server's swagger by default. API_SPEC_DIR reads
@@ -14,7 +14,7 @@ import path from "node:path";
 
 const SWAGGER_BASE_URL = "http://10.133.199.134:8090";
 const SERVICES = ["core", "auth"];
-const OUT_DIR = "./src/apis/generated";
+const OUT_DIR = "./src/lib/api/generated";
 // The exact version is pinned in package.json (ADR 0012 item 1).
 const GENERATOR_BIN = "./node_modules/.bin/swagger-typescript-api";
 

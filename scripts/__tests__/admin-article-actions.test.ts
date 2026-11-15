@@ -25,7 +25,7 @@ vi.mock("next/dist/client/components/redirect-error", () => ({
     error instanceof Error && error.message.startsWith("REDIRECT:"),
 }));
 
-vi.mock("@/lib/admin/session", () => ({
+vi.mock("@/lib/auth/session", () => ({
   requireAdminActionSession,
 }));
 
@@ -53,12 +53,12 @@ vi.mock("@/lib/api/articles", () => ({
   updateAdminArticle,
 }));
 
-vi.mock("@/lib/editorial/admin", () => ({
+vi.mock("@/features/articles/loader", () => ({
   loadAdminEditorialArticle,
 }));
 
 async function loadArticleActionsModule() {
-  return import("@/app/articles/actions");
+  return import("@/features/articles/actions");
 }
 
 afterEach(() => {

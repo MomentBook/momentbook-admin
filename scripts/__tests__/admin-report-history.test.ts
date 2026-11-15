@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/api/client", async () => {
-  const fixtures = await import("@/scripts/__fixtures__/admin-journeys");
+  const fixtures = await import("../__fixtures__/admin-journeys");
   return {
     BackendApiError: fixtures.TestBackendApiError,
     isBackendApiError: fixtures.isTestBackendApiError,
@@ -32,7 +32,7 @@ describe("loadReportHistory", () => {
       limit: 5,
       hasMore: true,
     });
-    const { loadReportHistory } = await import("@/lib/admin/reports");
+    const { loadReportHistory } = await import("@/features/reports/loader");
 
     const history = await loadReportHistory({
       accessToken: "t",
@@ -56,7 +56,7 @@ describe("loadReportHistory", () => {
       limit: 3,
       hasMore: false,
     });
-    const { loadReportHistory } = await import("@/lib/admin/reports");
+    const { loadReportHistory } = await import("@/features/reports/loader");
 
     await loadReportHistory({ accessToken: "t", reporterId: "user-9", limit: 3 });
 
@@ -69,9 +69,9 @@ describe("loadReportHistory", () => {
 
 describe("loadReportHistoryOrNull", () => {
   it("returns null when the reports endpoint fails", async () => {
-    const { TestBackendApiError } = await import("@/scripts/__fixtures__/admin-journeys");
+    const { TestBackendApiError } = await import("../__fixtures__/admin-journeys");
     listAdminReports.mockRejectedValue(new TestBackendApiError("boom", 500));
-    const { loadReportHistoryOrNull } = await import("@/lib/admin/reports");
+    const { loadReportHistoryOrNull } = await import("@/features/reports/loader");
 
     await expect(
       loadReportHistoryOrNull({ accessToken: "t", targetType: "USER", targetId: "u1" }),
@@ -79,9 +79,9 @@ describe("loadReportHistoryOrNull", () => {
   });
 
   it("still propagates an expired session", async () => {
-    const { TestBackendApiError } = await import("@/scripts/__fixtures__/admin-journeys");
+    const { TestBackendApiError } = await import("../__fixtures__/admin-journeys");
     listAdminReports.mockRejectedValue(new TestBackendApiError("expired", 401));
-    const { loadReportHistoryOrNull } = await import("@/lib/admin/reports");
+    const { loadReportHistoryOrNull } = await import("@/features/reports/loader");
 
     await expect(
       loadReportHistoryOrNull({ accessToken: "t", targetType: "USER", targetId: "u1" }),

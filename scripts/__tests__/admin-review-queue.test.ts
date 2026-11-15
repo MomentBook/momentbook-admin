@@ -4,7 +4,7 @@ import {
   createAdminJourneysPage,
   isTestBackendApiError,
   TestBackendApiError,
-} from "@/scripts/__fixtures__/admin-journeys";
+} from "../__fixtures__/admin-journeys";
 
 vi.mock("server-only", () => ({}));
 
@@ -28,7 +28,7 @@ const counts = {
 };
 
 async function loadModule() {
-  return import("@/lib/admin/review-queue");
+  return import("@/features/reviews/queue-loader");
 }
 
 afterEach(() => {

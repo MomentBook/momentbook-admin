@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/src/configs/env.server", () => ({
+vi.mock("@/lib/env", () => ({
   ENV: { API_BASE_URL: "https://api.test" },
 }));
 

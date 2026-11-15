@@ -19,7 +19,7 @@ vi.mock("next/headers", () => ({
   cookies,
 }));
 
-vi.mock("@/lib/admin/session", () => ({
+vi.mock("@/lib/auth/session", () => ({
   clearAdminSession,
   requireAdminActionSession,
 }));
@@ -59,7 +59,7 @@ function form(fields: Record<string, string> = {}) {
 
 async function run(formData: FormData): Promise<string> {
   const { resyncAdminUserSubscriptionsAction } = await import(
-    "@/app/users/subscription-actions"
+    "@/features/users/subscription-actions"
   );
 
   try {
