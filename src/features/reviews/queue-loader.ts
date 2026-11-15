@@ -4,42 +4,9 @@ import { listPublishedJourneys } from "@/lib/api/journeys";
 import type { AttentionCounts } from "@/lib/workspace/attention";
 import { normalizeAdminReviewItem, type AdminReviewQueueItem } from "./loader";
 import type { AdminPublishedJourneyItemDto, JourneyReviewStatus } from "@/lib/api/types";
-
-export type ReviewQueueTab = "pending" | "translation" | "approved" | "rejected" | "all";
-
-export const REVIEW_QUEUE_TABS: readonly ReviewQueueTab[] = [
-  "pending",
-  "translation",
-  "approved",
-  "rejected",
-  "all",
-];
+import { REVIEW_QUEUE_TABS, type ReviewQueueTab } from "@/lib/navigation/review-routes";
 
 export const REVIEW_QUEUE_PAGE_SIZE = 20;
-
-// The API rejects page > 100000.
-const MAX_QUEUE_PAGE = 100000;
-
-export function parseReviewQueueTab(value: string | null): ReviewQueueTab {
-  return REVIEW_QUEUE_TABS.find((tab) => tab === value) ?? "pending";
-}
-
-/** The queue tab a detail page was opened from, or `null` when the link came
- * from outside the queue (or names no tab) — only an explicit `pending`
- * context auto-advances after a decision. */
-export function parseReviewQueueContext(value: string | null): ReviewQueueTab | null {
-  return REVIEW_QUEUE_TABS.find((tab) => tab === value) ?? null;
-}
-
-export function parseReviewQueuePage(value: string | null): number {
-  if (!value || !/^-?\d+$/.test(value.trim())) {
-    return 1;
-  }
-
-  const page = Number(value);
-
-  return Math.min(MAX_QUEUE_PAGE, Math.max(1, page));
-}
 
 export function reviewQueueTabFilter(tab: ReviewQueueTab): {
   reviewStatus?: JourneyReviewStatus;

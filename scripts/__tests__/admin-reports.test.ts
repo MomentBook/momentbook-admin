@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildAdminReportDetailHref,
-  buildAdminReportsHref,
-  parseAdminWorkspaceTab,
-} from "@/lib/navigation/paths";
+import { parseAdminWorkspaceTab } from "@/lib/navigation/paths";
+import { buildAdminReportDetailHref, buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import {
   getReportReasonLabel,
   getReportStatusLabel,

@@ -205,62 +205,6 @@ export function parseAdminWorkspaceTab(
   return ADMIN_DEFAULT_WORKSPACE_TAB;
 }
 
-/** The review queue; `pending` and page 1 are the defaults and stay out of
- * the URL. */
-export function buildAdminReviewQueueHref(options?: {
-  status?: string | null;
-  page?: number | string | null;
-  userId?: string | null;
-  entries?: Record<string, string | null | undefined>;
-}): string {
-  const status = readOptionalQueryValue(options?.status);
-
-  return withAdminQuery(ADMIN_REVIEWS_PATH, {
-    status: status === "pending" ? null : status,
-    userId: readOptionalQueryValue(options?.userId),
-    page: normalizePageQuery(options?.page),
-    ...options?.entries,
-  });
-}
-
-export function buildAdminReviewDetailHref(
-  publicId: string,
-  entries?: Record<string, string | null | undefined>,
-): string {
-  return withAdminQuery(
-    `${ADMIN_REVIEWS_PATH}/${encodeURIComponent(publicId)}`,
-    entries ?? {},
-  );
-}
-
-/** A review detail page's own URL (the action `returnTo`) and its links back
- * to the queue it was opened from. They carry the tab, page and author
- * filter, so going back lands on the same rows. `status` is the explicit
- * queue context, or `null` when opened from outside the queue. */
-export function buildReviewDetailQueueLinks(options: {
-  publicId: string;
-  status: string | null;
-  page: number;
-  userId?: string | null;
-  lang?: string | null;
-}): { returnTo: string; backHref: string; notFoundHref: string } {
-  const queue = { status: options.status, page: options.page, userId: options.userId };
-
-  return {
-    returnTo: buildAdminReviewDetailHref(options.publicId, {
-      lang: options.lang,
-      page: normalizePageQuery(options.page),
-      status: options.status,
-      userId: options.userId,
-    }),
-    backHref: buildAdminReviewQueueHref(queue),
-    notFoundHref: buildAdminReviewQueueHref({
-      ...queue,
-      entries: { error: "review_target_not_found" },
-    }),
-  };
-}
-
 export function buildAdminArticleWorkspaceHref(
   options?: AdminArticleWorkspaceHrefOptions,
 ): string {
@@ -307,44 +251,6 @@ export function buildAdminArticleTableDetailHref(options: {
       category: options.category,
     }),
   });
-}
-
-export type AdminReportsHrefOptions = {
-  page?: number | string | null;
-  status?: string | null;
-  targetType?: string | null;
-  reason?: string | null;
-  targetId?: string | null;
-  reporterId?: string | null;
-  mutation?: string | null;
-  error?: string | null;
-  message?: string | null;
-};
-
-export function buildAdminReportsHref(
-  options?: AdminReportsHrefOptions,
-): string {
-  return withAdminQuery(ADMIN_REPORTS_PATH, {
-    page: normalizePageQuery(options?.page),
-    status: readOptionalQueryValue(options?.status),
-    targetType: readOptionalQueryValue(options?.targetType),
-    reason: readOptionalQueryValue(options?.reason),
-    targetId: readOptionalQueryValue(options?.targetId),
-    reporterId: readOptionalQueryValue(options?.reporterId),
-    mutation: readOptionalQueryValue(options?.mutation),
-    error: readOptionalQueryValue(options?.error),
-    message: readOptionalQueryValue(options?.message),
-  });
-}
-
-export function buildAdminReportDetailHref(
-  reportId: string,
-  entries?: Record<string, string | null | undefined>,
-): string {
-  return withAdminQuery(
-    `${ADMIN_REPORTS_PATH}/${encodeURIComponent(reportId)}`,
-    entries ?? {},
-  );
 }
 
 export function buildAdminUsersHref(options?: {

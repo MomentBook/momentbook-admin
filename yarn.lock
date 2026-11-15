@@ -2315,7 +2315,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@standard-schema/spec@npm:^1.1.0":
+"@standard-schema/spec@npm:1.1.0, @standard-schema/spec@npm:^1.1.0":
   version: 1.1.0
   resolution: "@standard-schema/spec@npm:1.1.0"
   checksum: 6245ebef5e698bb04752a22e996a7cc40406a404d9f68a9d4e1a7a10f2422da287247508e7b495a2f32bb38f3d57b4daf2c9ab4bf22d9bca13e20a3dc5ec575e
@@ -5229,6 +5229,7 @@ __metadata:
     lucide-react: 1.8.0
     next: 16.3.8
     next-themes: ^0.4.6
+    nuqs: 2.10.2
     openapi-fetch: 0.17.0
     openapi-typescript: 7.13.0
     radix-ui: ~1.6.7
@@ -5403,6 +5404,33 @@ __metadata:
   bin:
     nopt: bin/nopt.js
   checksum: c2903b9171a3293b731189ace4eaeacc2ed8191bb8f8f74ebfb61babc0de2ff158d97a215fd561070ed0dac567f3b8741955f81a534009e57eb37fdc419d5d4e
+  languageName: node
+  linkType: hard
+
+"nuqs@npm:2.10.2":
+  version: 2.10.2
+  resolution: "nuqs@npm:2.10.2"
+  dependencies:
+    "@standard-schema/spec": 1.1.0
+  peerDependencies:
+    "@remix-run/react": ">=2"
+    "@tanstack/react-router": ^1
+    next: ">=14.2.0"
+    react: ">=18.2.0 || ^19.0.0-0"
+    react-router: ^5 || ^6 || ^7 || ^8
+    react-router-dom: ^5 || ^6 || ^7
+  peerDependenciesMeta:
+    "@remix-run/react":
+      optional: true
+    "@tanstack/react-router":
+      optional: true
+    next:
+      optional: true
+    react-router:
+      optional: true
+    react-router-dom:
+      optional: true
+  checksum: 558c9ce522bbb5b1a4a9a3573ae888f2d6d65707eb7bf039e073f2ba99b2e01b10185b00e43125caa0927acc6eb63d958e50c734aa3b7e66ea340e422f1016a6
   languageName: node
   linkType: hard
 

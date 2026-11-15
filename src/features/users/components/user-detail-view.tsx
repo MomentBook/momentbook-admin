@@ -7,11 +7,13 @@ import { ConfirmActionForm } from "@/components/confirm-action-form";
 import {
   buildAdminAuditLogHref,
   buildAdminCommentsHref,
-  buildAdminReportsHref,
-  buildAdminReviewDetailHref,
-  buildAdminReviewQueueHref,
   buildAdminUsersHref,
 } from "@/lib/navigation/paths";
+import {
+  buildAdminReviewDetailHref,
+  buildAdminReviewQueueHref,
+} from "@/lib/navigation/review-routes";
+import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import { ADMIN_AUDIT_ACTION_LABELS } from "@/entities/audit-event/model";
 import { COMMENT_DELETED_BY_LABELS } from "@/entities/comment/model";
 import { getAdminReviewStatusLabel, normalizeAdminReviewItem } from "@/features/reviews/loader";

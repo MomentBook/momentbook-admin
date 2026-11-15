@@ -2,16 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminReportDetail, loadReportHistoryOrNull } from "@/features/reports/loader";
-import {
-  loadWorkspacePage,
-  readQueryParam,
-} from "@/lib/workspace/load-workspace-page";
+import { loadWorkspacePage } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { WorkspaceError } from "@/components/layout/workspace-error";
 import {
   buildAdminReportDetailHref,
   buildAdminReportsHref,
-} from "@/lib/navigation/paths";
+  loadReportDetailParams,
+} from "@/lib/navigation/report-routes";
 import { resolveReportBanner } from "@/features/reports/flash";
 import { AdminReportDetailPageView } from "@/features/reports/components/report-detail-view";
 
@@ -27,21 +25,10 @@ export default async function AdminReportDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
+  const query = loadReportDetailParams(await searchParams);
   const reportId = decodeURIComponent(resolvedParams.reportId);
-  const mutation = readQueryParam(resolvedSearchParams.mutation);
-  const error = readQueryParam(resolvedSearchParams.error);
-  const message = readQueryParam(resolvedSearchParams.message);
-
   const returnTo = buildAdminReportDetailHref(reportId);
-
-  const banner = resolveReportBanner({
-    error,
-    message,
-    mutation,
-    status: readQueryParam(resolvedSearchParams.status),
-    userStatus: readQueryParam(resolvedSearchParams.userStatus),
-  });
+  const banner = resolveReportBanner(query);
 
   let result;
 

@@ -1,24 +1,20 @@
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
+import {
+  resolveFlash,
+  type Flash,
+  type FlashMessages,
+  type FlashQuery,
+} from "@/lib/navigation/flash";
 
-export function resolveCommentBanner(options: {
-  mutation: string | null;
-  error: string | null;
-  message: string | null;
-}): AdminDashboardBanner | null {
-  if (options.mutation === "comment_deleted") {
-    return { tone: "success", message: "Comment hidden from the journey." };
-  }
+const COMMENT_FLASH: FlashMessages<FlashQuery> = {
+  mutations: {
+    comment_deleted: "Comment hidden from the journey.",
+  },
+  errors: {
+    comment_not_found: "That comment no longer exists.",
+    comment_update_failed: ({ message }) => message || "Could not delete the comment. Try again.",
+  },
+};
 
-  if (options.error === "comment_not_found") {
-    return { tone: "error", message: "That comment no longer exists." };
-  }
-
-  if (options.error === "comment_update_failed") {
-    return {
-      tone: "error",
-      message: options.message || "Could not delete the comment. Try again.",
-    };
-  }
-
-  return null;
+export function resolveCommentBanner(query: FlashQuery): Flash | null {
+  return resolveFlash(query, COMMENT_FLASH);
 }

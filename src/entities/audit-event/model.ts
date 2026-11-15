@@ -6,10 +6,10 @@ import type {
 import {
   buildAdminArticleDetailHref,
   buildAdminCommentsHref,
-  buildAdminReportDetailHref,
-  buildAdminReviewDetailHref,
   buildAdminUserHref,
 } from "@/lib/navigation/paths";
+import { buildAdminReviewDetailHref } from "@/lib/navigation/review-routes";
+import { buildAdminReportDetailHref } from "@/lib/navigation/report-routes";
 
 export const ADMIN_AUDIT_PAGE_SIZE = 20;
 

@@ -7,9 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LocalizedDate } from "@/components/localized-time";
 import { cn } from "@/lib/utils";
-import { buildAdminReviewDetailHref, buildAdminReviewQueueHref } from "@/lib/navigation/paths";
+import {
+  buildAdminReviewDetailHref,
+  buildAdminReviewQueueHref,
+} from "@/lib/navigation/review-routes";
 import { SLACK_TRANSLATION_NOTE } from "@/lib/workspace/attention";
-import type { ReviewQueuePage, ReviewQueueTab } from "@/features/reviews/queue-loader";
+import type { ReviewQueuePage } from "@/features/reviews/queue-loader";
+import type { ReviewQueueTab } from "@/lib/navigation/review-routes";
 import { getAdminReviewStatusLabel, type AdminReviewStatus } from "@/features/reviews/loader";
 import { defaultLanguage } from "@/lib/i18n";
 import type { AdminReviewBanner } from "@/features/reviews/flash";
@@ -170,7 +174,7 @@ export function ReviewQueuePageView({
   returnTo: string;
 }) {
   // The explicit status is the queue context; it turns on auto-advance for
-  // the pending tab (see parseReviewQueueContext).
+  // the pending tab (see loadReviewDetailParams).
   const detailQuery = {
     status: queue.tab,
     page: queue.page > 1 ? String(queue.page) : null,

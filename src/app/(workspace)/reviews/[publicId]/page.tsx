@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminReviewDetailPageView } from "@/features/reviews/components/review-detail-view";
-import { buildReviewDetailQueueLinks } from "@/lib/navigation/paths";
+import {
+  buildReviewDetailQueueLinks,
+  loadReviewDetailParams,
+} from "@/lib/navigation/review-routes";
 import { isBackendApiError } from "@/lib/api/client";
-import { parseReviewQueueContext, parseReviewQueuePage } from "@/features/reviews/queue-loader";
 import { loadReportHistoryOrNull } from "@/features/reports/loader";
-import { parseUuidFilter } from "@/entities/report/model";
-import { loadAdminReviewDetail, parseAdminReviewStatus } from "@/features/reviews/loader";
+import { loadAdminReviewDetail } from "@/features/reviews/loader";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { resolveSupportedLanguage, toLocaleTag } from "@/lib/i18n";
-import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
+import { loadWorkspacePage } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceError } from "@/components/layout/workspace-error";
 import { resolveUserStatusBanner } from "@/entities/user/status-flash";
 import { resolveReviewBanner } from "@/features/reviews/flash";
@@ -26,16 +27,14 @@ export default async function AdminReviewDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
+  const query = loadReviewDetailParams(await searchParams);
   const publicId = decodeURIComponent(resolvedParams.publicId);
-  const page = parseReviewQueuePage(readQueryParam(resolvedSearchParams.page));
+  const page = query.page;
   // Null when opened from outside the queue (e.g. report detail): no auto-advance.
-  const queueContext = parseReviewQueueContext(readQueryParam(resolvedSearchParams.status));
+  const queueContext = query.status;
   // The author filter of the queue this was opened from, kept for the way back.
-  const userId = parseUuidFilter(readQueryParam(resolvedSearchParams.userId));
-  const detailLanguage = resolveSupportedLanguage(
-    readQueryParam(resolvedSearchParams.lang),
-  );
+  const userId = query.userId ?? undefined;
+  const detailLanguage = resolveSupportedLanguage(query.lang);
   const detailLocale = detailLanguage ? toLocaleTag(detailLanguage) : null;
   const { returnTo, backHref, notFoundHref } = buildReviewDetailQueueLinks({
     publicId,
@@ -44,20 +43,7 @@ export default async function AdminReviewDetailPage({
     userId,
     lang: detailLocale,
   });
-  const read = (key: string) => readQueryParam(resolvedSearchParams[key]);
-  const banner =
-    resolveReviewBanner({
-      error: read("error"),
-      mutation: read("mutation"),
-      reviewStatus: parseAdminReviewStatus(read("reviewStatus")),
-      targetPublicId: read("targetPublicId"),
-    }) ??
-    resolveUserStatusBanner({
-      error: read("error"),
-      message: read("message"),
-      mutation: read("mutation"),
-      userStatus: read("userStatus"),
-    });
+  const banner = resolveReviewBanner(query) ?? resolveUserStatusBanner(query);
 
   let result;
 

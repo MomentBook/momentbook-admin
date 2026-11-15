@@ -54,7 +54,7 @@ describe("comment filters", () => {
   });
 
   it("parseUuidFilter (shared with reports) keeps only a UUID", async () => {
-    const { parseUuidFilter } = await import("@/entities/report/model");
+    const { parseUuidFilter } = await import("@/lib/navigation/params");
 
     expect(parseUuidFilter(` ${UUID} `)).toBe(UUID);
     expect(parseUuidFilter("nope")).toBeUndefined();

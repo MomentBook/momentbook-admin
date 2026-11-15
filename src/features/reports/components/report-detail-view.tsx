@@ -15,11 +15,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { LocalizedDate } from "@/components/localized-time";
-import {
-  buildAdminReportsHref,
-  buildAdminReviewDetailHref,
-  buildAdminUserHref,
-} from "@/lib/navigation/paths";
+import { buildAdminUserHref } from "@/lib/navigation/paths";
+import { buildAdminReviewDetailHref } from "@/lib/navigation/review-routes";
+import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import {
   getReportReasonLabel,
   getReportStatusLabel,

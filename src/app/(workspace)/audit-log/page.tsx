@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminAuditLogData } from "@/features/audit-log/loader";
 import { parseAuditActionFilter, parseAuditTargetTypeFilter } from "@/entities/audit-event/model";
-import { parseUuidFilter } from "@/entities/report/model";
+import { parseUuidFilter } from "@/lib/navigation/params";
 import { buildAdminAuditLogHref } from "@/lib/navigation/paths";
 import { loadWorkspacePage, parsePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminCommentsWorkspaceData } from "@/features/comments/loader";
 import { parseCommentStatusTab, parsePublicIdFilter } from "@/entities/comment/model";
-import { parseUuidFilter } from "@/entities/report/model";
+import { parseUuidFilter } from "@/lib/navigation/params";
 import { buildAdminCommentsHref } from "@/lib/navigation/paths";
 import {
   loadWorkspacePage,

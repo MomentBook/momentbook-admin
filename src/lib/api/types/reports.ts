@@ -18,6 +18,29 @@ export type ReportTargetType = AdminReportDto["targetType"];
 export type ReportReason = AdminReportDto["reason"];
 export type ReportStatus = AdminReportDto["status"];
 
+// Each enum's values, in the order the admin lists them; the build fails if
+// one stops being an API value.
+export const REPORT_STATUSES = [
+  "PENDING",
+  "REVIEWED",
+  "RESOLVED",
+  "REJECTED",
+] as const satisfies readonly ReportStatus[];
+
+export const REPORT_TARGET_TYPES = [
+  "USER",
+  "PUBLISHED_JOURNEY",
+] as const satisfies readonly ReportTargetType[];
+
+export const REPORT_REASONS = [
+  "SPAM",
+  "ABUSE",
+  "HATE",
+  "SEXUAL",
+  "INAPPROPRIATE",
+  "OTHER",
+] as const satisfies readonly ReportReason[];
+
 // ─── Report ───────────────────────────────────
 
 /** The reporter or the reported account inside a report. */

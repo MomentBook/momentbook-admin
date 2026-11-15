@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import {
   ADMIN_ROOT_PATH,
   buildAdminArticleWorkspaceHref,
-  buildAdminReportsHref,
-  buildAdminReviewQueueHref,
   parseAdminWorkspaceTab,
 } from "@/lib/navigation/paths";
+import { buildAdminReviewQueueHref } from "@/lib/navigation/review-routes";
+import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminOverview } from "@/features/overview/loader";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";

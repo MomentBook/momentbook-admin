@@ -1,6 +1,6 @@
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { FlashBanner } from "@/components/flash-banner";
 import { Button } from "@/components/ui/button";
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
+import type { Flash } from "@/lib/navigation/flash";
 import { updatePublishedJourneyReviewAction } from "@/features/reviews/actions";
 import type { AdminReviewBanner } from "@/features/reviews/flash";
 
@@ -11,20 +11,16 @@ export function ReviewBanner({
   banner,
   returnTo,
 }: {
-  banner: AdminReviewBanner | AdminDashboardBanner | null;
+  banner: AdminReviewBanner | Flash | null;
   returnTo: string;
 }) {
-  if (!banner) {
-    return null;
-  }
-
-  const undoPublicId = "undoPublicId" in banner ? banner.undoPublicId : undefined;
+  const undoPublicId = banner && "undoPublicId" in banner ? banner.undoPublicId : undefined;
 
   return (
-    <Alert variant={banner.tone === "error" ? "destructive" : "default"}>
-      <div className="col-start-2 flex flex-wrap items-center justify-between gap-3">
-        <AlertTitle className="line-clamp-none">{banner.message}</AlertTitle>
-        {undoPublicId ? (
+    <FlashBanner
+      flash={banner}
+      action={
+        undoPublicId ? (
           <form action={updatePublishedJourneyReviewAction}>
             <input type="hidden" name="returnTo" value={returnTo} />
             <input type="hidden" name="targetPublicId" value={undoPublicId} />
@@ -33,8 +29,8 @@ export function ReviewBanner({
               Undo
             </Button>
           </form>
-        ) : null}
-      </div>
-    </Alert>
+        ) : undefined
+      }
+    />
   );
 }

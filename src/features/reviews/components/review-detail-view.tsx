@@ -14,12 +14,9 @@ import {
 import { updateAdminUserStatusAction } from "@/features/reports/actions";
 import { ReportHistoryList, type ReportHistory } from "@/entities/report/components/report-history-list";
 import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
-import {
-  buildAdminCommentsHref,
-  buildAdminReportsHref,
-  buildAdminUserHref,
-} from "@/lib/navigation/paths";
-import type { ReviewQueueTab } from "@/features/reviews/queue-loader";
+import { buildAdminCommentsHref, buildAdminUserHref } from "@/lib/navigation/paths";
+import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
+import type { ReviewQueueTab } from "@/lib/navigation/review-routes";
 import {
   getAdminReviewStatusLabel,
   type AdminReviewDetail,

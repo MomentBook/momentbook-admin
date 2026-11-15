@@ -1,5 +1,7 @@
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
-import { resolveUserStatusBanner } from "@/entities/user/status-flash";
+import { resolveFlash, type Flash, type FlashMessages } from "@/lib/navigation/flash";
+import { USER_STATUS_FLASH, type UserStatusFlashQuery } from "@/entities/user/status-flash";
+
+type UserFlashQuery = UserStatusFlashQuery & { revokedSessions?: string | null };
 
 const ALLOWANCE_ERROR_MESSAGES: Record<string, string> = {
   allowance_empty: "Enter the allowance in GB.",
@@ -10,66 +12,43 @@ const ALLOWANCE_ERROR_MESSAGES: Record<string, string> = {
   allowance_choice_missing: "Choose Set allowance or Use the plan's allowance.",
 };
 
-/** Banner for the user detail page: sign-out, allowance and subscription-check
- * results first, then the shared ban/unban banner. */
-export function resolveUserBanner(options: {
-  mutation: string | null;
-  error: string | null;
-  message: string | null;
-  revokedSessions: string | null;
-  userStatus: string | null;
-}): AdminDashboardBanner | null {
-  if (options.mutation === "sessions_revoked") {
+const SUBSCRIPTIONS_CHECK_FAILED = "The store could not be asked.";
+
+/** The user detail page's banners: sign-out, allowance and subscription-check
+ * results, then the shared ban/unban ones. */
+const USER_FLASH: FlashMessages<UserFlashQuery> = {
+  mutations: {
     // An account has at most one active session, so the API answers 0 or 1.
-    return options.revokedSessions === "0"
-      ? { tone: "default", message: "No active session to end." }
-      : { tone: "success", message: "Signed out. The account must sign in again." };
-  }
+    sessions_revoked: ({ revokedSessions }) =>
+      revokedSessions === "0"
+        ? { tone: "default", message: "No active session to end." }
+        : "Signed out. The account must sign in again.",
+    storage_allowance_updated: "Allowance updated.",
+    subscriptions_checked:
+      "Asked the store about the subscriptions that can still change. What is stored now is below.",
+    ...USER_STATUS_FLASH.mutations,
+  },
+  errors: {
+    sessions_revoke_failed: ({ message }) =>
+      message || "Could not sign out the account. Try again.",
+    ...ALLOWANCE_ERROR_MESSAGES,
+    allowance_update_failed: ({ message }) => {
+      const base = "The allowance could not be changed.";
+      return message ? `${base} ${message}` : base;
+    },
+    subscriptions_check_failed: ({ message }) => {
+      // The server's words for an outage are this same sentence: say it once.
+      const reason = message?.trim().replace(/\.$/, "");
+      const repeats = reason === SUBSCRIPTIONS_CHECK_FAILED.replace(/\.$/, "");
+      return reason && !repeats
+        ? `${SUBSCRIPTIONS_CHECK_FAILED} ${reason}`
+        : SUBSCRIPTIONS_CHECK_FAILED;
+    },
+    user_not_found: "That user no longer exists.",
+    ...USER_STATUS_FLASH.errors,
+  },
+};
 
-  if (options.error === "sessions_revoke_failed") {
-    return {
-      tone: "error",
-      message: options.message || "Could not sign out the account. Try again.",
-    };
-  }
-
-  if (options.mutation === "storage_allowance_updated") {
-    return { tone: "success", message: "Allowance updated." };
-  }
-
-  if (options.error && Object.hasOwn(ALLOWANCE_ERROR_MESSAGES, options.error)) {
-    return { tone: "error", message: ALLOWANCE_ERROR_MESSAGES[options.error] };
-  }
-
-  if (options.error === "allowance_update_failed") {
-    const base = "The allowance could not be changed.";
-    return { tone: "error", message: options.message ? `${base} ${options.message}` : base };
-  }
-
-  if (options.mutation === "subscriptions_checked") {
-    return {
-      tone: "success",
-      message:
-        "Asked the store about the subscriptions that can still change. What is stored now is below.",
-    };
-  }
-
-  if (options.error === "subscriptions_check_failed") {
-    const base = "The store could not be asked.";
-    // The server's words for an outage are this same sentence: say it once.
-    const reason = options.message?.trim().replace(/\.$/, "");
-    const repeats = reason === base.replace(/\.$/, "");
-    return { tone: "error", message: reason && !repeats ? `${base} ${reason}` : base };
-  }
-
-  if (options.error === "user_not_found") {
-    return { tone: "error", message: "That user no longer exists." };
-  }
-
-  return resolveUserStatusBanner({
-    mutation: options.mutation,
-    userStatus: options.userStatus,
-    error: options.error,
-    message: options.message,
-  });
+export function resolveUserBanner(query: UserFlashQuery): Flash | null {
+  return resolveFlash(query, USER_FLASH);
 }

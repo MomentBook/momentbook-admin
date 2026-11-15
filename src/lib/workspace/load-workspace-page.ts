@@ -7,11 +7,9 @@ import { loadAttentionCounts, type AttentionCounts } from "./attention";
 import { buildAdminSessionInvalidateHref } from "@/lib/navigation/paths";
 import { requireAdminApiSession } from "@/lib/auth/session";
 import type { AdminSession } from "@/lib/auth/session-schema";
+import type { Flash } from "@/lib/navigation/flash";
 
-export type AdminDashboardBanner = {
-  tone: "default" | "error" | "success";
-  message: string;
-};
+export type AdminDashboardBanner = Flash;
 
 export function readQueryParam(
   value: string | string[] | undefined,

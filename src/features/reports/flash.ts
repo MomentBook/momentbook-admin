@@ -1,59 +1,24 @@
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
-import { resolveUserStatusBanner } from "@/entities/user/status-flash";
+import { resolveFlash, type Flash, type FlashMessages } from "@/lib/navigation/flash";
+import { USER_STATUS_FLASH, type UserStatusFlashQuery } from "@/entities/user/status-flash";
 
-type ResolveReportBannerOptions = {
-  error: string | null;
-  message?: string | null;
-  mutation?: string | null;
-  status?: string | null;
-  userStatus?: string | null;
+/** A report update also names the new `status`. */
+type ReportFlashQuery = UserStatusFlashQuery & { status?: string | null };
+
+const REPORT_FLASH: FlashMessages<ReportFlashQuery> = {
+  mutations: {
+    report_updated: ({ status }) =>
+      status ? `Report status updated to ${status}.` : "Report updated successfully.",
+    ...USER_STATUS_FLASH.mutations,
+  },
+  errors: {
+    ...USER_STATUS_FLASH.errors,
+    missing_report_id: "Missing report ID.",
+    report_not_found: "Report not found.",
+    report_update_failed: ({ message }) => message || "Could not update the report. Try again.",
+    admin_access_denied: "This session does not have administrative permissions.",
+  },
 };
 
-export function resolveReportBanner(
-  options: ResolveReportBannerOptions,
-): AdminDashboardBanner | null {
-  if (options.mutation === "report_updated") {
-    return {
-      tone: "success",
-      message: options.status
-        ? `Report status updated to ${options.status}.`
-        : "Report updated successfully.",
-    };
-  }
-
-  const userStatusBanner = resolveUserStatusBanner({
-    mutation: options.mutation ?? null,
-    userStatus: options.userStatus ?? null,
-    error: options.error,
-    message: options.message ?? null,
-  });
-
-  if (userStatusBanner) {
-    return userStatusBanner;
-  }
-
-  switch (options.error) {
-    case "missing_report_id":
-      return {
-        tone: "error",
-        message: "Missing report ID.",
-      };
-    case "report_not_found":
-      return {
-        tone: "error",
-        message: "Report not found.",
-      };
-    case "report_update_failed":
-      return {
-        tone: "error",
-        message: options.message || "Could not update the report. Try again.",
-      };
-    case "admin_access_denied":
-      return {
-        tone: "error",
-        message: "This session does not have administrative permissions.",
-      };
-    default:
-      return null;
-  }
+export function resolveReportBanner(query: ReportFlashQuery): Flash | null {
+  return resolveFlash(query, REPORT_FLASH);
 }

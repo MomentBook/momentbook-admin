@@ -5,12 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LocalizedDateTime } from "@/components/localized-time";
 import { StatTile } from "@/components/stat-tile";
 import { cn } from "@/lib/utils";
-import {
-  buildAdminMetricsHref,
-  buildAdminReportsHref,
-  buildAdminReviewQueueHref,
-  buildAdminUsersHref,
-} from "@/lib/navigation/paths";
+import { buildAdminMetricsHref, buildAdminUsersHref } from "@/lib/navigation/paths";
+import { buildAdminReviewQueueHref } from "@/lib/navigation/review-routes";
+import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import {
   METRICS_DAY_OPTIONS,
   deletionScheduledAccounts,

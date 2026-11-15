@@ -19,22 +19,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LocalizedDate } from "@/components/localized-time";
+import { buildAdminReportDetailHref, buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import {
-  buildAdminReportDetailHref,
-  buildAdminReportsHref,
-} from "@/lib/navigation/paths";
-import {
-  REPORT_REASONS,
   getReportReasonLabel,
   getReportStatusLabel,
   getReportTargetTypeLabel,
 } from "@/entities/report/model";
-import type {
-  AdminReportsDataDto,
-  AdminReportStatsDataDto,
-  ReportReason,
-  ReportStatus,
-  ReportTargetType,
+import {
+  REPORT_REASONS,
+  type AdminReportsDataDto,
+  type AdminReportStatsDataDto,
+  type ReportReason,
+  type ReportStatus,
+  type ReportTargetType,
 } from "@/lib/api/types";
 import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
 import { defaultLanguage } from "@/lib/i18n";

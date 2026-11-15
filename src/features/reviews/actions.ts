@@ -7,11 +7,13 @@ import { requeueJourneyReview, updateReviewStatus } from "@/lib/api/journeys";
 import {
   ADMIN_REVIEWS_PATH,
   buildAdminLoginHref,
-  buildAdminReviewDetailHref,
-  buildAdminReviewQueueHref,
   sanitizeAdminPath,
   withAdminQuery,
 } from "@/lib/navigation/paths";
+import {
+  buildAdminReviewDetailHref,
+  buildAdminReviewQueueHref,
+} from "@/lib/navigation/review-routes";
 import { findNextPendingPublicId } from "./queue-loader";
 import {
   clearAdminSession,

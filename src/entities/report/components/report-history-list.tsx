@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buildAdminReportDetailHref } from "@/lib/navigation/paths";
+import { buildAdminReportDetailHref } from "@/lib/navigation/report-routes";
 import { getReportReasonLabel, getReportStatusLabel } from "@/entities/report/model";
 import type { AdminReportItemDto } from "@/lib/api/types";
 

@@ -10,11 +10,8 @@ import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { LocalizedDateTime } from "@/components/localized-time";
 import { cn } from "@/lib/utils";
 import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
-import {
-  buildAdminCommentsHref,
-  buildAdminReviewDetailHref,
-  buildAdminUserHref,
-} from "@/lib/navigation/paths";
+import { buildAdminCommentsHref, buildAdminUserHref } from "@/lib/navigation/paths";
+import { buildAdminReviewDetailHref } from "@/lib/navigation/review-routes";
 import type { AdminCommentsWorkspaceData } from "@/features/comments/loader";
 import { COMMENT_DELETED_BY_LABELS, type CommentStatusTab } from "@/entities/comment/model";
 import { USER_STATUS_LABELS, userStatusBadgeVariant } from "@/entities/user/model";

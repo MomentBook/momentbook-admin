@@ -1,40 +1,33 @@
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
+import {
+  resolveFlash,
+  type Flash,
+  type FlashMessages,
+  type FlashQuery,
+} from "@/lib/navigation/flash";
 
-/** Banner for the ban/unban action, wherever it was used from. */
-export function resolveUserStatusBanner(options: {
-  mutation: string | null;
-  userStatus: string | null;
-  error: string | null;
-  message: string | null;
-}): AdminDashboardBanner | null {
-  if (options.mutation === "user_status_updated") {
-    switch (options.userStatus) {
-      case "banned":
-        return {
-          tone: "success",
-          message: "User has been banned and all active sessions revoked.",
-        };
-      case "inactive":
-        return {
-          tone: "success",
-          message:
-            "Ban lifted. The account stays inactive until it accepts the required consents.",
-        };
-      default:
-        return { tone: "success", message: "Ban lifted." };
-    }
-  }
+export type UserStatusFlashQuery = FlashQuery & { userStatus?: string | null };
 
-  if (options.error === "user_update_failed") {
-    return {
-      tone: "error",
-      message: options.message || "Could not update the user. Try again.",
-    };
-  }
+/** The ban/unban action's banners, wherever it was used from; the reports
+ * and user pages add them to their own. */
+export const USER_STATUS_FLASH: FlashMessages<UserStatusFlashQuery> = {
+  mutations: {
+    user_status_updated: ({ userStatus }) => {
+      switch (userStatus) {
+        case "banned":
+          return "User has been banned and all active sessions revoked.";
+        case "inactive":
+          return "Ban lifted. The account stays inactive until it accepts the required consents.";
+        default:
+          return "Ban lifted.";
+      }
+    },
+  },
+  errors: {
+    user_update_failed: ({ message }) => message || "Could not update the user. Try again.",
+    missing_user_id: ({ message }) => message || "Missing user ID.",
+  },
+};
 
-  if (options.error === "missing_user_id") {
-    return { tone: "error", message: options.message || "Missing user ID." };
-  }
-
-  return null;
+export function resolveUserStatusBanner(query: UserStatusFlashQuery): Flash | null {
+  return resolveFlash(query, USER_STATUS_FLASH);
 }
