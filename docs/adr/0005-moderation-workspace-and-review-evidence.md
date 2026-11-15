@@ -12,6 +12,10 @@ Active.
 > `WorkspaceShell`. Routes live at the root (`/`, `/reviews`, …), not under
 > `/admin`.
 
+> **Amended by [0014](0014-source-layout-and-layer-boundaries.md) and [0015](0015-library-adoption.md):** 2026-11-16, the code moved under
+> `src/` (paths below updated) and fullscreen photos use
+> `yet-another-react-lightbox`.
+
 The moderation workspace is an operational admin surface optimized for queue
 health, evidence inspection, and review status mutation. The default review
 filter is pending.
@@ -22,17 +26,20 @@ filter is pending.
   links redirect to `/reviews`, `/reports`, and `/articles`.
 - `/reviews` renders the review queue with `?status=` tabs (`pending` default,
   `translation`, `approved`, `rejected`, `all`) and `?page=`.
-- `app/_workspace/workspace-data.ts` centralizes query parsing, session
-  loading, attention counts, and 401/403 redirects for workspace pages
-  (`loadWorkspacePage`); banners are resolved next to each route
-  (`app/reviews/review-banner.ts`, `app/reports/report-banner.ts`).
+- `renderWorkspacePage` (`src/components/layout/workspace-page.tsx`, over
+  `loadWorkspacePage` in `src/lib/workspace/load-workspace-page.ts`) loads the
+  session and attention counts and handles 401/403 for workspace pages. Each
+  route reads its query with its loader in `src/lib/navigation/<screen>-routes.ts`,
+  and banners are resolved per screen through `resolveFlash`
+  (`src/features/reviews/flash.ts`, `src/features/reports/flash.ts`).
 - ~~`lib/admin/reviews.ts` loads all admin published journey pages with backend
   pagination limit 50, deduplicates by `publicId`, builds summary counts from
   the full dataset, filters/paginates the visible queue locally.~~ Replaced by
   [0010](0010-server-side-review-counts-and-workspace-shell.md):
-  `lib/admin/review-queue.ts` (queue), `lib/admin/attention.ts` (counts),
-  `lib/admin/overview.ts` (overview); `lib/admin/reviews.ts` keeps
-  normalization and the detail loader.
+  `src/features/reviews/queue-loader.ts` (queue),
+  `src/lib/workspace/attention.ts` (counts), `src/features/overview/loader.ts`
+  (overview); the detail loader is `src/features/reviews/loader.ts`, with its
+  view model in `detail-model.ts`.
 
 ## Review Detail and Evidence
 
@@ -48,13 +55,16 @@ filter is pending.
 - Timeline and recap sections with the same cluster ID merge into a single
   evidence section. Unattached photo assets are shown in a remaining-photos
   section.
-- Fullscreen photo inspection uses `LightboxPhotoTile`
-  (`app/reviews/[publicId]/LightboxPhotoTile.tsx`) with zoom, pan,
-  pinch/double-tap behavior, and close controls.
+- Fullscreen photo inspection uses `ReviewPhotoGallery`
+  (`src/features/reviews/components/review-photo-gallery.tsx`;
+  `yet-another-react-lightbox` with Zoom, Counter and Captions, ADR 0015): one
+  gallery per evidence section with previous/next, zoom, pan, pinch and
+  double-tap, the photo count, the location caption, and close controls.
 
 ## Review Mutation
 
-- `updatePublishedJourneyReviewAction` (`app/reviews/actions.ts`) validates
+- `updatePublishedJourneyReviewAction` (`src/features/reviews/actions.ts`,
+  through `runAdminAction`) validates
   `targetPublicId` and `reviewStatus`, requires an admin action session, calls
   the backend review mutation, then redirects with mutation, review status, and
   target ID. The public web's no-cache policy exposes the updated content.

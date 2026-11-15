@@ -7,6 +7,13 @@ account deletion (decisions 5, 7, 8, 9). Amends [0001](0001-admin-app-ownership-
 (route list) and [0011](0011-operator-surfaces-users-comments-metrics-audit.md)
 (call budget).
 
+> **Amended by [0014](0014-source-layout-and-layer-boundaries.md):** 2026-11-16, `formatBytes`, `allowanceTone` and
+> `parseAllowanceGigabytes` are in `src/entities/storage/model.ts` and
+> `StatTile` is `src/components/stat-tile.tsx`. *Corrected the same day:*
+> `/storage` also reads the storage subscriptions summary, added with the
+> subscriptions work: 2 calls, and only that section shows a notice when the
+> summary fails.
+
 ## Context
 
 - The API gives every account a backup storage allowance (the free plan is
@@ -21,11 +28,13 @@ account deletion (decisions 5, 7, 8, 9). Amends [0001](0001-admin-app-ownership-
 ## Decision
 
 1. **One read-only page**, `/storage`, in the nav after Metrics. It reads that
-   one endpoint (1 call on top of the 4 attention calls) and has no filters,
-   pagination or actions. A failure shows the workspace error page, as on the
-   other pages; there is no partial state.
+   endpoint and the storage subscriptions summary (2 calls on top of the 4
+   attention calls) and has no filters, pagination or actions. A failure of
+   the storage endpoint shows the workspace error page, as on the other pages;
+   a failing summary leaves "Could not load the subscription counts." in its
+   own section.
 2. **Binary units.** Sizes are shown in KB, MB, GB and TB of 1024 (`formatBytes`
-   in `lib/admin/storage-shared.ts`), matching how the allowance and the
+   in `src/entities/storage/model.ts`), matching how the allowance and the
    buckets are defined (GiB). One decimal for GB and TB below 10, none
    otherwise.
 3. **The allowance figures exist to decide when enforcement is safe.** "At the
@@ -43,7 +52,7 @@ account deletion (decisions 5, 7, 8, 9). Amends [0001](0001-admin-app-ownership-
    account or comes from its plan). This page links each top account there.
    - "Set allowance" takes an amount in **binary GB** (1 GB = 1024³ bytes,
      decimals allowed, 0 to 1024; `parseAllowanceGigabytes` in
-     `lib/admin/storage-shared.ts`). **0 is allowed** and means "no new
+     `src/entities/storage/model.ts`). **0 is allowed** and means "no new
      backups"; a clear hint says so. "Use the plan's allowance" (shown only when
      an override exists) sends `null`.
    - A **reason is required** (1 to 500 characters after trimming) for both. The
@@ -69,7 +78,7 @@ account deletion (decisions 5, 7, 8, 9). Amends [0001](0001-admin-app-ownership-
    reads the same metrics call: no new call. "Users by status" gains a
    "Deletion scheduled" row, derived as the total minus the four other rows so
    the card always adds up (not from the deletion figures, a different query).
-9. **One stat tile** (`components/stat-tile.tsx`) serves Storage and Metrics.
+9. **One stat tile** (`src/components/stat-tile.tsx`) serves Storage and Metrics.
 
 ## Alternatives Considered
 

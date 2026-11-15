@@ -11,6 +11,14 @@ domain-organized service layer in `lib/api/` stays. The server half is
 momentbook-api ADR-0099 (wire contract v3) and its operation-by-operation
 mapping `docs/contract-v3.md` (§8 admin, §3 auth).
 
+> **Superseded in part by [0015](0015-library-adoption.md) (2026-11-16):** decision 1's generator is
+> now `openapi-typescript` with an `openapi-fetch` client, and the generated
+> files and aliases moved to `src/lib/api/generated/` and `src/lib/api/types/`
+> ([0014](0014-source-layout-and-layer-boundaries.md)). The alternative "call the generated client", rejected below, is
+> what the admin does now: the contract v3 parsing of decisions 2–6 runs in
+> one client middleware. Decisions 2–6 stand; the `lib/admin/`, `lib/editorial/`
+> and `src/apis/` paths below are the layout before ADR 0014.
+
 ## Context
 
 - The API moves to contract v3 in one release (momentbook-api ADR-0099). For

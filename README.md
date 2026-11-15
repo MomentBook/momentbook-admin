@@ -51,12 +51,12 @@ Set **all** variables from `.env.example` in Vercel Project Settings > Environme
 
 | Variable | Notes |
 |---|---|
-| `NEXT_PUBLIC_ADMIN_SITE_URL` | Must be HTTPS URL (production origin) |
-| `NEXT_PUBLIC_API_BASE_URL` | Nest API production URL |
+| `NEXT_PUBLIC_ADMIN_SITE_URL` | Must be HTTPS URL (production origin); `yarn build` fails otherwise |
+| `NEXT_PUBLIC_API_BASE_URL` | Nest API production URL; must be HTTPS, checked at build |
 | `NEXT_PUBLIC_PUBLIC_IMAGE_ORIGIN` | CloudFront CDN origin |
 | `NEXT_PUBLIC_APP_ENV` | Set to `production` |
 | `NEXT_PUBLIC_APP_IS_LOCAL` | Set to `false` (disables localhost fallbacks, enforces HTTPS) |
-| `ADMIN_SESSION_SECRET` | Random 64-char hex string (secret) |
+| `ADMIN_SESSION_SECRET` | Random 64-char hex string (secret); `yarn build` fails without it |
 
 ### Post-Deployment Checklist
 
@@ -77,6 +77,10 @@ The Nest API must allow the production admin origin and selected Vercel preview 
 ## Verification
 
 ```bash
-yarn verify   # typecheck + lint + test
-yarn build
+yarn verify   # mock paths + typecheck + lint (with the layer rule) + test
+yarn build    # also validates the environment (src/lib/env.ts)
 ```
+
+Source layout, layers and conventions: `AGENTS.md` and
+`docs/adr/0014-source-layout-and-layer-boundaries.md`. Libraries in use and
+why: `docs/adr/0015-library-adoption.md`.

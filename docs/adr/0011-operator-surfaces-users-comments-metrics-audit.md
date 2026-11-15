@@ -6,6 +6,12 @@ Active. Date: 2026-10-23. Amends [0001](0001-admin-app-ownership-and-runtime.md)
 (route list), [0009](0009-reports-moderation-and-user-sanction.md) (sanctions)
 and [0010](0010-server-side-review-counts-and-workspace-shell.md) (call budget).
 
+> **Amended by [0014](0014-source-layout-and-layer-boundaries.md) and [0015](0015-library-adoption.md):** 2026-11-16, page loaders are
+> `src/features/<screen>/loader.ts`, and `/metrics` draws its charts with
+> shadcn `chart` (recharts) instead of div bars. *Corrected the same day:* the
+> user detail also reads the account's storage subscriptions (one call added
+> with the subscriptions work), so it costs 1 + 6 + 1.
+
 ## Context
 
 - Operators could review journeys and reports but not look at the account behind
@@ -23,7 +29,8 @@ and [0010](0010-server-side-review-counts-and-workspace-shell.md) (call budget).
 1. **Four new root routes**: `/users` and `/users/[userId]`, `/comments`,
    `/audit-log`, `/metrics`. Nav order: Attention, Reviews, Reports, Comments,
    Users, Articles, Metrics, Audit log. All follow ADR 0010: a page loader in
-   `lib/admin/*`, a service in `lib/api/*`, and `WorkspaceShell`.
+   `src/features/<screen>/loader.ts`, a service in `src/lib/api/*`, and
+   `WorkspaceShell` (ADR 0014).
 2. **Visibility boundary.** Admins see profile, both emails, sign-in methods,
    sessions and devices, auth events including IP, public journeys, and
    comments. Admins never see chat bodies or private journey contents; private
@@ -60,8 +67,8 @@ and [0010](0010-server-side-review-counts-and-workspace-shell.md) (call budget).
    journeys and erased accounts drop out. Active accounts are an approximation
    from sign-ins and token refreshes over the last 30 days, shown as a daily
    average (summing daily distinct accounts would double count). `?days=` is
-   7, 30, or 90. Charts are server-rendered div bars; there is no chart
-   library. The Operations card is for engineers and has no admin action.
+   7, 30, or 90. Charts are shadcn `chart` bars (recharts, ADR 0015;
+   server-rendered div bars until then). The Operations card is for engineers and has no admin action.
    *Amended 2026-11-03:* a Notifications section reads
    `GET /core/admin/metrics/notifications` (API ADR-0096) for the same window:
    per category pushes sent, delivered, opened and failed, skips by reason,
@@ -78,7 +85,7 @@ Each row is in addition to the 4 attention calls.
 | Page | Calls |
 | --- | --- |
 | `/users` | 1 |
-| `/users/[userId]` | 1 detail + 6 sections |
+| `/users/[userId]` | 1 detail + 6 sections + 1 subscriptions |
 | `/comments` | 1 |
 | `/metrics` | 2 (operations, notifications) |
 | `/audit-log` | 1 |
@@ -95,6 +102,9 @@ calls. The next-pending auto-advance after a decision ignores the author filter.
 - **Sum daily distinct accounts for "active"** — rejected: it counts one person
   once per day.
 - **A chart library** — rejected: three bar charts do not justify a dependency.
+  *Revisited 2026-11-16 by [0015](0015-library-adoption.md):* shadcn's `chart` brings keyboard access
+  and tooltips, and the rebuild replaced hand-written UI with libraries
+  wherever one fit.
 - **Fail the user page when any section fails** — rejected: a broken auth-event
   query should not hide the ban button.
 
@@ -102,7 +112,7 @@ calls. The next-pending auto-advance after a decision ignores the author filter.
 
 - Positive: moderation, account context, and the audit trail are one click
   apart; page cost stays constant.
-- Negative: user detail costs 11 calls per render (7 + 4); active accounts are
+- Negative: user detail costs 12 calls per render (8 + 4); active accounts are
   an approximation.
 - Deploy order: API first (migration, then core), then admin. An admin deployed
   first shows 404 banners on the new pages; on `/metrics` it shows "Could not

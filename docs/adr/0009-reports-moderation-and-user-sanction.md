@@ -10,6 +10,14 @@ Active.
 > 2026-10-23, the sanction reason (and the linked report) is stored in the API's
 > admin action log, and Sign out is added beside Ban and Unban.
 
+> **Amended by [0012](0012-generated-api-types-and-contract-v3.md), [0014](0014-source-layout-and-layer-boundaries.md)
+> and [0015](0015-library-adoption.md):** the report and user types are aliases of the generated contract
+> in `src/lib/api/types/`; the services are `src/lib/api/reports.ts` and
+> `src/lib/api/users.ts`; `updateAdminUserStatusAction` is
+> `src/entities/user/status-action.ts` and its form
+> `src/entities/user/components/user-status-form.tsx`, shared by reports,
+> reviews and users.
+
 Integrate the backend `admin/reports` and `admin/users` controllers into a dedicated **Reports Moderation** tab (`/reports` and `/reports/[reportId]`), expanding the moderation workspace to support report triage, evidence inspection, resolution state mutations, and direct user account sanctioning (ban/unban).
 
 ## Context
@@ -25,10 +33,11 @@ Previously, `momentbook-admin` only implemented interfaces for journeys (Reviews
 ## Implementation Shape
 
 ### API Contract and Service Layer
-- Hand-written types defined in `src/apis/types/reports.ts` and `src/apis/types/users.ts` matching NestJS DTOs.
-- Domain-organized API services in `lib/api/reports.ts` (`listAdminReports`, `getAdminReportStats`, `getAdminReport`, `updateAdminReport`) and `lib/api/users.ts` (`updateAdminUserStatus`).
-- Types are re-exported via `src/apis/types/index.ts`; callers import services
-  from their domain module (`lib/api/reports`, `lib/api/users`).
+- ~~Hand-written types defined in `src/apis/types/reports.ts` and `src/apis/types/users.ts` matching NestJS DTOs.~~ Generated aliases in `src/lib/api/types/` (ADR 0012).
+- Domain-organized API services in `src/lib/api/reports.ts` (`listAdminReports`, `getAdminReportStats`, `getAdminReport`, `updateAdminReport`) and `src/lib/api/users.ts` (`updateAdminUserStatus`).
+- ~~Types are re-exported via `src/apis/types/index.ts`~~; callers import
+  services from their domain module (`src/lib/api/reports`,
+  `src/lib/api/users`).
 
 ### Routing and Navigation
 

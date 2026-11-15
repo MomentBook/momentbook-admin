@@ -10,6 +10,9 @@ Active.
 > `ADMIN_ALLOWED_EMAIL` allow-list was removed. Backend RBAC (active status and
 > `admin` role claims) is the single authorization source for admin login.
 
+> **Amended by [0014](0014-source-layout-and-layer-boundaries.md):** 2026-11-16, `POST /session` is removed and the
+> code below moved under `src/`; the rules are unchanged.
+
 The Nest API is authoritative for authentication, token claims, admin role/RBAC,
 and admin mutations. The local `momentbook_admin_session` cookie is only an
 encrypted web-session wrapper around backend access and refresh tokens.
@@ -21,27 +24,30 @@ Login, session bootstrap, refresh, and action/session guards must preserve both:
 
 ## Implementation Shape
 
-- `app/login/actions.ts` posts the email and password to `/auth/email/login`
-  on the API base URL, decodes backend access token claims, checks the admin
-  role, then creates the encrypted admin cookie.
-- `app/session/route.ts` bootstraps a web session from backend login
-  payloads and rejects malformed payloads, non-admin roles, and disallowed
-  emails.
-- `lib/admin/session.ts` encrypts/decrypts the cookie with `jose`, scopes it to
+- `loginAdminAction` (`src/features/auth/actions.ts`) signs in through
+  `loginWithEmail` (`POST /auth/email/login` on `authClient`), decodes the
+  access token's claims (`jose` `decodeJwt`, `src/lib/auth/token.ts`), checks
+  the admin role, builds the session with `buildAdminSession`
+  (`src/lib/auth/session-schema.ts`), then creates the encrypted admin cookie.
+- ~~`app/session/route.ts` bootstrapped a web session from a posted login
+  payload.~~ Removed by [0014](0014-source-layout-and-layer-boundaries.md):
+  nothing called it, and it trusted tokens it never verified.
+- `src/lib/auth/session.ts` encrypts/decrypts the cookie with `jose`, scopes it to
   path `/` (the admin routes are at the root), refreshes access tokens inside a
   60 second window, and clears local sessions when refresh fails.
 - `requireAdminApiSession` redirects near-expiry sessions to
   `/session/refresh`; server actions use `requireAdminActionSession` so
   they can refresh before mutation.
-- `app/session/refresh/route.ts` and
-  `app/session/invalidate/route.ts` redirect through the canonical admin
+- `src/app/session/refresh/route.ts` and
+  `src/app/session/invalidate/route.ts` redirect through the canonical admin
   origin from `resolveSiteUrl()`, not the incoming request origin.
-- `logoutAdminAction` (`app/_workspace/actions.ts`) attempts backend logout but
+- `logoutAdminAction` (`src/lib/auth/logout-action.ts`) attempts backend logout but
   clears the local admin session even if backend logout fails.
 
 ## Redirect and Path Rules
 
-- Keep admin paths centralized in `lib/admin/paths.ts`.
+- Keep admin paths centralized in `src/lib/navigation/paths.ts` and the route
+  modules beside it (`<screen>-routes.ts`).
 - Sanitize return targets with `sanitizeAdminPath` before redirecting.
 - Drop external or non-admin return targets.
 - Whitelist session redirect errors through
@@ -53,7 +59,7 @@ Login, session bootstrap, refresh, and action/session guards must preserve both:
 - Do not silently ignore backend 401/403 responses; map them to session
   invalidation or access-denied login notices.
 - Session or auth changes should run:
-  `yarn vitest run scripts/__tests__/admin-session-routes.test.ts scripts/__tests__/admin-paths.test.ts`
+  `yarn vitest run scripts/__tests__/admin-session-routes.test.ts scripts/__tests__/admin-paths.test.ts scripts/__tests__/admin-login.test.ts scripts/__tests__/admin-session-schema.test.ts`
 - Also run `yarn tsc --noEmit` for shared session, route, or config type
   changes, and `yarn build` for deployment/origin behavior changes.
 
