@@ -10,7 +10,8 @@ import {
 } from "@/entities/storage/model";
 import type { AdminUserStorageDto } from "@/lib/api/types";
 import { updateAdminUserStorageAllowanceAction } from "@/features/users/actions";
-import { Field, ReasonInput, Section } from "@/components/detail-parts";
+import { Field, Section } from "@/components/detail-parts";
+import { ReasonField } from "@/components/reason-field";
 
 const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
 
@@ -103,7 +104,7 @@ export function UserStorageSection({
                   From 0 to 1024 GB; decimals are fine. 0 stops new backups for this account.
                 </p>
               </div>
-              <ReasonInput id="user-allowance-reason" required maxLength={500} />
+              <ReasonField id="user-allowance-reason" required maxLength={500} />
             </ConfirmActionForm>
             {hasOverride ? (
               <ConfirmActionForm
@@ -115,7 +116,7 @@ export function UserStorageSection({
                 description={`Removes the allowance set for ${label} (${userId}); the plan (${storage.planKey}) decides again.`}
                 confirmLabel="Use the plan's allowance"
               >
-                <ReasonInput id="user-allowance-plan-reason" required maxLength={500} />
+                <ReasonField id="user-allowance-plan-reason" required maxLength={500} />
               </ConfirmActionForm>
             ) : null}
           </div>

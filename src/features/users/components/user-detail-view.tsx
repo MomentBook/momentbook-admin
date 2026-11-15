@@ -28,7 +28,8 @@ import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
 import { updateAdminUserStatusAction } from "@/features/reports/actions";
 import { ReportHistoryList } from "@/entities/report/components/report-history-list";
 import { revokeAdminUserSessionsAction } from "@/features/users/actions";
-import { DateValue, Field, ReasonInput, Section } from "@/components/detail-parts";
+import { DateValue, Field, Section } from "@/components/detail-parts";
+import { ReasonField } from "@/components/reason-field";
 import { UserDeletionSection } from "./user-deletion-section";
 import { UserStorageSection } from "./user-storage-section";
 import { UserSubscriptionSection } from "./user-subscription-section";
@@ -103,7 +104,7 @@ function AccountActions({
             description={`Lifts the ban on ${label} (${profile.userId}). If required consents are pending, the account stays inactive until it accepts them.`}
             confirmLabel="Unban"
           >
-            <ReasonInput id="user-unban-reason" />
+            <ReasonField id="user-unban-reason" />
           </ConfirmActionForm>
         ) : (
           // ACTIVE, INACTIVE and PENDING_DELETION. The API bans a pending
@@ -123,7 +124,7 @@ function AccountActions({
             }`}
             confirmLabel="Ban"
           >
-            <ReasonInput id="user-ban-reason" />
+            <ReasonField id="user-ban-reason" />
           </ConfirmActionForm>
         )}
         <ConfirmActionForm
@@ -135,7 +136,7 @@ function AccountActions({
           description={`Ends the current session of ${label} (${profile.userId}). The app must sign in again. The account is not banned.`}
           confirmLabel="Sign out"
         >
-          <ReasonInput id="user-sign-out-reason" />
+          <ReasonField id="user-sign-out-reason" />
         </ConfirmActionForm>
       </div>
       {blockedReason ? <p className="text-xs text-muted-foreground">{blockedReason}</p> : null}
