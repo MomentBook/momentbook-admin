@@ -8,7 +8,6 @@ import {
 } from "@/lib/navigation/paths";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminEditorialArticle } from "@/features/articles/loader";
-import { buildNoIndexRobots } from "@/lib/seo";
 import {
   loadWorkspacePage,
   readQueryParam,
@@ -24,7 +23,6 @@ import { EditorialArticleEditorPageView } from "@/features/articles/components/a
 
 export const metadata: Metadata = {
   title: "Edit Article",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminArticleDetailPage({

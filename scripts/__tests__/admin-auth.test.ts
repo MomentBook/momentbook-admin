@@ -145,32 +145,6 @@ describe("loginAdminAction", () => {
   });
 });
 
-describe("session bootstrap route", () => {
-  it("creates the session from a v3 sign-in body's user.id", async () => {
-    const cookieStore = createCookieStore();
-    mocks.cookies.mockResolvedValue(cookieStore);
-    const { POST } = await import("@/app/session/route");
-    const { getStoredAdminSession } = await import("@/lib/auth/session");
-
-    const response = await POST(
-      new Request("https://admin.test/session", {
-        method: "POST",
-        body: JSON.stringify({
-          user: authSession.user,
-          accessToken,
-          refreshToken,
-        }),
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    await expect(getStoredAdminSession(cookieStore as never)).resolves.toMatchObject({
-      userId: "user-1",
-      email: "admin@example.com",
-    });
-  });
-});
-
 describe("auth services", () => {
   it("refreshAdminTokens returns the bare TokenPairDto", async () => {
     const pair = { accessToken: "a2", refreshToken: "r2", expiresIn: 900 };

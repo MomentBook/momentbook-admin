@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminUserSubscriptionsOrNull } from "@/features/users/subscriptions-loader";
 import { loadAdminUserDetailWorkspaceData } from "@/features/users/loader";
@@ -13,7 +12,6 @@ import { AdminUserDetailPageView } from "@/features/users/components/user-detail
 
 export const metadata: Metadata = {
   title: "User Detail",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminUserDetailPage({

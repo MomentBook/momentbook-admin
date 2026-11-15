@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AdminRootDocument } from "@/components/layout/admin-root-document";
 import { resolveSiteUrlObject } from "@/lib/navigation/site-url";
-import { buildNoIndexRobots } from "@/lib/seo";
 
 export const metadata: Metadata = {
   metadataBase: resolveSiteUrlObject(),
@@ -10,7 +9,7 @@ export const metadata: Metadata = {
     default: "MomentBook Admin",
     template: "%s | MomentBook Admin",
   },
-  robots: buildNoIndexRobots(),
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

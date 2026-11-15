@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminAuditLogData } from "@/features/audit-log/loader";
 import { parseAuditActionFilter, parseAuditTargetTypeFilter } from "@/entities/audit-event/model";
@@ -12,7 +11,6 @@ import { AdminAuditLogPageView } from "@/features/audit-log/components/audit-log
 
 export const metadata: Metadata = {
   title: "Audit log",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminAuditLogPage({

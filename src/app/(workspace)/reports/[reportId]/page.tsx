@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminReportDetail, loadReportHistoryOrNull } from "@/features/reports/loader";
 import {
@@ -18,7 +17,6 @@ import { AdminReportDetailPageView } from "@/features/reports/components/report-
 
 export const metadata: Metadata = {
   title: "Report Detail",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminReportDetailPage({

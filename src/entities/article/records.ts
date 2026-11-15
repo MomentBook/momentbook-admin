@@ -11,16 +11,6 @@ import {
 
 const DEFAULT_AUTHOR_NAME = "MomentBook Editorial";
 const DEFAULT_CATEGORY: EditorialArticleCategory = "travel-guide";
-const GUIDE_SUMMARY_NOISE_PHRASE =
-  /더\s*매끄럽고\s*더\s*풍부한\s*여행을\s*위한\s*핵심\s*여행\s*팁\s*좋은\s*여행은/gu;
-
-function normalizeGuideSummary(summary: string): string {
-  return summary
-    .replace(GUIDE_SUMMARY_NOISE_PHRASE, "")
-    .replace(/\s{2,}/gu, " ")
-    .trim();
-}
-
 type EditorialArticleListFields = {
   articleId: unknown;
   translationGroupId?: unknown;
@@ -107,12 +97,14 @@ export function normalizeEditorialArticleListItem(
   const locale = readText(item.locale);
   const slug = readText(item.slug);
   const title = readText(item.title);
-  const summary = readText(item.summary);
+  // The admin never shows the summary, and an article missing one timestamp
+  // still has to be listed so an editor can find and fix it.
+  const summary = readText(item.summary) ?? "";
   const authorName = readText(item.authorName) ?? DEFAULT_AUTHOR_NAME;
-  const updatedAt = readText(item.updatedAt);
+  const updatedAt = readText(item.updatedAt) ?? readText(item.publishedAt);
   const publishedAt = readText(item.publishedAt) ?? updatedAt;
 
-  if (!id || !language || !locale || !slug || !title || !summary || !updatedAt || !publishedAt) {
+  if (!id || !language || !locale || !slug || !title || !updatedAt || !publishedAt) {
     return null;
   }
 
@@ -124,7 +116,7 @@ export function normalizeEditorialArticleListItem(
     category: normalizeEditorialCategory(item.category),
     slug,
     title,
-    summary: normalizeGuideSummary(summary),
+    summary,
     coverImage: normalizeCoverImage(item.coverImage),
     readingMinutes: normalizeEditorialReadingMinutes(item.readingTimeMinutes),
     authorName,

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminCommentsWorkspaceData } from "@/features/comments/loader";
 import { parseCommentStatusTab, parsePublicIdFilter } from "@/entities/comment/model";
@@ -17,7 +16,6 @@ import { AdminCommentsListPageView } from "@/features/comments/components/commen
 
 export const metadata: Metadata = {
   title: "Comments",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminCommentsPage({

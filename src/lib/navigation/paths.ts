@@ -261,12 +261,6 @@ export function buildReviewDetailQueueLinks(options: {
   };
 }
 
-export function buildAdminArticlesHref(
-  entries?: Record<string, string | null | undefined>,
-): string {
-  return withAdminQuery(ADMIN_ARTICLES_PATH, entries ?? {});
-}
-
 export function buildAdminArticleWorkspaceHref(
   options?: AdminArticleWorkspaceHrefOptions,
 ): string {

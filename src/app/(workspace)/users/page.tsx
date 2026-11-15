@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminUsersWorkspaceData } from "@/features/users/loader";
 import {
@@ -19,7 +18,6 @@ import { AdminUsersListPageView } from "@/features/users/components/users-list-v
 
 export const metadata: Metadata = {
   title: "Users",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminUsersPage({

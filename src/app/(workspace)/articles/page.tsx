@@ -7,7 +7,6 @@ import {
   parseAdminArticleFilterCategory,
   parseAdminArticleFilterLanguage,
 } from "@/features/articles/loader";
-import { buildNoIndexRobots } from "@/lib/seo";
 import {
   loadWorkspacePage,
   parsePage,
@@ -20,7 +19,6 @@ import { AdminArticleListPageView } from "@/features/articles/components/article
 
 export const metadata: Metadata = {
   title: "Articles",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminArticlesPage({

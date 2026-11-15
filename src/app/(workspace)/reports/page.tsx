@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { isBackendApiError } from "@/lib/api/client";
 import {
   ADMIN_REPORTS_PAGE_SIZE,
@@ -20,7 +19,6 @@ import { AdminReportsListPageView } from "@/features/reports/components/reports-
 
 export const metadata: Metadata = {
   title: "Reports Moderation",
-  robots: buildNoIndexRobots(),
 };
 
 function parseReportStatusParam(value: string | null): ReportStatus | undefined {

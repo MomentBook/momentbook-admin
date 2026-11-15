@@ -241,12 +241,6 @@ export function isExplicitUnknownLocalDateTimeContext(
     return context?.localDateTimeType === "UNKNOWN";
 }
 
-export function hasRenderableLocalDateTimeContext(
-    context: LocalDateTimeContextLike | null | undefined,
-): boolean {
-    return resolveParsedContext(context) !== null;
-}
-
 export function formatLocalDateTimeContextValue(
     lang: Language,
     context: LocalDateTimeContextLike | null | undefined,
@@ -265,34 +259,6 @@ export function formatLocalDateTimeContextValue(
     } catch {
         return null;
     }
-}
-
-function formatUtcOffset(minutes: number): string {
-    const sign = minutes >= 0 ? "+" : "-";
-    const absoluteMinutes = Math.abs(minutes);
-    const hours = Math.floor(absoluteMinutes / 60);
-    const mins = absoluteMinutes % 60;
-
-    return `${sign}${padNumber(hours)}:${padNumber(mins)}`;
-}
-
-export function buildLocalDateTimeMachineValue(
-    context: LocalDateTimeContextLike | null | undefined,
-): string | null {
-    const parsed = resolveParsedContext(context);
-    if (!parsed) {
-        return null;
-    }
-
-    if (
-        context?.localDateTimeType === "OFFSET_AWARE" &&
-        typeof context.utcOffsetMinutes === "number" &&
-        Number.isFinite(context.utcOffsetMinutes)
-    ) {
-        return `${parsed.canonicalDateTime}${formatUtcOffset(context.utcOffsetMinutes)}`;
-    }
-
-    return parsed.canonicalDateTime;
 }
 
 export function buildLocalDateMachineValue(

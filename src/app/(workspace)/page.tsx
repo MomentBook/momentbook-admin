@@ -9,7 +9,6 @@ import {
 } from "@/lib/navigation/paths";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminOverview } from "@/features/overview/loader";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AttentionOverview } from "@/features/overview/components/attention-overview";
 import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
@@ -19,7 +18,6 @@ import { resolveReviewBanner } from "@/features/reviews/flash";
 
 export const metadata: Metadata = {
   title: "Attention",
-  robots: buildNoIndexRobots(),
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;

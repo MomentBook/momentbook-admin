@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminMetricsData, loadAdminNotificationMetricsData } from "@/features/metrics/loader";
 import { parseMetricsDays } from "@/features/metrics/model";
@@ -11,7 +10,6 @@ import { AdminMetricsPageView } from "@/features/metrics/components/metrics-view
 
 export const metadata: Metadata = {
   title: "Metrics",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminMetricsPage({

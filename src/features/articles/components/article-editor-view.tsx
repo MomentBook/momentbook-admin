@@ -101,7 +101,7 @@ export function EditorialArticleEditorPageView({
               <div className="flex justify-between gap-4 sm:flex-col">
                 <dt className="text-sm text-muted-foreground">Category</dt>
                 <dd className="text-sm">
-                  {article ? getEditorialCategoryLabel("en", article.category) : "Set in form"}
+                  {article ? getEditorialCategoryLabel(article.category) : "Set in form"}
                 </dd>
               </div>
               <div className="flex justify-between gap-4 sm:flex-col">

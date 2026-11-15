@@ -118,7 +118,7 @@ export function AdminArticleListPageView({
                     <Badge
                       variant={dashboard.category === category ? "default" : "outline"}
                     >
-                      {getEditorialCategoryLabel("en", category)}
+                      {getEditorialCategoryLabel(category)}
                     </Badge>
                   </Link>
                 ))}
@@ -169,7 +169,7 @@ export function AdminArticleListPageView({
                           <Badge variant="outline">{item.language.toUpperCase()}</Badge>
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
-                          {getEditorialCategoryLabel("en", item.category)}
+                          {getEditorialCategoryLabel(item.category)}
                         </TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground">

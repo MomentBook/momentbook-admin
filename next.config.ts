@@ -86,24 +86,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "cdn.momentbook.app",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn-dev.momentbook.app",
-      },
-      {
-        protocol: "https",
-        hostname: "d1mnbpnyxoksha.cloudfront.net",
-      },
-      {
-        protocol: "https",
-        hostname: "d17831w57uibmm.cloudfront.net",
-      },
-    ],
   },
   async headers() {
     const csp = [

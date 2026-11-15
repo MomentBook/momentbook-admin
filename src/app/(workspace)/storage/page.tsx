@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminStorageData } from "@/features/storage/loader";
 import { loadAdminSubscriptionSummaryOrNull } from "@/features/users/subscriptions-loader";
@@ -11,7 +10,6 @@ import { AdminStoragePageView } from "@/features/storage/components/storage-view
 
 export const metadata: Metadata = {
   title: "Storage",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminStoragePage() {

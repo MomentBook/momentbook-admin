@@ -9,12 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { buildNoIndexRobots } from "@/lib/seo";
 import {
   ADMIN_ROOT_PATH,
   sanitizeAdminPath,
 } from "@/lib/navigation/paths";
-import { getAdminSession } from "@/lib/auth/session";
+import { getStoredAdminSession } from "@/lib/auth/session";
 import { AdminLoginForm } from "@/features/auth/components/login-form";
 
 function readQueryParam(
@@ -59,7 +58,6 @@ function resolveLoginNotice(
 
 export const metadata: Metadata = {
   title: "Admin Sign In",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminLoginPage({
@@ -68,7 +66,7 @@ export default async function AdminLoginPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const cookieStore = await cookies();
-  const session = await getAdminSession(cookieStore);
+  const session = await getStoredAdminSession(cookieStore);
   const resolvedSearchParams = await searchParams;
   const nextPath =
     sanitizeAdminPath(readQueryParam(resolvedSearchParams.next)) ??

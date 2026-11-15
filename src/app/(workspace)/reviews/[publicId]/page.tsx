@@ -9,7 +9,6 @@ import { parseUuidFilter } from "@/entities/report/model";
 import { loadAdminReviewDetail, parseAdminReviewStatus } from "@/features/reviews/loader";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { resolveSupportedLanguage, toLocaleTag } from "@/lib/i18n";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
 import { resolveUserStatusBanner } from "@/entities/user/status-flash";
@@ -17,7 +16,6 @@ import { resolveReviewBanner } from "@/features/reviews/flash";
 
 export const metadata: Metadata = {
   title: "Review Detail",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminReviewDetailPage({

@@ -201,22 +201,3 @@ export function parseEditorialBody(body: string): EditorialMarkdownBlock[] {
 
   return blocks;
 }
-
-export function extractEditorialPlainText(
-  blocks: EditorialMarkdownBlock[],
-): string {
-  return blocks
-    .map((block) => {
-      if (block.type === "image") {
-        return block.alt;
-      }
-
-      if (block.type === "list") {
-        return block.items.join(" ");
-      }
-
-      return block.text;
-    })
-    .join("\n\n")
-    .trim();
-}

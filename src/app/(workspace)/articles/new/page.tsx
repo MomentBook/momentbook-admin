@@ -6,7 +6,6 @@ import {
 } from "@/lib/navigation/paths";
 import { isBackendApiError } from "@/lib/api/client";
 import { resolveSupportedLanguage } from "@/lib/i18n";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
@@ -16,7 +15,6 @@ import { EditorialArticleEditorPageView } from "@/features/articles/components/a
 
 export const metadata: Metadata = {
   title: "Create Article",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminNewArticlePage({

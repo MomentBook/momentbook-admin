@@ -6,7 +6,6 @@ import {
   parseReviewQueuePage,
   parseReviewQueueTab,
 } from "@/features/reviews/queue-loader";
-import { buildNoIndexRobots } from "@/lib/seo";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
 import { parseAdminReviewStatus } from "@/features/reviews/loader";
@@ -17,7 +16,6 @@ import { ReviewQueuePageView } from "@/features/reviews/components/review-queue-
 
 export const metadata: Metadata = {
   title: "Review Queue",
-  robots: buildNoIndexRobots(),
 };
 
 export default async function AdminReviewsPage({

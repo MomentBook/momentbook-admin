@@ -132,18 +132,6 @@ export async function getStoredAdminSession(
   return session;
 }
 
-export async function getAdminSession(
-  cookieStore: AdminCookieStore,
-): Promise<AdminSession | null> {
-  const session = await getStoredAdminSession(cookieStore);
-
-  if (!session) {
-    return null;
-  }
-
-  return session;
-}
-
 function requiresAdminSessionRefresh(session: AdminSession): boolean {
   return (
     session.accessTokenExpiresAt - Date.now() <= ACCESS_TOKEN_REFRESH_WINDOW_MS
@@ -207,24 +195,6 @@ export async function clearAdminSession(
     expires: new Date(0),
     path: ADMIN_SESSION_COOKIE_PATH,
   });
-}
-
-export async function requireAdminSession(
-  cookieStore: AdminCookieStore,
-  nextPath: string,
-): Promise<AdminSession> {
-  const session = await getAdminSession(cookieStore);
-
-  if (!session) {
-    redirect(
-      buildAdminLoginHref({
-        next: nextPath,
-        error: "session_expired",
-      }),
-    );
-  }
-
-  return session;
 }
 
 export async function requireAdminApiSession(
