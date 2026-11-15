@@ -1,5 +1,9 @@
 import "server-only";
 
+import createClient, { type ClientOptions, type Middleware } from "openapi-fetch";
+import { z } from "zod";
+import type { paths as AuthPaths } from "@/lib/api/generated/auth";
+import type { paths as CorePaths } from "@/lib/api/generated/core";
 import type { PageCounts } from "@/lib/api/types";
 import { ENV } from "@/lib/env";
 
@@ -25,7 +29,7 @@ export class BackendApiError extends Error {
  */
 export function isBackendApiError(
   error: unknown,
-): error is { message: string; statusCode: number } {
+): error is { message: string; statusCode: number; errorCode?: string } {
   return (
     typeof error === "object" &&
     error !== null &&
@@ -50,44 +54,14 @@ export class AdminAccessDeniedError extends BackendApiError {
   }
 }
 
-// ─── URL Builder ────────────────────────────
+// ─── Response (contract v3, ADR 0012) ───────
 
-function buildApiUrl(pathname: string, query?: Record<string, string | number>): string {
-  const url = new URL(pathname, ENV.API_BASE_URL);
-
-  if (query) {
-    for (const [key, value] of Object.entries(query)) {
-      url.searchParams.set(key, String(value));
-    }
-  }
-
-  return url.toString();
-}
-
-// ─── Request (contract v3, ADR 0012) ────────
-
-export interface ApiRequestOptions {
-  pathname: string;
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
-  accessToken?: string;
-  body?: unknown;
-  query?: Record<string, string | number>;
-  /** Extra request headers, such as `Accept-Language`. */
-  headers?: Record<string, string>;
-}
-
-function readErrorBody(payload: unknown): { message?: string; errorCode?: string } {
-  if (!payload || typeof payload !== "object") {
-    return {};
-  }
-
-  const { message, errorCode } = payload as Record<string, unknown>;
-
-  return {
-    ...(typeof message === "string" ? { message } : {}),
-    ...(typeof errorCode === "string" ? { errorCode } : {}),
-  };
-}
+/** The top level of `ApiErrorResponseDto`; anything else in it is ignored,
+ * and a field of the wrong type (a `null` errorCode) reads as absent. */
+const apiErrorBody = z.object({
+  message: z.string().optional().catch(undefined),
+  errorCode: z.string().optional().catch(undefined),
+});
 
 /** The resource a 2xx carries (contract v3 has no envelope), nothing for a
  * 204, and the error classes for everything else: 401 and 403 end or deny the
@@ -109,7 +83,7 @@ export async function parseApiResponse<T>(response: Response): Promise<T> {
   }
 
   if (!response.ok) {
-    const body = readErrorBody(payload);
+    const body = apiErrorBody.safeParse(payload).data ?? {};
     const message = body.message ?? `Request failed with status ${response.status}`;
 
     if (response.status === 401) {
@@ -130,22 +104,57 @@ export async function parseApiResponse<T>(response: Response): Promise<T> {
   return payload as T;
 }
 
-export async function requestApi<T>(options: ApiRequestOptions): Promise<T> {
-  const response = await fetch(buildApiUrl(options.pathname, options.query), {
-    method: options.method ?? "GET",
-    headers: {
-      Accept: "application/json",
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...(options.accessToken
-        ? { Authorization: `Bearer ${options.accessToken}` }
-        : {}),
-      ...options.headers,
-    },
-    ...(options.body ? { body: JSON.stringify(options.body) } : {}),
-    cache: "no-store",
-  });
+// ─── Clients ─────────────────────────────────
 
-  return parseApiResponse<T>(response);
+/** Every response goes through `parseApiResponse` first, so an error status
+ * or a 2xx that is not JSON throws the classes above before openapi-fetch
+ * reads the body. */
+const contractV3: Middleware = {
+  async onResponse({ response }) {
+    await parseApiResponse(response.clone());
+  },
+};
+
+/** `URLSearchParams` spelling (a space is `+`), as the API has always been
+ * called; `undefined`, `null` and empty values are left out. */
+function serializeQuery(query: Record<string, unknown>): string {
+  const search = new URLSearchParams();
+
+  for (const [name, value] of Object.entries(query)) {
+    if (value === undefined || value === null || value === "") {
+      continue;
+    }
+
+    search.set(name, String(value));
+  }
+
+  return search.toString();
+}
+
+const clientOptions: ClientOptions = {
+  baseUrl: ENV.API_BASE_URL,
+  cache: "no-store",
+  headers: { Accept: "application/json" },
+  querySerializer: serializeQuery,
+  // Read at call time, so the fetch Next patches (or a test stubs) is used.
+  fetch: (request) => globalThis.fetch(request),
+};
+
+export const coreClient = createClient<CorePaths>(clientOptions);
+coreClient.use(contractV3);
+
+export const authClient = createClient<AuthPaths>(clientOptions);
+authClient.use(contractV3);
+
+export function bearer(accessToken: string): { Authorization: string } {
+  return { Authorization: `Bearer ${accessToken}` };
+}
+
+/** The resource of a call. Errors never get here: the middleware has already
+ * thrown them. */
+export async function dataOf<T>(call: Promise<{ data?: T }>): Promise<T> {
+  const { data } = await call;
+  return data as T;
 }
 
 // ─── Page Counts ─────────────────────────────

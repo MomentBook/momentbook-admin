@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFetchCall } from "./helpers/fetch-call";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/env", () => ({
@@ -14,9 +15,9 @@ function ok(body: unknown) {
   });
 }
 
-function call(index = 0) {
-  const [url, init] = fetchMock.mock.calls[index] ?? [];
-  return { url: url as string, method: (init?.method ?? "GET") as string, body: init?.body };
+async function call(index = 0) {
+  const { url, method, body } = await readFetchCall(fetchMock, index);
+  return { url, method, body };
 }
 
 beforeEach(() => {
@@ -37,11 +38,11 @@ describe("listAdminUsers", () => {
     await listAdminUsers({ accessToken: "t", q: "kim", status: "BANNED", page: 1, limit: 20 });
     await listAdminUsers({ accessToken: "t", page: 2, limit: 10 });
 
-    expect(call(0)).toMatchObject({
+    expect(await call(0)).toMatchObject({
       method: "GET",
       url: "https://api.test/core/admin/users?q=kim&status=BANNED&page=1&limit=20",
     });
-    expect(call(1).url).toBe("https://api.test/core/admin/users?page=2&limit=10");
+    expect((await call(1)).url).toBe("https://api.test/core/admin/users?page=2&limit=10");
   });
 });
 
@@ -51,7 +52,7 @@ describe("getAdminUser", () => {
 
     await getAdminUser({ accessToken: "t", userId: "a/b" });
 
-    expect(call()).toMatchObject({
+    expect(await call()).toMatchObject({
       method: "GET",
       url: "https://api.test/core/admin/users/a%2Fb",
     });
@@ -64,7 +65,7 @@ describe("listAdminUserAuthEvents", () => {
 
     await listAdminUserAuthEvents({ accessToken: "t", userId: "u-1", page: 3, limit: 25 });
 
-    expect(call()).toMatchObject({
+    expect(await call()).toMatchObject({
       method: "GET",
       url: "https://api.test/core/admin/users/u-1/auth-events?page=3&limit=25",
     });
@@ -77,7 +78,7 @@ describe("revokeAdminUserSessions", () => {
 
     await revokeAdminUserSessions({ accessToken: "t", userId: "u-1", reason: "abuse" });
 
-    expect(call()).toMatchObject({
+    expect(await call()).toMatchObject({
       method: "POST",
       url: "https://api.test/core/admin/users/u-1/sessions/revoke",
       body: '{"reason":"abuse"}',
@@ -95,7 +96,7 @@ describe("updateAdminUserStatus", () => {
       data: { status: "BANNED", reportId: "r-1" },
     });
 
-    expect(call().body).toBe('{"status":"BANNED","reportId":"r-1"}');
+    expect((await call()).body).toBe('{"status":"BANNED","reportId":"r-1"}');
   });
 });
 
@@ -105,7 +106,7 @@ describe("listAdminComments", () => {
 
     await listAdminComments({ accessToken: "t", publicId: "p 1", status: "ACTIVE", page: 1, limit: 20 });
 
-    expect(call()).toMatchObject({
+    expect(await call()).toMatchObject({
       method: "GET",
       url: "https://api.test/core/admin/comments?publicId=p+1&status=ACTIVE&page=1&limit=20",
     });
@@ -122,7 +123,7 @@ describe("updateAdminCommentStatus", () => {
       data: { status: "DELETED", reason: "spam" },
     });
 
-    expect(call()).toMatchObject({
+    expect(await call()).toMatchObject({
       method: "PATCH",
       url: "https://api.test/core/admin/comments/c-1/status",
       body: '{"status":"DELETED","reason":"spam"}',
@@ -142,7 +143,7 @@ describe("listAdminAuditLog", () => {
       limit: 20,
     });
 
-    expect(call()).toMatchObject({
+    expect(await call()).toMatchObject({
       method: "GET",
       url: "https://api.test/core/admin/audit-logs?action=USER_BANNED&subjectUserId=u-1&page=1&limit=20",
     });
@@ -155,7 +156,7 @@ describe("getAdminMetrics", () => {
 
     await getAdminMetrics({ accessToken: "t", days: 30 });
 
-    expect(call()).toMatchObject({
+    expect(await call()).toMatchObject({
       method: "GET",
       url: "https://api.test/core/admin/metrics?days=30",
     });
@@ -212,7 +213,7 @@ describe("getAdminNotificationMetrics", () => {
 
     await getAdminNotificationMetrics({ accessToken: "t", days: 7 });
 
-    expect(call()).toMatchObject({
+    expect(await call()).toMatchObject({
       method: "GET",
       url: "https://api.test/core/admin/metrics/notifications?days=7",
     });
@@ -225,7 +226,7 @@ describe("listPublishedJourneys", () => {
 
     await listPublishedJourneys({ accessToken: "t", page: 1, limit: 20, userId: "u-1" });
 
-    expect(call().url).toBe(
+    expect((await call()).url).toBe(
       "https://api.test/core/admin/journeys/publish?page=1&limit=20&userId=u-1",
     );
   });

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFetchCall } from "./helpers/fetch-call";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/env", () => ({
@@ -14,9 +15,9 @@ function ok(body: unknown) {
   });
 }
 
-function call(index = 0) {
-  const [url, init] = fetchMock.mock.calls[index] ?? [];
-  return { url, headers: (init?.headers ?? {}) as Record<string, string> };
+async function call(index = 0) {
+  const { url, headers } = await readFetchCall(fetchMock, index);
+  return { url, headers };
 }
 
 beforeEach(() => {
@@ -42,7 +43,7 @@ describe("listPublishedJourneys", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+    expect((await readFetchCall(fetchMock, 0)).url).toBe(
       "https://api.test/core/admin/journeys/publish?page=1&limit=1&localizationPending=true",
     );
   });
@@ -74,8 +75,8 @@ describe("getPublishedJourneyDetail", () => {
       getPublishedJourneyDetail({ accessToken: "t", publicId: "p 1", lang: "ko-KR" }),
     ).resolves.toEqual(detail);
 
-    expect(call().url).toBe("https://api.test/core/admin/journeys/publish/p%201");
-    expect(call().headers).toMatchObject({ "Accept-Language": "ko-KR" });
+    expect((await call()).url).toBe("https://api.test/core/admin/journeys/publish/p%201");
+    expect((await call()).headers).toMatchObject({ "Accept-Language": "ko-KR" });
   });
 
   it("sends no Accept-Language without a language", async () => {
@@ -84,8 +85,8 @@ describe("getPublishedJourneyDetail", () => {
 
     await getPublishedJourneyDetail({ accessToken: "t", publicId: "p1" });
 
-    expect(call().url).toBe("https://api.test/core/admin/journeys/publish/p1");
-    expect(call().headers).not.toHaveProperty("Accept-Language");
+    expect((await call()).url).toBe("https://api.test/core/admin/journeys/publish/p1");
+    expect((await call()).headers).not.toHaveProperty("Accept-Language");
   });
 });
 
@@ -96,11 +97,11 @@ describe("requeueJourneyReview", () => {
 
     await requeueJourneyReview({ accessToken: "t", publicId: "p1" });
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+    expect((await readFetchCall(fetchMock, 0)).url).toBe(
       "https://api.test/core/admin/journeys/publish/p1/review/requeue",
     );
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: "POST" });
-    expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty("body");
+    expect(await readFetchCall(fetchMock, 0)).toMatchObject({ method: "POST" });
+    expect(await readFetchCall(fetchMock, 0)).not.toHaveProperty("body");
   });
 });
 
@@ -141,10 +142,10 @@ describe("updateReviewStatus", () => {
       acceptUntranslated: false,
     });
 
-    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(
+    expect((await readFetchCall(fetchMock, 0)).body).toBe(
       '{"status":"APPROVED","publishOperationId":"op-1","acceptUntranslated":true}',
     );
-    expect(JSON.parse(fetchMock.mock.calls[1]?.[1]?.body as string)).not.toHaveProperty(
+    expect(JSON.parse((await readFetchCall(fetchMock, 1)).body as string)).not.toHaveProperty(
       "acceptUntranslated",
     );
   });

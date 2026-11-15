@@ -1,13 +1,12 @@
 import "server-only";
 
 import type {
-  AdminCommentPageDto,
   AdminCommentStatus,
   AdminCommentStatusDataDto,
   AdminCommentsDataDto,
   UpdateAdminCommentStatusDto,
 } from "@/lib/api/types";
-import { requestApi, withPageCounts } from "./client";
+import { bearer, coreClient, dataOf, withPageCounts } from "./client";
 
 // ─── List Comments ──────────────────────────
 
@@ -19,19 +18,20 @@ export async function listAdminComments(input: {
   page: number;
   limit: number;
 }): Promise<AdminCommentsDataDto> {
-  const query: Record<string, string | number> = {};
-
-  if (input.userId) query.userId = input.userId;
-  if (input.publicId) query.publicId = input.publicId;
-  if (input.status) query.status = input.status;
-  query.page = input.page;
-  query.limit = input.limit;
-
-  const page = await requestApi<AdminCommentPageDto>({
-    pathname: "/core/admin/comments",
-    accessToken: input.accessToken,
-    query,
-  });
+  const page = await dataOf(
+    coreClient.GET("/core/admin/comments", {
+      params: {
+        query: {
+          userId: input.userId,
+          publicId: input.publicId,
+          status: input.status,
+          page: input.page,
+          limit: input.limit,
+        },
+      },
+      headers: bearer(input.accessToken),
+    }),
+  );
 
   return withPageCounts(page);
 }
@@ -43,10 +43,11 @@ export async function updateAdminCommentStatus(input: {
   commentId: string;
   data: UpdateAdminCommentStatusDto;
 }): Promise<AdminCommentStatusDataDto> {
-  return requestApi<AdminCommentStatusDataDto>({
-    pathname: `/core/admin/comments/${encodeURIComponent(input.commentId)}/status`,
-    method: "PATCH",
-    accessToken: input.accessToken,
-    body: input.data,
-  });
+  return dataOf(
+    coreClient.PATCH("/core/admin/comments/{commentId}/status", {
+      params: { path: { commentId: input.commentId } },
+      headers: bearer(input.accessToken),
+      body: input.data,
+    }),
+  );
 }

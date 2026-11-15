@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFetchCall } from "./helpers/fetch-call";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/env", () => ({
@@ -14,9 +15,9 @@ function ok(body: unknown) {
   });
 }
 
-function call(index = 0) {
-  const [url, init] = fetchMock.mock.calls[index] ?? [];
-  return { url, method: init?.method, body: init?.body ? JSON.parse(init.body as string) : undefined };
+async function call(index = 0) {
+  const { url, method, body } = await readFetchCall(fetchMock, index);
+  return { url, method, body: body ? JSON.parse(body) : undefined };
 }
 
 /** A v3 `AdminArticleSummaryDto`. */
@@ -62,7 +63,7 @@ describe("article services", () => {
       category: "travel-guide",
     });
 
-    expect(call().url).toBe(
+    expect((await call()).url).toBe(
       "https://api.test/core/admin/articles?page=1&limit=20&language=ko&category=TRAVEL_GUIDE",
     );
     expect(list).toEqual({
@@ -90,17 +91,17 @@ describe("article services", () => {
     });
     await updateAdminArticle({ accessToken: "t", articleId: "art-1", article: { body: "B2" } });
 
-    expect(call(0)).toMatchObject({
+    expect(await call(0)).toMatchObject({
       url: "https://api.test/core/admin/articles",
       method: "POST",
       body: { language: "en", category: "FESTIVAL", title: "T", body: "B" },
     });
-    expect(call(1)).toMatchObject({
+    expect(await call(1)).toMatchObject({
       url: "https://api.test/core/admin/articles/art-1",
       method: "PATCH",
       body: { category: "WELLBEING_GUIDE", title: "T2" },
     });
-    expect(call(2).body).toEqual({ body: "B2" });
+    expect((await call(2)).body).toEqual({ body: "B2" });
   });
 
   it("returns the bare detail and deletion bodies", async () => {
@@ -115,7 +116,7 @@ describe("article services", () => {
       articleId: "art-1",
       deleted: true,
     });
-    expect(call(1)).toMatchObject({ method: "DELETE" });
+    expect(await call(1)).toMatchObject({ method: "DELETE" });
   });
 });
 
@@ -134,7 +135,7 @@ describe("article loaders", () => {
       category: "destination-guide",
     });
 
-    expect(call().url).toBe(
+    expect((await call()).url).toBe(
       "https://api.test/core/admin/articles?page=1&limit=20&language=ko&category=DESTINATION_GUIDE",
     );
     expect(dashboard).toMatchObject({ page: 1, pages: 1, total: 2, language: "ko" });

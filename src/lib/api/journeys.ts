@@ -1,15 +1,13 @@
 import "server-only";
 
 import type {
-  AdminPublishedJourneyPageDto,
   AdminPublishedJourneysDataDto,
   JourneyReviewStatus,
   PublishedJourneyDetailDto,
-  RequeueJourneyReviewResultDto,
   UpdatePublishedJourneyReviewDataDto,
   UpdatePublishedJourneyReviewRequestDto,
 } from "@/lib/api/types";
-import { requestApi, withPageCounts } from "./client";
+import { bearer, coreClient, dataOf, withPageCounts } from "./client";
 
 // ─── List Published Journeys ─────────────────
 
@@ -22,32 +20,21 @@ export async function listPublishedJourneys(input: {
   enqueueFailed?: boolean;
   userId?: string;
 }): Promise<AdminPublishedJourneysDataDto> {
-  const query: Record<string, string | number> = {
-    page: input.page,
-    limit: input.limit,
-  };
-
-  if (input.reviewStatus) {
-    query.reviewStatus = input.reviewStatus;
-  }
-
-  if (input.localizationPending !== undefined) {
-    query.localizationPending = String(input.localizationPending);
-  }
-
-  if (input.enqueueFailed !== undefined) {
-    query.enqueueFailed = String(input.enqueueFailed);
-  }
-
-  if (input.userId) {
-    query.userId = input.userId;
-  }
-
-  const page = await requestApi<AdminPublishedJourneyPageDto>({
-    pathname: "/core/admin/journeys/publish",
-    accessToken: input.accessToken,
-    query,
-  });
+  const page = await dataOf(
+    coreClient.GET("/core/admin/journeys/publish", {
+      params: {
+        query: {
+          page: input.page,
+          limit: input.limit,
+          reviewStatus: input.reviewStatus,
+          localizationPending: input.localizationPending,
+          enqueueFailed: input.enqueueFailed,
+          userId: input.userId,
+        },
+      },
+      headers: bearer(input.accessToken),
+    }),
+  );
 
   return withPageCounts(page);
 }
@@ -58,10 +45,9 @@ export async function requeueJourneyReview(input: {
   accessToken: string;
   publicId: string;
 }): Promise<void> {
-  await requestApi<RequeueJourneyReviewResultDto>({
-    pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review/requeue`,
-    method: "POST",
-    accessToken: input.accessToken,
+  await coreClient.POST("/core/admin/journeys/publish/{publicId}/review/requeue", {
+    params: { path: { publicId: input.publicId } },
+    headers: bearer(input.accessToken),
   });
 }
 
@@ -74,11 +60,15 @@ export async function getPublishedJourneyDetail(input: {
   publicId: string;
   lang?: string;
 }): Promise<PublishedJourneyDetailDto> {
-  return requestApi<PublishedJourneyDetailDto>({
-    pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}`,
-    accessToken: input.accessToken,
-    headers: input.lang ? { "Accept-Language": input.lang } : undefined,
-  });
+  return dataOf(
+    coreClient.GET("/core/admin/journeys/publish/{publicId}", {
+      params: { path: { publicId: input.publicId } },
+      headers: {
+        ...bearer(input.accessToken),
+        ...(input.lang ? { "Accept-Language": input.lang } : {}),
+      },
+    }),
+  );
 }
 
 // ─── Update Review Status ───────────────────
@@ -90,16 +80,17 @@ export async function updateReviewStatus(input: {
   publishOperationId?: string;
   acceptUntranslated?: boolean;
 }): Promise<UpdatePublishedJourneyReviewDataDto> {
-  return requestApi<UpdatePublishedJourneyReviewDataDto>({
-    pathname: `/core/admin/journeys/publish/${encodeURIComponent(input.publicId)}/review`,
-    method: "PATCH",
-    accessToken: input.accessToken,
-    body: {
-      status: input.status,
-      ...(input.publishOperationId
-        ? { publishOperationId: input.publishOperationId }
-        : {}),
-      ...(input.acceptUntranslated === true ? { acceptUntranslated: true } : {}),
-    },
-  });
+  return dataOf(
+    coreClient.PATCH("/core/admin/journeys/publish/{publicId}/review", {
+      params: { path: { publicId: input.publicId } },
+      headers: bearer(input.accessToken),
+      body: {
+        status: input.status,
+        ...(input.publishOperationId
+          ? { publishOperationId: input.publishOperationId }
+          : {}),
+        ...(input.acceptUntranslated === true ? { acceptUntranslated: true } : {}),
+      },
+    }),
+  );
 }

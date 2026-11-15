@@ -7,13 +7,12 @@ import {
 import type {
   AdminArticleDetailDto,
   AdminArticleMutationDataDto,
-  AdminArticlePageDto,
   AdminArticlesDataDto,
   AdminDeleteArticleDataDto,
   CreateAdminArticleRequestDto,
   UpdateAdminArticleRequestDto,
 } from "@/lib/api/types";
-import { requestApi, withPageCounts } from "./client";
+import { bearer, coreClient, dataOf, withPageCounts } from "./client";
 
 // ─── Inputs ──────────────────────────────────
 // Callers pass the editorial category spelling (`travel-guide`); the API
@@ -37,16 +36,19 @@ export async function listAdminArticles(input: {
   language?: string;
   category?: EditorialArticleCategory;
 }): Promise<AdminArticlesDataDto> {
-  const page = await requestApi<AdminArticlePageDto>({
-    pathname: "/core/admin/articles",
-    accessToken: input.accessToken,
-    query: {
-      page: input.page,
-      limit: input.limit,
-      ...(input.language ? { language: input.language } : {}),
-      ...(input.category ? { category: toArticleCategoryApiValue(input.category) } : {}),
-    },
-  });
+  const page = await dataOf(
+    coreClient.GET("/core/admin/articles", {
+      params: {
+        query: {
+          page: input.page,
+          limit: input.limit,
+          language: input.language,
+          category: input.category ? toArticleCategoryApiValue(input.category) : undefined,
+        },
+      },
+      headers: bearer(input.accessToken),
+    }),
+  );
 
   return withPageCounts(page);
 }
@@ -57,10 +59,12 @@ export async function getAdminArticle(input: {
   accessToken: string;
   articleId: string;
 }): Promise<AdminArticleDetailDto> {
-  return requestApi<AdminArticleDetailDto>({
-    pathname: `/core/admin/articles/${encodeURIComponent(input.articleId)}`,
-    accessToken: input.accessToken,
-  });
+  return dataOf(
+    coreClient.GET("/core/admin/articles/{articleId}", {
+      params: { path: { articleId: input.articleId } },
+      headers: bearer(input.accessToken),
+    }),
+  );
 }
 
 // ─── Create Article ─────────────────────────
@@ -69,17 +73,15 @@ export async function createAdminArticle(input: {
   accessToken: string;
   article: AdminArticleCreateInput;
 }): Promise<AdminArticleMutationDataDto> {
-  const body: CreateAdminArticleRequestDto = {
-    ...input.article,
-    category: toArticleCategoryApiValue(input.article.category),
-  };
-
-  return requestApi<AdminArticleMutationDataDto>({
-    pathname: "/core/admin/articles",
-    method: "POST",
-    accessToken: input.accessToken,
-    body,
-  });
+  return dataOf(
+    coreClient.POST("/core/admin/articles", {
+      headers: bearer(input.accessToken),
+      body: {
+        ...input.article,
+        category: toArticleCategoryApiValue(input.article.category),
+      },
+    }),
+  );
 }
 
 // ─── Update Article ─────────────────────────
@@ -94,12 +96,13 @@ export async function updateAdminArticle(input: {
     ? { ...fields, category: toArticleCategoryApiValue(category) }
     : fields;
 
-  return requestApi<AdminArticleMutationDataDto>({
-    pathname: `/core/admin/articles/${encodeURIComponent(input.articleId)}`,
-    method: "PATCH",
-    accessToken: input.accessToken,
-    body,
-  });
+  return dataOf(
+    coreClient.PATCH("/core/admin/articles/{articleId}", {
+      params: { path: { articleId: input.articleId } },
+      headers: bearer(input.accessToken),
+      body,
+    }),
+  );
 }
 
 // ─── Delete Article ─────────────────────────
@@ -108,9 +111,10 @@ export async function deleteAdminArticle(input: {
   accessToken: string;
   articleId: string;
 }): Promise<AdminDeleteArticleDataDto> {
-  return requestApi<AdminDeleteArticleDataDto>({
-    pathname: `/core/admin/articles/${encodeURIComponent(input.articleId)}`,
-    method: "DELETE",
-    accessToken: input.accessToken,
-  });
+  return dataOf(
+    coreClient.DELETE("/core/admin/articles/{articleId}", {
+      params: { path: { articleId: input.articleId } },
+      headers: bearer(input.accessToken),
+    }),
+  );
 }

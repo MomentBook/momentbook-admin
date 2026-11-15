@@ -1,10 +1,8 @@
 import "server-only";
 
 import type {
-  AdminUserAuthEventPageDto,
   AdminUserAuthEventsDataDto,
   AdminUserDetailDataDto,
-  AdminUserPageDto,
   AdminUserRole,
   AdminUserSessionsRevokeDataDto,
   AdminUserStatus,
@@ -13,7 +11,7 @@ import type {
   AdminUsersDataDto,
   UpdateAdminUserStatusDto,
 } from "@/lib/api/types";
-import { requestApi, withPageCounts } from "./client";
+import { bearer, coreClient, dataOf, withPageCounts } from "./client";
 
 // ─── Update User Status (Ban / Unban) ───────
 
@@ -22,12 +20,13 @@ export async function updateAdminUserStatus(input: {
   userId: string;
   data: UpdateAdminUserStatusDto;
 }): Promise<AdminUserStatusResponseDataDto> {
-  return requestApi<AdminUserStatusResponseDataDto>({
-    pathname: `/core/admin/users/${encodeURIComponent(input.userId)}/status`,
-    method: "PATCH",
-    accessToken: input.accessToken,
-    body: input.data,
-  });
+  return dataOf(
+    coreClient.PATCH("/core/admin/users/{userId}/status", {
+      params: { path: { userId: input.userId } },
+      headers: bearer(input.accessToken),
+      body: input.data,
+    }),
+  );
 }
 
 // ─── List Users ─────────────────────────────
@@ -40,19 +39,20 @@ export async function listAdminUsers(input: {
   page: number;
   limit: number;
 }): Promise<AdminUsersDataDto> {
-  const query: Record<string, string | number> = {};
-
-  if (input.q) query.q = input.q;
-  if (input.status) query.status = input.status;
-  if (input.role) query.role = input.role;
-  query.page = input.page;
-  query.limit = input.limit;
-
-  const page = await requestApi<AdminUserPageDto>({
-    pathname: "/core/admin/users",
-    accessToken: input.accessToken,
-    query,
-  });
+  const page = await dataOf(
+    coreClient.GET("/core/admin/users", {
+      params: {
+        query: {
+          q: input.q,
+          status: input.status,
+          role: input.role,
+          page: input.page,
+          limit: input.limit,
+        },
+      },
+      headers: bearer(input.accessToken),
+    }),
+  );
 
   return withPageCounts(page);
 }
@@ -63,10 +63,12 @@ export async function getAdminUser(input: {
   accessToken: string;
   userId: string;
 }): Promise<AdminUserDetailDataDto> {
-  return requestApi<AdminUserDetailDataDto>({
-    pathname: `/core/admin/users/${encodeURIComponent(input.userId)}`,
-    accessToken: input.accessToken,
-  });
+  return dataOf(
+    coreClient.GET("/core/admin/users/{userId}", {
+      params: { path: { userId: input.userId } },
+      headers: bearer(input.accessToken),
+    }),
+  );
 }
 
 // ─── List User Auth Events ──────────────────
@@ -77,11 +79,15 @@ export async function listAdminUserAuthEvents(input: {
   page: number;
   limit: number;
 }): Promise<AdminUserAuthEventsDataDto> {
-  const page = await requestApi<AdminUserAuthEventPageDto>({
-    pathname: `/core/admin/users/${encodeURIComponent(input.userId)}/auth-events`,
-    accessToken: input.accessToken,
-    query: { page: input.page, limit: input.limit },
-  });
+  const page = await dataOf(
+    coreClient.GET("/core/admin/users/{userId}/auth-events", {
+      params: {
+        path: { userId: input.userId },
+        query: { page: input.page, limit: input.limit },
+      },
+      headers: bearer(input.accessToken),
+    }),
+  );
 
   return withPageCounts(page);
 }
@@ -93,12 +99,13 @@ export async function revokeAdminUserSessions(input: {
   userId: string;
   reason?: string;
 }): Promise<AdminUserSessionsRevokeDataDto> {
-  return requestApi<AdminUserSessionsRevokeDataDto>({
-    pathname: `/core/admin/users/${encodeURIComponent(input.userId)}/sessions/revoke`,
-    method: "POST",
-    accessToken: input.accessToken,
-    body: input.reason ? { reason: input.reason } : {},
-  });
+  return dataOf(
+    coreClient.POST("/core/admin/users/{userId}/sessions/revoke", {
+      params: { path: { userId: input.userId } },
+      headers: bearer(input.accessToken),
+      body: input.reason ? { reason: input.reason } : {},
+    }),
+  );
 }
 
 // ─── Update Storage Allowance ───────────────
@@ -110,10 +117,11 @@ export async function updateAdminUserStorageAllowance(input: {
   quotaOverrideBytes: number | null;
   reason: string;
 }): Promise<AdminUserStorageDto> {
-  return requestApi<AdminUserStorageDto>({
-    pathname: `/core/admin/users/${encodeURIComponent(input.userId)}/storage-allowance`,
-    method: "PATCH",
-    accessToken: input.accessToken,
-    body: { quotaOverrideBytes: input.quotaOverrideBytes, reason: input.reason },
-  });
+  return dataOf(
+    coreClient.PATCH("/core/admin/users/{userId}/storage-allowance", {
+      params: { path: { userId: input.userId } },
+      headers: bearer(input.accessToken),
+      body: { quotaOverrideBytes: input.quotaOverrideBytes, reason: input.reason },
+    }),
+  );
 }

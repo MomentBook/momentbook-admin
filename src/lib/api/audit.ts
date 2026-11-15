@@ -3,10 +3,9 @@ import "server-only";
 import type {
   AdminAuditAction,
   AdminAuditLogDataDto,
-  AdminAuditLogPageDto,
   AdminAuditTargetType,
 } from "@/lib/api/types";
-import { requestApi, withPageCounts } from "./client";
+import { bearer, coreClient, dataOf, withPageCounts } from "./client";
 
 // ─── List Audit Log ─────────────────────────
 
@@ -20,21 +19,22 @@ export async function listAdminAuditLog(input: {
   page: number;
   limit: number;
 }): Promise<AdminAuditLogDataDto> {
-  const query: Record<string, string | number> = {};
-
-  if (input.action) query.action = input.action;
-  if (input.actorId) query.actorId = input.actorId;
-  if (input.subjectUserId) query.subjectUserId = input.subjectUserId;
-  if (input.targetType) query.targetType = input.targetType;
-  if (input.targetId) query.targetId = input.targetId;
-  query.page = input.page;
-  query.limit = input.limit;
-
-  const page = await requestApi<AdminAuditLogPageDto>({
-    pathname: "/core/admin/audit-logs",
-    accessToken: input.accessToken,
-    query,
-  });
+  const page = await dataOf(
+    coreClient.GET("/core/admin/audit-logs", {
+      params: {
+        query: {
+          action: input.action,
+          actorId: input.actorId,
+          subjectUserId: input.subjectUserId,
+          targetType: input.targetType,
+          targetId: input.targetId,
+          page: input.page,
+          limit: input.limit,
+        },
+      },
+      headers: bearer(input.accessToken),
+    }),
+  );
 
   return withPageCounts(page);
 }

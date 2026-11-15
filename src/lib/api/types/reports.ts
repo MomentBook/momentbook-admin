@@ -6,6 +6,7 @@ import type {
   AdminReportDto,
   AdminReportPageDto,
   AdminReportStatsDto,
+  paths,
   UpdateAdminReportDto,
 } from "@/lib/api/generated/core";
 import type { PageCounts } from "./shared";
@@ -32,16 +33,9 @@ export type AdminReportStatsDataDto = AdminReportStatsDto;
 
 // ─── Request Payloads ─────────────────────────
 
-/** Query of `GET /core/admin/reports`. Hand-written: the documents describe
- * query parameters per operation, and `--no-client` emits no type for them. */
-export interface AdminReportsQueryDto {
-  page?: number;
-  limit?: number;
-  status?: ReportStatus;
-  targetType?: ReportTargetType;
-  reason?: ReportReason;
-  targetId?: string;
-  reporterId?: string;
-}
+/** Query of `GET /core/admin/reports`, as the API documents it. */
+export type AdminReportsQueryDto = NonNullable<
+  paths["/core/admin/reports"]["get"]["parameters"]["query"]
+>;
 
 export type UpdateAdminReportRequestDto = UpdateAdminReportDto;
