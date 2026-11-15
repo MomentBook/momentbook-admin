@@ -2,10 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  readAccessTokenClaims,
-  readTokenExpiryMs,
-} from "@/lib/auth/token";
+import { buildAdminSession } from "@/lib/auth/session-schema";
+import { hasAdminRole, readTokenClaims } from "@/lib/auth/token";
 import {
   ADMIN_ROOT_PATH,
   sanitizeAdminPath,
@@ -94,44 +92,30 @@ export async function loginAdminAction(
     return { error: "Incomplete login response." };
   }
 
-  let claims;
+  const claims = readTokenClaims(accessToken);
 
-  try {
-    claims = readAccessTokenClaims(accessToken);
-  } catch {
+  if (!claims) {
     return { error: "Invalid token response." };
   }
 
-  const returnedEmail =
-    typeof claims.email === "string"
-      ? claims.email
-      : typeof user.email === "string"
-        ? user.email
-        : null;
-
-  if (claims.role?.toLowerCase() !== "admin") {
+  if (!hasAdminRole(claims)) {
     return { error: "This account does not have admin access." };
   }
 
-  const userId = user.id;
   const cookieStore = await cookies();
 
   try {
-    await createAdminSession(cookieStore, {
-      userId,
-      role: "admin",
-      email: returnedEmail,
-      name:
-        typeof claims.name === "string"
-          ? claims.name
-          : typeof user.name === "string"
-            ? user.name
-            : null,
-      accessToken,
-      refreshToken,
-      accessTokenExpiresAt: readTokenExpiryMs(accessToken),
-      refreshTokenExpiresAt: readTokenExpiryMs(refreshToken),
-    });
+    await createAdminSession(
+      cookieStore,
+      buildAdminSession(
+        { accessToken, refreshToken },
+        {
+          userId: user.id,
+          email: typeof user.email === "string" ? user.email : null,
+          name: typeof user.name === "string" ? user.name : null,
+        },
+      ),
+    );
   } catch {
     return { error: "Could not create session." };
   }

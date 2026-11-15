@@ -3,10 +3,8 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { redirect } from "next/navigation";
 import { EncryptJWT, jwtDecrypt } from "jose";
-import {
-  readAccessTokenClaims,
-  readTokenExpiryMs,
-} from "./token";
+import { type AdminSession, adminSessionSchema, buildAdminSession } from "./session-schema";
+import { hasAdminRole, readTokenClaims } from "./token";
 import { refreshAdminTokens } from "@/lib/api/auth";
 import {
   buildAdminLoginHref,
@@ -32,17 +30,6 @@ function isSessionCookieSecure(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
-export type AdminSession = {
-  userId: string;
-  role: "admin";
-  email: string | null;
-  name: string | null;
-  accessToken: string;
-  refreshToken: string;
-  accessTokenExpiresAt: number;
-  refreshTokenExpiresAt: number;
-};
-
 export type AdminCookieStore = Awaited<
   ReturnType<typeof import("next/headers").cookies>
 >;
@@ -55,24 +42,6 @@ function getSessionSecret(): Uint8Array {
   }
 
   return createHash("sha256").update(raw).digest();
-}
-
-function isSessionShape(value: unknown): value is AdminSession {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const payload = value as Record<string, unknown>;
-  return (
-    typeof payload.userId === "string" &&
-    payload.role === "admin" &&
-    (typeof payload.email === "string" || payload.email === null) &&
-    (typeof payload.name === "string" || payload.name === null) &&
-    typeof payload.accessToken === "string" &&
-    typeof payload.refreshToken === "string" &&
-    typeof payload.accessTokenExpiresAt === "number" &&
-    typeof payload.refreshTokenExpiresAt === "number"
-  );
 }
 
 async function encryptAdminSession(session: AdminSession): Promise<string> {
@@ -110,7 +79,8 @@ async function readStoredAdminSessionCookie(
 
   try {
     const { payload } = await jwtDecrypt(encrypted, getSessionSecret());
-    return isSessionShape(payload) ? payload : null;
+    const parsed = adminSessionSchema.safeParse(payload);
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }
@@ -143,24 +113,13 @@ async function buildRefreshedAdminSession(
 ): Promise<AdminSession | null> {
   try {
     const refreshed = await refreshAdminTokens(session.refreshToken);
-    const claims = readAccessTokenClaims(refreshed.accessToken);
-    if (claims.role?.toLowerCase() !== "admin") {
+    const claims = readTokenClaims(refreshed.accessToken);
+
+    if (!claims || !hasAdminRole(claims)) {
       return null;
     }
 
-    const nextSession: AdminSession = {
-      userId: session.userId,
-      role: "admin",
-      email:
-        typeof claims.email === "string" ? claims.email : session.email,
-      name: typeof claims.name === "string" ? claims.name : session.name,
-      accessToken: refreshed.accessToken,
-      refreshToken: refreshed.refreshToken,
-      accessTokenExpiresAt: readTokenExpiryMs(refreshed.accessToken),
-      refreshTokenExpiresAt: readTokenExpiryMs(refreshed.refreshToken),
-    };
-
-    return nextSession;
+    return buildAdminSession(refreshed, session);
   } catch {
     return null;
   }

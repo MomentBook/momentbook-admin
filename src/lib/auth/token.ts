@@ -1,45 +1,32 @@
 import "server-only";
 
-/**
- * Decoded (not verified) JWT claim shape from admin access tokens.
- * Tokens MUST originate from trusted backend API responses.
- */
-export type AccessTokenClaims = {
-  role?: string;
-  email?: string | null;
-  name?: string | null;
-  picture?: string | null;
-  exp?: number;
-  [key: string]: unknown;
-};
+import { decodeJwt } from "jose";
+import { z } from "zod";
+
+/** The claims the admin reads from a token. A field of the wrong type reads
+ * as absent; a token without a numeric `exp` has no claims at all. */
+const tokenClaimsSchema = z.looseObject({
+  exp: z.number(),
+  role: z.string().optional().catch(undefined),
+  email: z.string().optional().catch(undefined),
+  name: z.string().optional().catch(undefined),
+});
+
+export type AdminTokenClaims = z.infer<typeof tokenClaimsSchema>;
 
 /**
- * Decodes (does NOT verify) JWT payload claims from a raw access token.
- * Tokens MUST originate from trusted backend API responses.
+ * Decodes (does NOT verify) a token's claims, or `null` when it is not a JWT
+ * or carries no expiry. Tokens MUST come from the API's own responses.
  */
-export function readAccessTokenClaims(token: string): AccessTokenClaims {
-  const segments = token.split(".");
-  if (segments.length < 2) {
-    throw new Error("Invalid token format");
+export function readTokenClaims(token: string): AdminTokenClaims | null {
+  try {
+    return tokenClaimsSchema.parse(decodeJwt(token));
+  } catch {
+    return null;
   }
-
-  const payloadSegment = segments[1];
-  const normalized = payloadSegment
-    .replace(/-/g, "+")
-    .replace(/_/g, "/")
-    .padEnd(Math.ceil(payloadSegment.length / 4) * 4, "=");
-  const payload = JSON.parse(
-    Buffer.from(normalized, "base64").toString("utf8"),
-  ) as AccessTokenClaims;
-
-  if (typeof payload.exp !== "number") {
-    throw new Error("Missing access token expiration");
-  }
-
-  return payload;
 }
 
-/** Reads the expiry timestamp (ms) from an access token. */
-export function readTokenExpiryMs(token: string): number {
-  return readAccessTokenClaims(token).exp! * 1000;
+/** The role claim, read without regard to case (`ADMIN` on the wire). */
+export function hasAdminRole(claims: AdminTokenClaims): boolean {
+  return claims.role?.toLowerCase() === "admin";
 }

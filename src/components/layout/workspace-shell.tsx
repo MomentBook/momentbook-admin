@@ -4,7 +4,7 @@ import { AdminShell } from "./admin-shell";
 import { AdminSidebar } from "./admin-sidebar";
 import type { AdminNavKey } from "./admin-nav";
 import type { AttentionCounts } from "@/lib/workspace/attention";
-import type { AdminSession } from "@/lib/auth/session";
+import type { AdminSession } from "@/lib/auth/session-schema";
 
 // The sidebar's own open/collapsed cookie (components/ui/sidebar.tsx).
 const SIDEBAR_STATE_COOKIE = "sidebar_state";

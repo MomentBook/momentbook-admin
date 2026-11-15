@@ -5,10 +5,8 @@ import { redirect } from "next/navigation";
 import { isBackendApiError } from "@/lib/api/client";
 import { loadAttentionCounts, type AttentionCounts } from "./attention";
 import { buildAdminSessionInvalidateHref } from "@/lib/navigation/paths";
-import {
-  type AdminSession,
-  requireAdminApiSession,
-} from "@/lib/auth/session";
+import { requireAdminApiSession } from "@/lib/auth/session";
+import type { AdminSession } from "@/lib/auth/session-schema";
 
 export type AdminDashboardBanner = {
   tone: "default" | "error" | "success";
