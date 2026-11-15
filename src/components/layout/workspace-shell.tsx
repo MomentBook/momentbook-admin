@@ -14,8 +14,8 @@ const SIDEBAR_STATE_COOKIE = "sidebar_state";
  * because layouts are not re-rendered on navigation and the counts must be
  * fresh after every mutation redirect.
  *
- * Without `counts` and `session` it is the pending shell (loading, or a page
- * whose API call failed): no badges and no account name.
+ * Without `counts` and `session` it is the pending shell (a page whose API
+ * call failed): no badges and no account name.
  */
 export async function WorkspaceShell({
   active,

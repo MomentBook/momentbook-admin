@@ -87,8 +87,10 @@ export function ArticleEditorForm({
   const errors = form.formState.errors;
 
   // The checked fields go to the server action as the form posts them, so
-  // the Select's hidden input and the hidden fields travel too.
-  const save = (event: FormEvent<HTMLFormElement>) => {
+  // the Select's hidden input and the hidden fields travel too. The form
+  // also names the action, so a save made before hydration still posts to
+  // it; handleSubmit cancels the native submit once the form is live.
+  const save =(event: FormEvent<HTMLFormElement>) => {
     const element = event.currentTarget;
 
     return form.handleSubmit(() => {
@@ -113,7 +115,7 @@ export function ArticleEditorForm({
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,21rem)]">
-      <form id={formId} noValidate onSubmit={save}>
+      <form id={formId} action={saveAction} noValidate onSubmit={save}>
         <input type="hidden" name="nextPath" value={nextPath} />
         <input type="hidden" name="returnTo" value={returnTo} />
         {article ? <input type="hidden" name="articleId" value={article.id} /> : null}

@@ -53,9 +53,8 @@ actions and the shell live). The libraries the rebuild brought in are
                       comment · journey · report · storage · subscription · user
      features/<f>/ 3  one screen each: articles · audit-log · auth · comments ·
                       metrics · overview · reports · reviews · storage · users
-     app/          4  routes only: (workspace)/ pages with loading.tsx and
-                      error.tsx, login/, session/{refresh,invalidate}/,
-                      not-found.tsx
+     app/          4  routes only: (workspace)/ pages with error.tsx, login/,
+                      session/{refresh,invalidate}/, not-found.tsx
    ```
 
 2. **The boundary is a lint error.** `eslint.boundaries.mjs`
@@ -89,9 +88,9 @@ actions and the shell live). The libraries the rebuild brought in are
    `BackendApiError` as `WorkspaceError` inside the shell, and rethrows anything
    else to `app/(workspace)/error.tsx`. The shell is still rendered per page,
    not in a layout (ADR 0010).
-6. **The `(workspace)` route group** scopes `loading.tsx` (the pending shell
-   with skeleton rows) and `error.tsx` (retry and a link home) to the
-   workspace screens and keeps `/login` out of them. It changes no URL.
+6. **The `(workspace)` route group** scopes `error.tsx` (retry and a link
+   home) to the workspace screens and keeps `/login` out of it. It changes no
+   URL. It has no `loading.tsx` (see Alternatives).
 7. **Server actions** all go through `runAdminAction`
    (`lib/actions/admin-action.ts`): fields are read with a zod schema before
    the session; `returnTo` passes `sanitizeAdminPath` or the fallback is used;
@@ -148,6 +147,12 @@ actions and the shell live). The libraries the rebuild brought in are
 - **Search params beside each screen (`features/<f>/params.ts`)** — rejected:
   links to a screen are built on other screens, and a feature may not import
   another.
+- **A `loading.tsx` skeleton for the workspace** — tried and removed before
+  merge: it makes every workspace response stream, so the session redirects
+  (to login, to `/session/refresh`) arrive as a 200 with a client-side
+  redirect and a one-second meta refresh instead of a 307. On a slow load the
+  meta refresh can send a second `/session/refresh` carrying the same refresh
+  token, and a rotated token would then sign the operator out.
 - **The shell in `app/(workspace)/layout.tsx`** — rejected again for ADR
   0010's reason: a layout is not re-rendered after a mutation redirect, so the
   badges would go stale.

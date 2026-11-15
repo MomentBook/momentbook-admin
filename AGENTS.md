@@ -58,7 +58,7 @@ below, and `yarn lint` fails anything else (`eslint.boundaries.mjs`, ADR 0014):
 | `src/components/`, `src/hooks/` | shadcn `ui/`, the shell and `renderWorkspacePage` (`layout/`), `data-table/`, shared parts |
 | `src/entities/<e>/` | what several screens share: labels, tones, mappings, the ban form, report history |
 | `src/features/<f>/` | one screen: `loader.ts` (server-only), `actions.ts`, `schema.ts`, `flash.ts`, `components/` |
-| `src/app/` | route files only; workspace routes sit in the `(workspace)` group with `loading.tsx` and `error.tsx` |
+| `src/app/` | route files only; workspace routes sit in the `(workspace)` group with `error.tsx` (no `loading.tsx`: it would turn session redirects into streamed ones, ADR 0014) |
 
 - No entity imports another entity, and no feature another feature. A part
   two screens need moves down, or the `app` route composes it.

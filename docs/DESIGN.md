@@ -27,8 +27,8 @@ surface.
 - **Shell**: one `AdminSidebar` (`src/components/layout/admin-sidebar.tsx`,
   single nav definition in `admin-nav.ts`) rendered by the per-page
   `WorkspaceShell`, which every page reaches through `renderWorkspacePage`.
-  While a page loads, `(workspace)/loading.tsx` shows the shell with skeleton
-  rows.
+  There is no loading skeleton: a workspace page must be able to answer with
+  a plain redirect (ADR 0014).
   Every item has an icon, so the collapsed rail shows icons with tooltips;
   counts use `SidebarMenuBadge`; ⌘B and the `sidebar_state` cookie are kept;
   desktop starts expanded; mobile uses the sheet.
