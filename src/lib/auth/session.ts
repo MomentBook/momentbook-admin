@@ -19,7 +19,7 @@ const ADMIN_SESSION_COOKIE_PATH = "/";
 const ACCESS_TOKEN_REFRESH_WINDOW_MS = 60_000;
 
 function isSessionCookieSecure(): boolean {
-  const siteUrl = process.env.NEXT_PUBLIC_ADMIN_SITE_URL;
+  const siteUrl = ENV.ADMIN_SITE_URL;
 
   if (siteUrl) {
     try {

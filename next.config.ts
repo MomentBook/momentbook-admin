@@ -1,21 +1,5 @@
 import type { NextConfig } from "next";
-
-function parseBooleanEnv(value: string | undefined): boolean {
-  if (!value) {
-    return false;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  return normalized === "true" || normalized === "1" || normalized === "yes";
-}
-
-function shouldRequireHttpsOrigins(): boolean {
-  if (process.env.NODE_ENV !== "production") {
-    return false;
-  }
-
-  return !parseBooleanEnv(process.env.NEXT_PUBLIC_APP_IS_LOCAL);
-}
+import { env, requiresHttpsUrls } from "./src/lib/env";
 
 function readOrigin(value: string | undefined): string | null {
   if (!value) {
@@ -29,7 +13,7 @@ function readOrigin(value: string | undefined): string | null {
       return null;
     }
 
-    if (shouldRequireHttpsOrigins() && parsed.protocol !== "https:") {
+    if (requiresHttpsUrls(env) && parsed.protocol !== "https:") {
       return null;
     }
 
@@ -41,7 +25,7 @@ function readOrigin(value: string | undefined): string | null {
 
 function buildConnectSrc(): string[] {
   const values = ["'self'"];
-  const apiOrigin = readOrigin(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const apiOrigin = readOrigin(env.NEXT_PUBLIC_API_BASE_URL);
 
   if (apiOrigin) {
     values.push(apiOrigin);
@@ -71,15 +55,6 @@ function buildImgSrc(): string[] {
   }
 
   return values;
-}
-
-if (
-  shouldRequireHttpsOrigins() &&
-  !readOrigin(process.env.NEXT_PUBLIC_ADMIN_SITE_URL)
-) {
-  throw new Error(
-    "NEXT_PUBLIC_ADMIN_SITE_URL must resolve to an absolute https URL in production.",
-  );
 }
 
 const nextConfig: NextConfig = {

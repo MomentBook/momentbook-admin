@@ -1,13 +1,6 @@
+import { ENV } from "@/lib/env";
+
 const LOCAL_SITE_URL = "http://localhost:3200";
-
-function parseBooleanEnv(value: string | undefined): boolean {
-  if (!value) {
-    return false;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  return normalized === "true" || normalized === "1" || normalized === "yes";
-}
 
 function parseSiteUrl(value: string | undefined): URL | null {
   if (!value) {
@@ -41,7 +34,7 @@ function canUseLocalSiteUrlFallback(): boolean {
     return true;
   }
 
-  return parseBooleanEnv(process.env.NEXT_PUBLIC_APP_IS_LOCAL);
+  return ENV.APP_IS_LOCAL;
 }
 
 function shouldRequireHttpsSiteUrl(): boolean {
@@ -50,7 +43,7 @@ function shouldRequireHttpsSiteUrl(): boolean {
 
 export function resolveSiteUrl(): string {
   const localFallbackAllowed = canUseLocalSiteUrlFallback();
-  const configuredSiteUrl = parseSiteUrl(process.env.NEXT_PUBLIC_ADMIN_SITE_URL);
+  const configuredSiteUrl = parseSiteUrl(ENV.ADMIN_SITE_URL);
 
   if (configuredSiteUrl) {
     return normalizeSiteUrl(configuredSiteUrl);
