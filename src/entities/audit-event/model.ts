@@ -11,8 +11,6 @@ import {
 import { buildAdminReviewDetailHref } from "@/lib/navigation/review-routes";
 import { buildAdminReportDetailHref } from "@/lib/navigation/report-routes";
 
-export const ADMIN_AUDIT_PAGE_SIZE = 20;
-
 /** The single label source for audit actions (filter select, badges, the user
  * detail's moderation history). */
 export const ADMIN_AUDIT_ACTION_LABELS: Record<AdminAuditAction, string> = {

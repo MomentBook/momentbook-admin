@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { SectionNote } from "@/components/detail-parts";
 import { StatTile } from "@/components/stat-tile";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { buildAdminUserHref } from "@/lib/navigation/paths";
-import { formatRate } from "@/features/metrics/model";
+import { formatCount as count, formatRate } from "@/lib/format/number";
 import {
   allowanceTone,
   formatBytes,
@@ -19,9 +20,6 @@ import {
   summarizeSubscriptionGroups,
 } from "@/entities/subscription/model";
 import type { AdminStorageDataDto, AdminSubscriptionSummaryDataDto } from "@/lib/api/types";
-
-const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
-const count = (value: number) => COUNT_FORMATTER.format(value);
 
 const TONE_BADGE_VARIANT: Record<AllowanceTone, "secondary" | "outline" | "destructive"> = {
   ok: "secondary",
@@ -87,7 +85,7 @@ function TopAccountsTable({ accounts }: { accounts: AdminStorageDataDto["topAcco
   return (
     <TableCard title="Largest backups">
       {accounts.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No account has a backup yet.</p>
+        <SectionNote>No account has a backup yet.</SectionNote>
       ) : (
         <Table>
           <TableHeader>
@@ -178,7 +176,7 @@ function SubscriptionsSection({
   if (subscriptions === null) {
     return (
       <Section id="subscriptions" title="Subscriptions">
-        <p className="text-xs text-muted-foreground">Could not load the subscription counts.</p>
+        <SectionNote>Could not load the subscription counts.</SectionNote>
       </Section>
     );
   }
@@ -227,7 +225,7 @@ function SubscriptionsSection({
   );
 }
 
-export function AdminStoragePageView({
+export function StorageView({
   data,
   subscriptions,
 }: {

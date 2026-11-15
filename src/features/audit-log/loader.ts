@@ -1,12 +1,12 @@
 import "server-only";
 
 import { listAdminAuditLog } from "@/lib/api/audit";
-import { ADMIN_AUDIT_PAGE_SIZE } from "@/entities/audit-event/model";
 import type {
   AdminAuditAction,
   AdminAuditLogItemDto,
   AdminAuditTargetType,
 } from "@/lib/api/types";
+import { ADMIN_PAGE_SIZE } from "@/lib/workspace/list-page";
 
 export type AdminAuditLogFilters = {
   action?: AdminAuditAction;
@@ -36,7 +36,7 @@ export async function loadAdminAuditLogData(
     targetType: filters.targetType,
     targetId: filters.targetId,
     page: filters.page,
-    limit: ADMIN_AUDIT_PAGE_SIZE,
+    limit: ADMIN_PAGE_SIZE,
   });
 
   return {

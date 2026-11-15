@@ -139,7 +139,7 @@ function cohort(overrides: Partial<Retention> & Pick<Retention, "cohort">): Rete
 
 describe("notification metrics", () => {
   it("formatRate shows a share as a percentage, and nothing to divide by as a dash", async () => {
-    const { formatRate } = await import("@/features/metrics/model");
+    const { formatRate } = await import("@/lib/format/number");
 
     expect(formatRate(1, 3)).toBe("33.3%");
     expect(formatRate(2, 2)).toBe("100%");

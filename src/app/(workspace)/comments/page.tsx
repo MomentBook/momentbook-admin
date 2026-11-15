@@ -1,76 +1,45 @@
 import type { Metadata } from "next";
-import { isBackendApiError } from "@/lib/api/client";
-import { loadAdminCommentsWorkspaceData } from "@/features/comments/loader";
-import { parseCommentStatusTab, parsePublicIdFilter } from "@/entities/comment/model";
-import { parseUuidFilter } from "@/lib/navigation/params";
+import { renderWorkspacePage } from "@/components/layout/workspace-page";
+import { loadCommentsParams } from "@/lib/navigation/comment-routes";
 import { buildAdminCommentsHref } from "@/lib/navigation/paths";
-import {
-  loadWorkspacePage,
-  parsePage,
-  readQueryParam,
-} from "@/lib/workspace/load-workspace-page";
-import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { WorkspaceError } from "@/components/layout/workspace-error";
+import { parseCommentStatusTab, parsePublicIdFilter } from "@/entities/comment/model";
+import { CommentsView } from "@/features/comments/components/comments-view";
 import { resolveCommentBanner } from "@/features/comments/flash";
-import { AdminCommentsListPageView } from "@/features/comments/components/comments-view";
+import { loadAdminCommentsWorkspaceData } from "@/features/comments/loader";
 
 export const metadata: Metadata = {
   title: "Comments",
 };
 
-export default async function AdminCommentsPage({
+export default async function CommentsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolvedSearchParams = await searchParams;
-  const read = (key: string) => readQueryParam(resolvedSearchParams[key]);
-  const tab = parseCommentStatusTab(read("status"));
-  const userId = parseUuidFilter(read("userId"));
-  const publicId = parsePublicIdFilter(read("publicId"));
-  const pageNumber = parsePage(read("page"));
-  const banner = resolveCommentBanner({
-    mutation: read("mutation"),
-    error: read("error"),
-    message: read("message"),
-  });
+  const query = loadCommentsParams(await searchParams);
+  const tab = parseCommentStatusTab(query.status);
+  const userId = query.userId ?? undefined;
+  const publicId = parsePublicIdFilter(query.publicId);
   const returnTo = buildAdminCommentsHref({
     status: tab === "active" ? null : tab,
     userId,
     publicId,
-    page: pageNumber,
+    page: query.page,
   });
 
-  let page;
-
-  try {
-    page = await loadWorkspacePage({
-      returnTo,
-      load: (accessToken) =>
-        loadAdminCommentsWorkspaceData(accessToken, { tab, userId, publicId, page: pageNumber }),
-    });
-  } catch (error) {
-    if (isBackendApiError(error)) {
-      return (
-        <WorkspaceError
-          heading="Comments are temporarily unavailable."
-          message={error.message}
-          statusCode={error.statusCode}
-        />
-      );
-    }
-
-    throw error;
-  }
-
-  return (
-    <WorkspaceShell active="comments" counts={page.counts} session={page.session}>
-      <AdminCommentsListPageView
-        banner={banner}
-        data={page.data}
+  return renderWorkspacePage({
+    active: "comments",
+    errorHeading: "Comments are temporarily unavailable.",
+    returnTo,
+    load: (accessToken) =>
+      loadAdminCommentsWorkspaceData(accessToken, { tab, userId, publicId, page: query.page }),
+    render: (data) => (
+      <CommentsView
+        banner={resolveCommentBanner(query)}
+        data={data}
         filters={{ tab, userId, publicId }}
         returnTo={returnTo}
       />
-    </WorkspaceShell>
-  );
+    ),
+  });
 }

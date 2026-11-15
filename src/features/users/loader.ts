@@ -4,6 +4,7 @@ import { isBackendApiError } from "@/lib/api/client";
 import { listAdminAuditLog } from "@/lib/api/audit";
 import { listAdminComments } from "@/lib/api/comments";
 import { listPublishedJourneys } from "@/lib/api/journeys";
+import { getAdminUserSubscriptions } from "@/lib/api/subscriptions";
 import { getAdminUser, listAdminUserAuthEvents, listAdminUsers } from "@/lib/api/users";
 import { loadReportHistoryOrNull } from "@/entities/report/history";
 import type { ReportHistory } from "@/entities/report/model";
@@ -20,7 +21,6 @@ import type {
   AdminUserStatus,
   AdminUserSubscriptionsDataDto,
 } from "@/lib/api/types";
-import { loadAdminUserSubscriptionsOrNull } from "./subscriptions-loader";
 
 export type AdminUsersFilters = {
   q?: string;
@@ -121,7 +121,8 @@ export async function loadUserDetailPage(
   try {
     const [detail, subscriptions] = await Promise.all([
       loadAdminUserDetailWorkspaceData(accessToken, userId),
-      loadAdminUserSubscriptionsOrNull(accessToken, userId),
+      // A failure leaves the subscription section saying so.
+      orNull(getAdminUserSubscriptions({ accessToken, userId })),
     ]);
 
     return { detail, subscriptions };

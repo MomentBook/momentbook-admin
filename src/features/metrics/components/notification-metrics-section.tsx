@@ -4,10 +4,10 @@ import {
   PUSH_PERMISSIONS,
   compareRetention,
   formatLift,
-  formatRate,
   permissionMatrix,
   totalSkipped,
 } from "@/features/metrics/model";
+import { formatRate } from "@/lib/format/number";
 import type {
   AdminNotificationCategoryMetricsDto,
   AdminNotificationMetricsDataDto,

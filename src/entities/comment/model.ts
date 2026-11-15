@@ -1,7 +1,5 @@
 import type { AdminCommentDeletedByRole, AdminCommentStatus } from "@/lib/api/types";
 
-export const ADMIN_COMMENTS_PAGE_SIZE = 20;
-
 // The API caps `publicId` at 64 characters.
 const MAX_PUBLIC_ID_LENGTH = 64;
 
@@ -30,4 +28,9 @@ export function parsePublicIdFilter(raw?: string | null): string | undefined {
   const trimmed = raw?.trim();
 
   return trimmed && trimmed.length <= MAX_PUBLIC_ID_LENGTH ? trimmed : undefined;
+}
+
+/** "Deleted by journey owner", or "Deleted" when the API does not say who. */
+export function commentDeletedLabel(deletedByRole: AdminCommentDeletedByRole | null): string {
+  return deletedByRole ? `Deleted by ${COMMENT_DELETED_BY_LABELS[deletedByRole]}` : "Deleted";
 }

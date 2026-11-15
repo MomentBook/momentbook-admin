@@ -1,12 +1,9 @@
 import "server-only";
 
 import { listAdminComments } from "@/lib/api/comments";
-import {
-  ADMIN_COMMENTS_PAGE_SIZE,
-  commentTabToApiStatus,
-  type CommentStatusTab,
-} from "@/entities/comment/model";
 import type { AdminCommentItemDto } from "@/lib/api/types";
+import { ADMIN_PAGE_SIZE, toListPage, type ListPage } from "@/lib/workspace/list-page";
+import { commentTabToApiStatus, type CommentStatusTab } from "@/entities/comment/model";
 
 export type AdminCommentsFilters = {
   tab: CommentStatusTab;
@@ -15,12 +12,7 @@ export type AdminCommentsFilters = {
   page: number;
 };
 
-export type AdminCommentsWorkspaceData = {
-  comments: AdminCommentItemDto[];
-  total: number;
-  page: number;
-  pages: number;
-};
+export type AdminCommentsWorkspaceData = ListPage<AdminCommentItemDto>;
 
 export async function loadAdminCommentsWorkspaceData(
   accessToken: string,
@@ -32,13 +24,8 @@ export async function loadAdminCommentsWorkspaceData(
     userId: filters.userId,
     publicId: filters.publicId,
     page: filters.page,
-    limit: ADMIN_COMMENTS_PAGE_SIZE,
+    limit: ADMIN_PAGE_SIZE,
   });
 
-  return {
-    comments: list.items,
-    total: list.total,
-    page: filters.page,
-    pages: Math.max(1, list.pages),
-  };
+  return toListPage(list, filters.page);
 }

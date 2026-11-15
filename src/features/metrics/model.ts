@@ -6,6 +6,7 @@ import type {
   AdminPushPermission,
   AdminPushPlatform,
 } from "@/lib/api/types";
+import { formatRate } from "@/lib/format/number";
 
 export const METRICS_DAY_OPTIONS = [7, 30, 90] as const;
 export type MetricsDays = (typeof METRICS_DAY_OPTIONS)[number];
@@ -77,16 +78,6 @@ export function formatMetricsDay(date: string): string {
 }
 
 // ─── Notifications (ADR-0096) ───────────────
-
-const PERCENT_FORMATTER = new Intl.NumberFormat("en-US", {
-  style: "percent",
-  maximumFractionDigits: 1,
-});
-
-/** `part` of `whole` as a percentage; a dash when there is nothing to divide by. */
-export function formatRate(part: number, whole: number): string {
-  return whole > 0 ? PERCENT_FORMATTER.format(part / whole) : "—";
-}
 
 export function totalSkipped(skipped: AdminNotificationSkipDto[]): number {
   return skipped.reduce((sum, entry) => sum + entry.jobs, 0);

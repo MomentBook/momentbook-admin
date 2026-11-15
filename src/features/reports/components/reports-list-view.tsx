@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { XIcon } from "lucide-react";
+import { FilterChips } from "@/components/filter-chips";
 import { FilterTabs } from "@/components/filter-tabs";
 import { FlashBanner } from "@/components/flash-banner";
 import { Badge } from "@/components/ui/badge";
@@ -39,30 +39,6 @@ const TARGET_TYPE_FILTERS: Array<{ value: ReportTargetType | undefined; label: s
   { value: "PUBLISHED_JOURNEY", label: "Journeys" },
   { value: "USER", label: "Users" },
 ];
-
-/** An ID filter (target or reporter) as a chip with a clear link. */
-function IdFilterChips({ chips }: { chips: Array<{ label: string; value: string; clearHref: string }> }) {
-  if (chips.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {chips.map((chip) => (
-        <Badge key={chip.label} variant="secondary" className="gap-1 pr-1">
-          {chip.label}: <span className="font-mono">{chip.value}</span>
-          <Link
-            href={chip.clearHref}
-            aria-label={`Clear ${chip.label.toLowerCase()} filter`}
-            className="rounded-sm p-0.5 hover:bg-muted-foreground/20"
-          >
-            <XIcon className="size-3" />
-          </Link>
-        </Badge>
-      ))}
-    </div>
-  );
-}
 
 export function ReportsListView({
   banner,
@@ -169,7 +145,7 @@ export function ReportsListView({
             />
           </div>
 
-          <IdFilterChips chips={idChips} />
+          <FilterChips chips={idChips} />
 
           {rows.length > 0 ? (
             <>
