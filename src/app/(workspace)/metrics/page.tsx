@@ -1,60 +1,30 @@
 import type { Metadata } from "next";
-import { isBackendApiError } from "@/lib/api/client";
-import { loadAdminMetricsData, loadAdminNotificationMetricsData } from "@/features/metrics/loader";
-import { parseMetricsDays } from "@/features/metrics/model";
+import { renderWorkspacePage } from "@/components/layout/workspace-page";
+import { loadMetricsParams } from "@/lib/navigation/metrics-routes";
 import { buildAdminMetricsHref } from "@/lib/navigation/paths";
-import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
-import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { WorkspaceError } from "@/components/layout/workspace-error";
-import { AdminMetricsPageView } from "@/features/metrics/components/metrics-view";
+import { MetricsView } from "@/features/metrics/components/metrics-view";
+import { loadMetricsPage } from "@/features/metrics/loader";
+import { parseMetricsDays } from "@/features/metrics/model";
 
 export const metadata: Metadata = {
   title: "Metrics",
 };
 
-export default async function AdminMetricsPage({
+export default async function MetricsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolvedSearchParams = await searchParams;
-  const days = parseMetricsDays(readQueryParam(resolvedSearchParams.days));
-  const returnTo = buildAdminMetricsHref({ days });
+  const query = loadMetricsParams(await searchParams);
+  const days = parseMetricsDays(query.days);
 
-  let page;
-
-  try {
-    page = await loadWorkspacePage({
-      returnTo,
-      load: async (accessToken) => {
-        const [metrics, notifications] = await Promise.all([
-          loadAdminMetricsData(accessToken, days),
-          loadAdminNotificationMetricsData(accessToken, days),
-        ]);
-        return { metrics, notifications };
-      },
-    });
-  } catch (error) {
-    if (isBackendApiError(error)) {
-      return (
-        <WorkspaceError
-          heading="Metrics are temporarily unavailable."
-          message={error.message}
-          statusCode={error.statusCode}
-        />
-      );
-    }
-
-    throw error;
-  }
-
-  return (
-    <WorkspaceShell active="metrics" counts={page.counts} session={page.session}>
-      <AdminMetricsPageView
-        data={page.data.metrics}
-        notifications={page.data.notifications}
-        days={days}
-      />
-    </WorkspaceShell>
-  );
+  return renderWorkspacePage({
+    active: "metrics",
+    errorHeading: "Metrics are temporarily unavailable.",
+    returnTo: buildAdminMetricsHref({ days }),
+    load: (accessToken) => loadMetricsPage(accessToken, days),
+    render: ({ metrics, notifications }) => (
+      <MetricsView data={metrics} notifications={notifications} days={days} />
+    ),
+  });
 }

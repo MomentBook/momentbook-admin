@@ -1,21 +1,25 @@
 import type { ReactNode } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { CircleCheck } from "lucide-react";
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { FlashBanner } from "@/components/flash-banner";
+import { StatTile } from "@/components/stat-tile";
+import { Time } from "@/components/time";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LocalizedDateTime } from "@/components/localized-time";
+import { formatCount } from "@/lib/format/number";
+import type { Flash } from "@/lib/navigation/flash";
 import { buildAdminReviewQueueHref } from "@/lib/navigation/review-routes";
 import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import { SLACK_TRANSLATION_NOTE, type AttentionCounts } from "@/lib/workspace/attention";
 import type { AdminOverview } from "@/features/overview/loader";
-import { defaultLanguage } from "@/lib/i18n";
-import type { AdminDashboardBanner } from "@/lib/workspace/load-workspace-page";
 
-const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
-const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
+// recharts loads in its own chunk, only when the chart renders (it still
+// renders on the server).
+const IntakeChart = dynamic(() => import("./intake-chart").then((mod) => mod.IntakeChart));
 
-function formatCount(value: number | null): string {
-  return value === null ? "—" : COUNT_FORMATTER.format(value);
+/** A count that may be unavailable (report counts when reports/stats fails). */
+function countOrDash(value: number | null): string {
+  return value === null ? "—" : formatCount(value);
 }
 
 function AttentionTile({
@@ -39,7 +43,7 @@ function AttentionTile({
         <CardDescription>{label}</CardDescription>
         <CardTitle className="text-3xl">
           <Link href={href} className="hover:underline">
-            {formatCount(value)}
+            {countOrDash(value)}
           </Link>
         </CardTitle>
       </CardHeader>
@@ -51,19 +55,8 @@ function AttentionTile({
   );
 }
 
-function HealthItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-0.5 rounded-md border p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-lg font-semibold">{value}</span>
-    </div>
-  );
-}
-
 function RecentIntakeCard({ intake }: { intake: AdminOverview["recentIntake"] }) {
-  const total = intake.truncated
-    ? `${COUNT_FORMATTER.format(intake.totalCount)}+`
-    : COUNT_FORMATTER.format(intake.totalCount);
+  const total = `${formatCount(intake.totalCount)}${intake.truncated ? "+" : ""}`;
 
   return (
     <Card>
@@ -72,27 +65,7 @@ function RecentIntakeCard({ intake }: { intake: AdminOverview["recentIntake"] })
         <CardDescription>{total} in the last 6 weeks (UTC weeks)</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex h-32 gap-2">
-          {intake.weeks.map((week) => {
-            const height =
-              intake.maxCount > 0 ? Math.max(4, Math.round((week.count / intake.maxCount) * 100)) : 4;
-
-            return (
-              <div key={week.key} className="flex flex-1 flex-col items-center gap-1">
-                <span className="text-xs tabular-nums">{week.count}</span>
-                {/* The bar's percentage height needs a definite-height parent. */}
-                <div className="flex w-full flex-1 items-end">
-                  <div
-                    className="w-full rounded-sm bg-primary/70"
-                    style={{ height: `${height}%` }}
-                    aria-hidden
-                  />
-                </div>
-                <span className="text-[11px] text-muted-foreground">{week.label}</span>
-              </div>
-            );
-          })}
-        </div>
+        <IntakeChart weeks={intake.weeks} />
       </CardContent>
     </Card>
   );
@@ -103,7 +76,7 @@ export function AttentionOverview({
   counts,
   overview,
 }: {
-  banner: AdminDashboardBanner | null;
+  banner: Flash | null;
   counts: AttentionCounts;
   overview: AdminOverview;
 }) {
@@ -120,16 +93,11 @@ export function AttentionOverview({
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          As of{" "}
-          <LocalizedDateTime lang={ADMIN_DISPLAY_LANGUAGE} timestamp={Date.parse(counts.asOf)} />
+          As of <Time value={counts.asOf} withTime />
         </p>
       </div>
 
-      {banner ? (
-        <Alert variant={banner.tone === "error" ? "destructive" : "default"}>
-          <AlertTitle className="line-clamp-none">{banner.message}</AlertTitle>
-        </Alert>
-      ) : null}
+      <FlashBanner flash={banner} />
 
       <section className="flex flex-col gap-3" aria-labelledby="needs-action">
         <h2 id="needs-action" className="text-sm font-medium text-muted-foreground">
@@ -181,13 +149,13 @@ export function AttentionOverview({
                   href={buildAdminReportsHref({ status: "PENDING" })}
                   className="text-primary hover:underline"
                 >
-                  Pending {formatCount(counts.pendingReports)}
+                  Pending {countOrDash(counts.pendingReports)}
                 </Link>
                 <Link
                   href={buildAdminReportsHref({ status: "REVIEWED" })}
                   className="text-primary hover:underline"
                 >
-                  Reviewed {formatCount(counts.reviewedReports)}
+                  Reviewed {countOrDash(counts.reviewedReports)}
                 </Link>
               </p>
             ) : null}
@@ -200,14 +168,14 @@ export function AttentionOverview({
           Health
         </h2>
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <HealthItem label="Approved" value={formatCount(overview.approvedCount)} />
-          <HealthItem label="Rejected" value={formatCount(overview.rejectedCount)} />
-          <HealthItem
+          <StatTile label="Approved" value={overview.approvedCount} />
+          <StatTile label="Rejected" value={overview.rejectedCount} />
+          <StatTile
             label="Approval rate"
             value={overview.approvalRate === null ? "—" : `${overview.approvalRate}%`}
           />
-          <HealthItem label="Reports pending" value={formatCount(counts.pendingReports)} />
-          <HealthItem label="Reports reviewed" value={formatCount(counts.reviewedReports)} />
+          <StatTile label="Reports pending" value={counts.pendingReports ?? "—"} />
+          <StatTile label="Reports reviewed" value={counts.reviewedReports ?? "—"} />
         </div>
         <RecentIntakeCard intake={overview.recentIntake} />
       </section>

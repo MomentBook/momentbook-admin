@@ -7,28 +7,6 @@ import { loadAttentionCounts, type AttentionCounts } from "./attention";
 import { buildAdminSessionInvalidateHref } from "@/lib/navigation/paths";
 import { requireAdminApiSession } from "@/lib/auth/session";
 import type { AdminSession } from "@/lib/auth/session-schema";
-import type { Flash } from "@/lib/navigation/flash";
-
-export type AdminDashboardBanner = Flash;
-
-export function readQueryParam(
-  value: string | string[] | undefined,
-): string | null {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (Array.isArray(value) && value.length > 0) {
-    return value[0] ?? null;
-  }
-
-  return null;
-}
-
-export function parsePage(value: string | null): number {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1;
-}
 
 /**
  * Loads a workspace page: the page's own data and the attention counts for

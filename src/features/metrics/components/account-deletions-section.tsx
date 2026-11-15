@@ -1,11 +1,11 @@
 import { StatTile } from "@/components/stat-tile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatCount } from "@/lib/format/number";
 import { deletionReasonShare } from "@/features/metrics/model";
 import { deletionReasonLabel } from "@/entities/user/model";
 import type { AdminMetricsDeletionsDto } from "@/lib/api/types";
 
-const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
 
 /** Account deletions over the selected window, and the accounts waiting for
  * their deletion date now. */
@@ -54,7 +54,7 @@ export function AccountDeletionsSection({
                   <TableRow key={row.reasonCode ?? "not-given"}>
                     <TableCell>{deletionReasonLabel(row.reasonCode)}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {COUNT_FORMATTER.format(row.count)}
+                      {formatCount(row.count)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {deletionReasonShare(row.count, deletions.requested)}

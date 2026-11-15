@@ -1,5 +1,3 @@
-import { normalizePublicImageUrl } from "./public-image-url";
-
 export function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
 }
@@ -32,9 +30,9 @@ export function resolveJourneyListCoverUrl(source: {
   const metadata = asRecord(source.metadata);
 
   return (
-    normalizePublicImageUrl(readText(source.thumbnailUrl)) ??
-    normalizePublicImageUrl(readText(source.coverUrl)) ??
-    normalizePublicImageUrl(readText(metadata?.thumbnailUri)) ??
+    readText(source.thumbnailUrl) ??
+    readText(source.coverUrl) ??
+    readText(metadata?.thumbnailUri) ??
     null
   );
 }

@@ -7,15 +7,14 @@ import {
   permissionMatrix,
   totalSkipped,
 } from "@/features/metrics/model";
-import { formatRate } from "@/lib/format/number";
+import { formatCount, formatRate } from "@/lib/format/number";
 import type {
   AdminNotificationCategoryMetricsDto,
   AdminNotificationMetricsDataDto,
   AdminNotificationRetentionDto,
 } from "@/lib/api/types";
 
-const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
-const count = (value: number) => COUNT_FORMATTER.format(value);
+const count = formatCount;
 
 const PLATFORM_LABELS = { IOS: "iOS", ANDROID: "Android", UNKNOWN: "Unknown" } as const;
 const PERMISSION_LABELS = {

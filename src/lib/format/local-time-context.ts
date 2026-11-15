@@ -1,5 +1,3 @@
-import { toLocaleTag, type Language } from "@/lib/i18n";
-
 // Contract v3 spells these enums in UPPER_SNAKE_CASE (ADR 0012 item 6).
 export type LocalDateTimeType = "OFFSET_AWARE" | "FLOATING_LOCAL" | "UNKNOWN";
 export type TimeZoneSource =
@@ -18,26 +16,6 @@ export type LocalDateTimeContext = {
 export type CaptureTimeContext = LocalDateTimeContext & {
     timeZoneSource: TimeZoneSource;
 };
-
-type LocalDateTimeContextLike = Pick<
-    LocalDateTimeContext,
-    "localDateTime" | "utcOffsetMinutes" | "timeZoneId" | "localDateTimeType"
->;
-
-type ParsedLocalDateTime = {
-    year: number;
-    month: number;
-    day: number;
-    hour: number;
-    minute: number;
-    second: number;
-    millisecond: number;
-    canonicalDate: string;
-    canonicalDateTime: string;
-};
-
-const LOCAL_DATE_TIME_PATTERN =
-    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -70,10 +48,6 @@ function readNumber(value: unknown): number | null {
     }
 
     return null;
-}
-
-function padNumber(value: number, length = 2): string {
-    return String(value).padStart(length, "0");
 }
 
 function normalizeLocalDateTimeType(value: unknown): LocalDateTimeType {
@@ -136,134 +110,4 @@ export function normalizeCaptureTimeContext(
         ...base,
         timeZoneSource: normalizeTimeZoneSource(value.timeZoneSource),
     };
-}
-
-function parseMilliseconds(value: string | undefined): number {
-    if (!value) {
-        return 0;
-    }
-
-    return Number(value.padEnd(3, "0").slice(0, 3));
-}
-
-function parseLocalDateTimeValue(
-    value: string | null | undefined,
-): ParsedLocalDateTime | null {
-    if (!value) {
-        return null;
-    }
-
-    const match = LOCAL_DATE_TIME_PATTERN.exec(value);
-    if (!match) {
-        return null;
-    }
-
-    const [
-        ,
-        yearValue,
-        monthValue,
-        dayValue,
-        hourValue,
-        minuteValue,
-        secondValue,
-        millisecondValue,
-    ] = match;
-
-    const year = Number(yearValue);
-    const month = Number(monthValue);
-    const day = Number(dayValue);
-    const hour = Number(hourValue);
-    const minute = Number(minuteValue);
-    const second = Number(secondValue ?? "0");
-    const millisecond = parseMilliseconds(millisecondValue);
-
-    const utcDate = new Date(
-        Date.UTC(year, month - 1, day, hour, minute, second, millisecond),
-    );
-
-    if (
-        utcDate.getUTCFullYear() !== year ||
-        utcDate.getUTCMonth() !== month - 1 ||
-        utcDate.getUTCDate() !== day ||
-        utcDate.getUTCHours() !== hour ||
-        utcDate.getUTCMinutes() !== minute ||
-        utcDate.getUTCSeconds() !== second ||
-        utcDate.getUTCMilliseconds() !== millisecond
-    ) {
-        return null;
-    }
-
-    const canonicalDate = `${padNumber(year, 4)}-${padNumber(month)}-${padNumber(day)}`;
-    const canonicalDateTime = `${canonicalDate}T${padNumber(hour)}:${padNumber(minute)}:${padNumber(second)}${
-        millisecond > 0 ? `.${padNumber(millisecond, 3)}` : ""
-    }`;
-
-    return {
-        year,
-        month,
-        day,
-        hour,
-        minute,
-        second,
-        millisecond,
-        canonicalDate,
-        canonicalDateTime,
-    };
-}
-
-function toUtcWallClockDate(parts: ParsedLocalDateTime): Date {
-    return new Date(
-        Date.UTC(
-            parts.year,
-            parts.month - 1,
-            parts.day,
-            parts.hour,
-            parts.minute,
-            parts.second,
-            parts.millisecond,
-        ),
-    );
-}
-
-function resolveParsedContext(
-    context: LocalDateTimeContextLike | null | undefined,
-): ParsedLocalDateTime | null {
-    if (!context || context.localDateTimeType === "UNKNOWN") {
-        return null;
-    }
-
-    return parseLocalDateTimeValue(context.localDateTime);
-}
-
-export function isExplicitUnknownLocalDateTimeContext(
-    context: LocalDateTimeContextLike | null | undefined,
-): boolean {
-    return context?.localDateTimeType === "UNKNOWN";
-}
-
-export function formatLocalDateTimeContextValue(
-    lang: Language,
-    context: LocalDateTimeContextLike | null | undefined,
-    options: Intl.DateTimeFormatOptions,
-): string | null {
-    const parsed = resolveParsedContext(context);
-    if (!parsed) {
-        return null;
-    }
-
-    try {
-        return new Intl.DateTimeFormat(toLocaleTag(lang), {
-            ...options,
-            timeZone: "UTC",
-        }).format(toUtcWallClockDate(parsed));
-    } catch {
-        return null;
-    }
-}
-
-export function buildLocalDateMachineValue(
-    context: LocalDateTimeContextLike | null | undefined,
-): string | null {
-    const parsed = resolveParsedContext(context);
-    return parsed?.canonicalDate ?? null;
 }

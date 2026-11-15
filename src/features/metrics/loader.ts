@@ -20,3 +20,20 @@ export async function loadAdminNotificationMetricsData(
 ): Promise<AdminNotificationMetricsDataDto | null> {
   return orNull(getAdminNotificationMetrics({ accessToken, days }));
 }
+
+/** The metrics page: the operations metrics (required) and the notifications
+ * section (optional), in parallel. */
+export async function loadMetricsPage(
+  accessToken: string,
+  days: MetricsDays,
+): Promise<{
+  metrics: AdminMetricsDataDto;
+  notifications: AdminNotificationMetricsDataDto | null;
+}> {
+  const [metrics, notifications] = await Promise.all([
+    loadAdminMetricsData(accessToken, days),
+    loadAdminNotificationMetricsData(accessToken, days),
+  ]);
+
+  return { metrics, notifications };
+}

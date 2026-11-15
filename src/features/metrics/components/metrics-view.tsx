@@ -1,10 +1,20 @@
 import type { ReactNode } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { LocalizedDateTime } from "@/components/localized-time";
+import { ChevronDownIcon } from "lucide-react";
+import { FilterTabs } from "@/components/filter-tabs";
 import { StatTile } from "@/components/stat-tile";
-import { cn } from "@/lib/utils";
+import { Time } from "@/components/time";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatCount } from "@/lib/format/number";
+import { toTimestamp } from "@/lib/format/time";
 import { buildAdminMetricsHref, buildAdminUsersHref } from "@/lib/navigation/paths";
 import { buildAdminReviewQueueHref } from "@/lib/navigation/review-routes";
 import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
@@ -18,17 +28,18 @@ import {
   type DailyMetricKey,
   type MetricsDays,
 } from "@/features/metrics/model";
-import { defaultLanguage } from "@/lib/i18n";
-import { parseApiTime } from "@/lib/format/view-helpers";
 import type { AdminMetricsDataDto, AdminNotificationMetricsDataDto } from "@/lib/api/types";
 import { AccountDeletionsSection } from "./account-deletions-section";
-import { DailyBarChart } from "./daily-bar-chart";
 import { NotificationMetricsSection } from "./notification-metrics-section";
 
-const ADMIN_DISPLAY_LANGUAGE = defaultLanguage;
-const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
+// recharts loads in its own chunk, only when a chart renders (it still
+// renders on the server).
+const DailyBarChart = dynamic(() =>
+  import("./daily-bar-chart").then((mod) => mod.DailyBarChart),
+);
 
-const formatCount = (value: number | null) => (value === null ? "—" : COUNT_FORMATTER.format(value));
+/** A daily value; a dash for a day with no data. */
+const countOrDash = (value: number | null) => (value === null ? "—" : formatCount(value));
 
 const WINDOW_TOTALS: ReadonlyArray<{ key: DailyMetricKey; label: string }> = [
   { key: "signups", label: "Signups" },
@@ -49,29 +60,17 @@ const DAILY_COLUMNS: ReadonlyArray<{ key: DailyMetricKey; label: string }> = [
   { key: "commentsCreated", label: "Comments" },
 ];
 
-function chipClass(active: boolean): string {
-  return cn(
-    "rounded-full border px-3 py-1 text-sm",
-    active
-      ? "border-primary bg-primary text-primary-foreground"
-      : "text-muted-foreground hover:text-foreground",
-  );
-}
-
 function WindowChips({ days }: { days: MetricsDays }) {
   return (
-    <nav aria-label="Window" className="flex flex-wrap gap-2">
-      {METRICS_DAY_OPTIONS.map((option) => (
-        <Link
-          key={option}
-          href={buildAdminMetricsHref({ days: option })}
-          aria-current={option === days ? "page" : undefined}
-          className={chipClass(option === days)}
-        >
-          {option} days
-        </Link>
-      ))}
-    </nav>
+    <FilterTabs
+      label="Window"
+      variant="pill"
+      items={METRICS_DAY_OPTIONS.map((option) => ({
+        label: `${option} days`,
+        href: buildAdminMetricsHref({ days: option }),
+        active: option === days,
+      }))}
+    />
   );
 }
 
@@ -95,15 +94,15 @@ function StatRow({ label, children }: { label: string; children: ReactNode }) {
 function CountLink({ href, value }: { href: string; value: number }) {
   return (
     <Link href={href} className="text-primary hover:underline">
-      {COUNT_FORMATTER.format(value)}
+      {formatCount(value)}
     </Link>
   );
 }
 
 function QueueHealthCard({ data }: { data: AdminMetricsDataDto }) {
   const { reviews, reports } = data;
-  const generatedAt = parseApiTime(data.generatedAt);
-  const oldestPendingAt = parseApiTime(reviews.oldestPendingAt);
+  const generatedAt = toTimestamp(data.generatedAt);
+  const oldestPendingAt = toTimestamp(reviews.oldestPendingAt);
   const oldestWaitSeconds =
     generatedAt === null || oldestPendingAt === null
       ? null
@@ -131,13 +130,13 @@ function QueueHealthCard({ data }: { data: AdminMetricsDataDto }) {
             />
           </StatRow>
           <StatRow label="Translation failed">
-            {COUNT_FORMATTER.format(reviews.enqueueFailed)}
+            {formatCount(reviews.enqueueFailed)}
           </StatRow>
           <StatRow label="Open reports">
             <CountLink href={buildAdminReportsHref()} value={reports.open} />
           </StatRow>
           <StatRow label="Pending · reviewed">
-            {COUNT_FORMATTER.format(reports.pending)} · {COUNT_FORMATTER.format(reports.reviewed)}
+            {formatCount(reports.pending)} · {formatCount(reports.reviewed)}
           </StatRow>
           <StatRow label="Median time to close">
             {formatDurationSeconds(reports.medianCloseSeconds)}
@@ -197,13 +196,13 @@ function OperationsCard({ operations }: { operations: AdminMetricsDataDto["opera
       <CardContent>
         <dl className="flex flex-col divide-y">
           <StatRow label="Dead notification jobs">
-            {COUNT_FORMATTER.format(operations.notificationJobsDead)}
+            {formatCount(operations.notificationJobsDead)}
           </StatRow>
           <StatRow label="Failed unpublish cleanups">
-            {COUNT_FORMATTER.format(operations.unpublishCleanupFailed)}
+            {formatCount(operations.unpublishCleanupFailed)}
           </StatRow>
           <StatRow label="Overdue account erasures">
-            {COUNT_FORMATTER.format(operations.erasureOverdue)}
+            {formatCount(operations.erasureOverdue)}
           </StatRow>
         </dl>
       </CardContent>
@@ -215,9 +214,14 @@ function DailyTable({ daily }: { daily: AdminMetricsDataDto["daily"] }) {
   return (
     <Card>
       <CardContent>
-        <details>
-          <summary className="cursor-pointer text-sm font-medium">Daily table</summary>
-          <div className="mt-3">
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="group -ml-2">
+              Daily table
+              <ChevronDownIcon className="transition-transform group-data-[state=open]:rotate-180" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-3">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -236,21 +240,21 @@ function DailyTable({ daily }: { daily: AdminMetricsDataDto["daily"] }) {
                     <TableCell className="tabular-nums">{entry.date}</TableCell>
                     {DAILY_COLUMNS.map((column) => (
                       <TableCell key={column.key} className="text-right tabular-nums">
-                        {formatCount(entry[column.key])}
+                        {countOrDash(entry[column.key])}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
-        </details>
+          </CollapsibleContent>
+        </Collapsible>
       </CardContent>
     </Card>
   );
 }
 
-export function AdminMetricsPageView({
+export function MetricsView({
   data,
   notifications,
   days,
@@ -278,8 +282,7 @@ export function AdminMetricsPageView({
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          As of{" "}
-          <LocalizedDateTime lang={ADMIN_DISPLAY_LANGUAGE} timestamp={parseApiTime(data.generatedAt)} />
+          As of <Time value={data.generatedAt} withTime />
         </p>
       </div>
 
