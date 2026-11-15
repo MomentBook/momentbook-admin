@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { editorialArticleCategories } from "@/entities/article/types";
+import { editorialArticleCategories } from "@/lib/api/article-category";
 import { languageList, type Language } from "@/lib/i18n";
 
 // An article's fields as the editor checks them while you type and the

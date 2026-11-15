@@ -1,3 +1,5 @@
+import { readText } from "./view-helpers";
+
 // Contract v3 spells these enums in UPPER_SNAKE_CASE (ADR 0012 item 6).
 export type LocalDateTimeType = "OFFSET_AWARE" | "FLOATING_LOCAL" | "UNKNOWN";
 export type TimeZoneSource =
@@ -19,15 +21,6 @@ export type CaptureTimeContext = LocalDateTimeContext & {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function readText(value: unknown): string | null {
-    if (typeof value !== "string") {
-        return null;
-    }
-
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : null;
 }
 
 function readNumber(value: unknown): number | null {

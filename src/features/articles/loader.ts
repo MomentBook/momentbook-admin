@@ -3,10 +3,10 @@ import "server-only";
 import { getAdminArticle, listAdminArticles } from "@/lib/api/articles";
 import { isBackendApiError } from "@/lib/api/client";
 import { type Language } from "@/lib/i18n";
-import {
-  type EditorialArticleCategory,
-  type EditorialArticleListItem,
-  type EditorialArticleRecord,
+import type { EditorialArticleCategory } from "@/lib/api/article-category";
+import type {
+  EditorialArticleListItem,
+  EditorialArticleRecord,
 } from "@/entities/article/types";
 import {
   normalizeEditorialArticleListItem,

@@ -1,76 +1,76 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
-import { Input } from "@/components/ui/input";
+import { startTransition, useActionState, type FormEvent } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FlashBanner } from "@/components/flash-banner";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { loginAdminAction, type LoginState } from "@/features/auth/actions";
-import { AlertCircle } from "lucide-react";
+import { loginFields } from "@/features/auth/schema";
 
-const initialState: LoginState = { error: null };
+const INITIAL_STATE: LoginState = { error: null };
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+/**
+ * The sign-in form. The fields are checked as they are left and on submit
+ * (`loginFields`, which the action applies too); the action's refusal shows
+ * under them. Before hydration the form posts to the action as a plain form.
+ */
+export function LoginForm({ nextPath }: { nextPath: string }) {
+  const [state, signIn, signingIn] = useActionState(loginAdminAction, INITIAL_STATE);
+  const form = useForm({
+    resolver: zodResolver(loginFields),
+    mode: "onTouched",
+    defaultValues: { email: "", password: "" },
+  });
+  const { errors } = form.formState;
+
+  // handleSubmit cancels the native submit, so React does not run the form
+  // action itself; a valid form is sent here instead.
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    const element = event.currentTarget;
+
+    return form.handleSubmit(() => {
+      startTransition(() => signIn(new FormData(element)));
+    })(event);
+  };
 
   return (
-    <Button
-      type="submit"
-      variant="default"
-      disabled={pending}
-      className="w-full"
-    >
-      {pending ? "Signing in..." : "Sign in"}
-    </Button>
-  );
-}
-
-export function AdminLoginForm({ nextPath }: { nextPath: string }) {
-  const [state, formAction] = useFormState(loginAdminAction, initialState);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  return (
-    <form action={formAction} className="space-y-4">
+    <form action={signIn} onSubmit={submit} className="flex flex-col gap-4">
       <input type="hidden" name="next" value={nextPath} />
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <Field data-invalid={Boolean(errors.email)}>
+        <FieldLabel htmlFor="email">Email</FieldLabel>
         <Input
           id="email"
-          name="email"
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="username"
           placeholder="Enter admin email"
-          required
+          aria-invalid={Boolean(errors.email)}
+          {...form.register("email")}
         />
-      </div>
+        <FieldError errors={[errors.email]} />
+      </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+      <Field data-invalid={Boolean(errors.password)}>
+        <FieldLabel htmlFor="password">Password</FieldLabel>
         <Input
           id="password"
-          name="password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
           placeholder="Password"
-          required
+          aria-invalid={Boolean(errors.password)}
+          {...form.register("password")}
         />
-      </div>
+        <FieldError errors={[errors.password]} />
+      </Field>
 
-      {state.error ? (
-        <div
-          role="alert"
-          className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{state.error}</span>
-        </div>
-      ) : null}
+      <FlashBanner flash={state.error ? { tone: "error", message: state.error } : null} />
 
-      <SubmitButton />
+      <Button type="submit" disabled={signingIn} className="w-full">
+        {signingIn ? "Signing in..." : "Sign in"}
+      </Button>
     </form>
   );
 }

@@ -1,10 +1,13 @@
 import { type Language, languageList } from "@/lib/i18n";
 import type { ArticleAlternateDto } from "@/lib/api/types";
-import { normalizeCoverImage, readPositiveInteger, readText } from "./normalize";
+import { readText } from "@/lib/format/view-helpers";
+import { normalizeCoverImage, readPositiveInteger } from "./normalize";
 import {
   parseArticleCategoryApiValue,
-  type EditorialArticleAlternate,
   type EditorialArticleCategory,
+} from "@/lib/api/article-category";
+import {
+  type EditorialArticleAlternate,
   type EditorialArticleListItem,
   type EditorialArticleRecord,
 } from "./types";

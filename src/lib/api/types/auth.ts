@@ -4,9 +4,12 @@
 
 import type {
   AuthSessionDto as GeneratedAuthSessionDto,
+  EmailLoginDto as GeneratedEmailLoginDto,
   TokenPairDto as GeneratedTokenPairDto,
 } from "@/lib/api/generated/auth";
 
+/** The body of `POST /auth/email/login`. */
+export type EmailLoginDto = GeneratedEmailLoginDto;
 /** The bare body of `POST /auth/email/login` (contract-v3 §2.4). */
 export type AuthSessionDto = GeneratedAuthSessionDto;
 /** The bare body of `POST /auth/refresh`. */

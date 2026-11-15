@@ -23,10 +23,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { languageList, languages } from "@/lib/i18n";
-import {
-  editorialArticleCategories,
-  type EditorialArticleRecord,
-} from "@/entities/article/types";
+import { editorialArticleCategories } from "@/lib/api/article-category";
+import type { EditorialArticleRecord } from "@/entities/article/types";
 import { articleCreateFields } from "@/features/articles/schema";
 import { MarkdownPreview } from "./markdown-preview";
 

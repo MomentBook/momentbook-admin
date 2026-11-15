@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/empty";
 import { UrlPagination } from "@/components/url-pagination";
 import { formatCount } from "@/lib/format/number";
+import { editorialArticleCategories } from "@/lib/api/article-category";
 import { languageList } from "@/lib/i18n";
 import type { Flash } from "@/lib/navigation/flash";
 import {
@@ -18,7 +19,6 @@ import {
   buildAdminArticleWorkspaceHref,
 } from "@/lib/navigation/paths";
 import { getEditorialCategoryLabel } from "@/entities/article/copy";
-import { editorialArticleCategories } from "@/entities/article/types";
 import type { AdminEditorialArticleDashboardData } from "@/features/articles/loader";
 import { ArticlesTable, type ArticleRow } from "./articles-table";
 

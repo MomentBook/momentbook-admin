@@ -1,16 +1,8 @@
+import { readText } from "@/lib/format/view-helpers";
 import type { EditorialArticleCoverImage } from "./types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
-}
-
-export function readText(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
 }
 
 export function readPositiveInteger(value: unknown): number | null {

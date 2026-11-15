@@ -1,4 +1,4 @@
-import type { EditorialArticleCategory } from "./types";
+import type { EditorialArticleCategory } from "@/lib/api/article-category";
 
 // The admin works in English: these are the category names editors see.
 const ARTICLE_CATEGORY_LABELS: Record<EditorialArticleCategory, string> = {

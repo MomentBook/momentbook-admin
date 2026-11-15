@@ -15,7 +15,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { logoutAdminAction } from "@/features/auth/logout-action";
+import { logoutAdminAction } from "@/lib/auth/logout-action";
 import { ADMIN_NAV_ITEMS, type AdminNavKey } from "./admin-nav";
 
 type AdminSidebarProps = {

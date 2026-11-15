@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { FlashBanner } from "@/components/flash-banner";
 import {
   Card,
   CardContent,
@@ -8,97 +9,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  ADMIN_ROOT_PATH,
-  sanitizeAdminPath,
-} from "@/lib/navigation/paths";
 import { getStoredAdminSession } from "@/lib/auth/session";
-import { AdminLoginForm } from "@/features/auth/components/login-form";
-
-function readQueryParam(
-  value: string | string[] | undefined,
-): string | null {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (Array.isArray(value) && value.length > 0) {
-    return value[0] ?? null;
-  }
-
-  return null;
-}
-
-function resolveLoginNotice(
-  error: string | null,
-  loggedOut: boolean,
-): { variant: "destructive" | "default"; message: string } | null {
-  if (loggedOut) {
-    return { variant: "default", message: "Signed out." };
-  }
-
-  switch (error) {
-    case "missing_fields":
-      return { variant: "destructive", message: "Enter email and password." };
-    case "invalid_credentials":
-      return { variant: "destructive", message: "Invalid password." };
-    case "admin_only":
-      return { variant: "destructive", message: "This account is not authorized for admin access." };
-    case "admin_access_denied":
-      return { variant: "destructive", message: "This account no longer has admin access." };
-    case "session_expired":
-      return { variant: "destructive", message: "Session expired. Sign in again." };
-    case "service_unavailable":
-      return { variant: "destructive", message: "Service unavailable." };
-    default:
-      return null;
-  }
-}
+import { loadLoginParams } from "@/lib/navigation/login-routes";
+import { ADMIN_ROOT_PATH, sanitizeAdminPath } from "@/lib/navigation/paths";
+import { LoginForm } from "@/features/auth/components/login-form";
+import { resolveLoginNotice } from "@/features/auth/flash";
 
 export const metadata: Metadata = {
   title: "Admin Sign In",
 };
 
-export default async function AdminLoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const cookieStore = await cookies();
-  const session = await getStoredAdminSession(cookieStore);
-  const resolvedSearchParams = await searchParams;
-  const nextPath =
-    sanitizeAdminPath(readQueryParam(resolvedSearchParams.next)) ??
-    ADMIN_ROOT_PATH;
+  const query = loadLoginParams(await searchParams);
+  const nextPath = sanitizeAdminPath(query.next) ?? ADMIN_ROOT_PATH;
+  const session = await getStoredAdminSession(await cookies());
 
   if (session) {
     redirect(nextPath);
   }
 
-  const notice = resolveLoginNotice(
-    readQueryParam(resolvedSearchParams.error),
-    readQueryParam(resolvedSearchParams.loggedOut) === "1",
-  );
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
+        <CardHeader className="gap-1">
           <CardTitle className="text-2xl">Sign in to MomentBook</CardTitle>
-          <CardDescription>
-            Use the admin account to continue.
-          </CardDescription>
+          <CardDescription>Use the admin account to continue.</CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          {notice ? (
-            <Alert variant={notice.variant}>
-              <AlertDescription>{notice.message}</AlertDescription>
-            </Alert>
-          ) : null}
-
-          <AdminLoginForm nextPath={nextPath} />
+        <CardContent className="flex flex-col gap-4">
+          <FlashBanner flash={resolveLoginNotice(query)} />
+          <LoginForm nextPath={nextPath} />
         </CardContent>
       </Card>
     </div>

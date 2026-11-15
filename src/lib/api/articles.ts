@@ -1,9 +1,5 @@
 import "server-only";
 
-import {
-  type EditorialArticleCategory,
-  toArticleCategoryApiValue,
-} from "@/entities/article/types";
 import type {
   AdminArticleDetailDto,
   AdminArticleMutationDataDto,
@@ -12,6 +8,7 @@ import type {
   CreateAdminArticleRequestDto,
   UpdateAdminArticleRequestDto,
 } from "@/lib/api/types";
+import { type EditorialArticleCategory, toArticleCategoryApiValue } from "./article-category";
 import { bearer, coreClient, dataOf, withPageCounts } from "./client";
 
 // ─── Inputs ──────────────────────────────────
