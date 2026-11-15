@@ -11,7 +11,7 @@ import { isBackendApiError } from "@/lib/api/client";
 import { loadAdminOverview } from "@/features/overview/loader";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { AttentionOverview } from "@/features/overview/components/attention-overview";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { parseAdminReviewStatus } from "@/features/reviews/loader";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { resolveReviewBanner } from "@/features/reviews/flash";
@@ -95,7 +95,7 @@ export default async function AdminIndexPage({
     });
   } catch (error) {
     if (isBackendApiError(error)) {
-      return <AdminWorkspaceErrorPage message={error.message} statusCode={error.statusCode} />;
+      return <WorkspaceError message={error.message} statusCode={error.statusCode} />;
     }
 
     throw error;

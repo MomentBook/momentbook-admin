@@ -10,7 +10,7 @@ import { loadAdminReviewDetail, parseAdminReviewStatus } from "@/features/review
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { resolveSupportedLanguage, toLocaleTag } from "@/lib/i18n";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { resolveUserStatusBanner } from "@/entities/user/status-flash";
 import { resolveReviewBanner } from "@/features/reviews/flash";
 
@@ -94,7 +94,7 @@ export default async function AdminReviewDetailPage({
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The review detail is temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

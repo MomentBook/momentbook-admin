@@ -5,7 +5,7 @@ import { loadAdminSubscriptionSummaryOrNull } from "@/features/users/subscriptio
 import { buildAdminStorageHref } from "@/lib/navigation/paths";
 import { loadWorkspacePage } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { AdminStoragePageView } from "@/features/storage/components/storage-view";
 
 export const metadata: Metadata = {
@@ -30,7 +30,7 @@ export default async function AdminStoragePage() {
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="Storage figures are temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

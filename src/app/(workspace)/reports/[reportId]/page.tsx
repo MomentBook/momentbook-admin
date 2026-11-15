@@ -7,7 +7,7 @@ import {
   readQueryParam,
 } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import {
   buildAdminReportDetailHref,
   buildAdminReportsHref,
@@ -73,7 +73,7 @@ export default async function AdminReportDetailPage({
       }
 
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The report details are temporarily unavailable."
           message={err.message}
           statusCode={err.statusCode}

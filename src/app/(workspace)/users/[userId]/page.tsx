@@ -6,7 +6,7 @@ import { loadAdminUserDetailWorkspaceData } from "@/features/users/loader";
 import { buildAdminUserHref, buildAdminUsersHref } from "@/lib/navigation/paths";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { resolveUserBanner } from "@/features/users/flash";
 import { AdminUserDetailPageView } from "@/features/users/components/user-detail-view";
 
@@ -56,7 +56,7 @@ export default async function AdminUserDetailPage({
       }
 
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The user details are temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

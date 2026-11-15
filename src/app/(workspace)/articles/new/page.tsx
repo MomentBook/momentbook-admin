@@ -8,7 +8,7 @@ import { isBackendApiError } from "@/lib/api/client";
 import { resolveSupportedLanguage } from "@/lib/i18n";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { resolveArticleBanner } from "@/features/articles/flash";
 import { createEditorialArticleAction } from "@/features/articles/actions";
 import { EditorialArticleEditorPageView } from "@/features/articles/components/article-editor-view";
@@ -53,7 +53,7 @@ export default async function AdminNewArticlePage({
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The article editor is temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

@@ -19,15 +19,16 @@ import { logoutAdminAction } from "@/features/auth/logout-action";
 import { ADMIN_NAV_ITEMS, type AdminNavKey } from "./admin-nav";
 
 type AdminSidebarProps = {
-  active: AdminNavKey;
+  /** The current page's item; none while the page loads. */
+  active?: AdminNavKey;
   badges: Partial<Record<AdminNavKey, number | null>>;
-  /** Display name only. This is a client component: never pass the session,
-   * whose tokens would be serialized into the page payload. */
-  account: string;
+  /** Display name only, left out while the page loads. This is a client
+   * component: never pass the session, whose tokens would be serialized into
+   * the page payload. */
+  account?: string;
 };
 
 export function AdminSidebar({ active, badges, account }: AdminSidebarProps) {
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -81,9 +82,11 @@ export function AdminSidebar({ active, badges, account }: AdminSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="truncate px-2 pb-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-              {account}
-            </div>
+            {account ? (
+              <div className="truncate px-2 pb-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+                {account}
+              </div>
+            ) : null}
             <form action={logoutAdminAction}>
               <SidebarMenuButton type="submit" tooltip="Sign out">
                 <LogOut />

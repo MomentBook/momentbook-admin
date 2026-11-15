@@ -13,7 +13,7 @@ import {
   readQueryParam,
 } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { AdminUsersListPageView } from "@/features/users/components/users-list-view";
 
 export const metadata: Metadata = {
@@ -53,7 +53,7 @@ export default async function AdminUsersPage({
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The user directory is temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

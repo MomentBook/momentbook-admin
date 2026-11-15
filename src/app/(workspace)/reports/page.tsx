@@ -10,7 +10,7 @@ import {
   readQueryParam,
 } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { buildAdminReportsHref } from "@/lib/navigation/paths";
 import { parseReportReason, parseReporterId } from "@/entities/report/model";
 import type { ReportStatus, ReportTargetType } from "@/lib/api/types";
@@ -101,7 +101,7 @@ export default async function AdminReportsPage({
   } catch (err) {
     if (isBackendApiError(err)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The reports workspace is temporarily unavailable."
           message={err.message}
           statusCode={err.statusCode}

@@ -5,7 +5,7 @@ import { parseMetricsDays } from "@/features/metrics/model";
 import { buildAdminMetricsHref } from "@/lib/navigation/paths";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { AdminMetricsPageView } from "@/features/metrics/components/metrics-view";
 
 export const metadata: Metadata = {
@@ -37,7 +37,7 @@ export default async function AdminMetricsPage({
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="Metrics are temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

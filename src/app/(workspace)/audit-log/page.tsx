@@ -6,7 +6,7 @@ import { parseUuidFilter } from "@/entities/report/model";
 import { buildAdminAuditLogHref } from "@/lib/navigation/paths";
 import { loadWorkspacePage, parsePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { AdminAuditLogPageView } from "@/features/audit-log/components/audit-log-view";
 
 export const metadata: Metadata = {
@@ -41,7 +41,7 @@ export default async function AdminAuditLogPage({
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The audit log is temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

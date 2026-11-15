@@ -13,7 +13,7 @@ import {
   readQueryParam,
 } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { resolveArticleBanner } from "@/features/articles/flash";
 import { AdminArticleListPageView } from "@/features/articles/components/articles-list-view";
 
@@ -63,7 +63,7 @@ export default async function AdminArticlesPage({
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The articles workspace is temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

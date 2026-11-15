@@ -13,7 +13,7 @@ import {
   readQueryParam,
 } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { resolveArticleBanner } from "@/features/articles/flash";
 import {
   deleteEditorialArticleAction,
@@ -61,7 +61,7 @@ export default async function AdminArticleDetailPage({
       }
 
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The article editor is temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

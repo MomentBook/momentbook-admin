@@ -10,7 +10,7 @@ import {
   readQueryParam,
 } from "@/lib/workspace/load-workspace-page";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { resolveCommentBanner } from "@/features/comments/flash";
 import { AdminCommentsListPageView } from "@/features/comments/components/comments-view";
 
@@ -52,7 +52,7 @@ export default async function AdminCommentsPage({
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="Comments are temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

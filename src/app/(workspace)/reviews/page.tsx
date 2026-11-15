@@ -7,7 +7,7 @@ import {
   parseReviewQueueTab,
 } from "@/features/reviews/queue-loader";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { AdminWorkspaceErrorPage } from "@/components/layout/workspace-error";
+import { WorkspaceError } from "@/components/layout/workspace-error";
 import { parseAdminReviewStatus } from "@/features/reviews/loader";
 import { parseUuidFilter } from "@/entities/report/model";
 import { loadWorkspacePage, readQueryParam } from "@/lib/workspace/load-workspace-page";
@@ -47,7 +47,7 @@ export default async function AdminReviewsPage({
   } catch (error) {
     if (isBackendApiError(error)) {
       return (
-        <AdminWorkspaceErrorPage
+        <WorkspaceError
           heading="The review queue is temporarily unavailable."
           message={error.message}
           statusCode={error.statusCode}

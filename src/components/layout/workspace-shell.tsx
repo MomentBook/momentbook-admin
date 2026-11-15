@@ -13,6 +13,9 @@ const SIDEBAR_STATE_COOKIE = "sidebar_state";
  * The one app shell for workspace pages. Rendered by each page, not a layout,
  * because layouts are not re-rendered on navigation and the counts must be
  * fresh after every mutation redirect.
+ *
+ * Without `counts` and `session` it is the pending shell (loading, or a page
+ * whose API call failed): no badges and no account name.
  */
 export async function WorkspaceShell({
   active,
@@ -20,9 +23,9 @@ export async function WorkspaceShell({
   session,
   children,
 }: {
-  active: AdminNavKey;
-  counts: AttentionCounts;
-  session: AdminSession;
+  active?: AdminNavKey;
+  counts?: AttentionCounts;
+  session?: AdminSession;
   children: ReactNode;
 }) {
   const cookieStore = await cookies();
@@ -34,8 +37,8 @@ export async function WorkspaceShell({
       sidebar={
         <AdminSidebar
           active={active}
-          account={session.email || session.name || "Admin"}
-          badges={{ reviews: counts.pendingReviews, reports: counts.openReports }}
+          account={session ? session.email || session.name || "Admin" : undefined}
+          badges={counts ? { reviews: counts.pendingReviews, reports: counts.openReports } : {}}
         />
       }
     >

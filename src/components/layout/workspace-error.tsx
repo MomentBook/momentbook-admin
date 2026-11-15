@@ -1,4 +1,5 @@
-export function AdminWorkspaceErrorPage({
+/** A workspace page whose API call failed, shown inside the shell. */
+export function WorkspaceError({
   heading,
   message,
   statusCode,
@@ -8,16 +9,14 @@ export function AdminWorkspaceErrorPage({
   statusCode: number;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 p-4 text-center">
-      <p className="text-sm text-muted-foreground">
+    <div role="alert" className="mx-auto flex max-w-md flex-col items-center gap-2 py-16 text-center">
+      <h1 className="text-base font-medium">
         {heading ?? "The moderation workspace is temporarily unavailable."}
-      </p>
-      <p className="text-xs text-muted-foreground">
+      </h1>
+      <p className="text-sm text-muted-foreground">
         Status {statusCode}. Please try again in a moment.
       </p>
-      <p className="text-[10px] text-muted-foreground">
-        {message}
-      </p>
+      <p className="break-words text-xs text-muted-foreground">{message}</p>
     </div>
   );
 }
