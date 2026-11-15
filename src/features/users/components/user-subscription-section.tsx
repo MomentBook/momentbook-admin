@@ -14,7 +14,7 @@ import type {
   AdminSubscriptionDto,
   AdminUserSubscriptionsDataDto,
 } from "@/lib/api/types";
-import { resyncAdminUserSubscriptionsAction } from "@/features/users/subscription-actions";
+import { resyncAdminUserSubscriptionsAction } from "@/features/users/actions";
 import { DateValue, Field, Section } from "@/components/detail-parts";
 
 const TONE_BADGE_VARIANT: Record<SubscriptionStateTone, "secondary" | "outline"> = {

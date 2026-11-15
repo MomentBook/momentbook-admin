@@ -1,171 +1,133 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { isBackendApiError } from "@/lib/api/client";
+import { z } from "zod";
+import { resyncAdminUserSubscriptions } from "@/lib/api/subscriptions";
 import { revokeAdminUserSessions, updateAdminUserStorageAllowance } from "@/lib/api/users";
+import {
+  formText,
+  optionalText,
+  requiredText,
+  runAdminAction,
+  type ActionOutcome,
+  type ApiRefusal,
+} from "@/lib/actions/admin-action";
+import { ADMIN_USERS_PATH, buildAdminUsersHref } from "@/lib/navigation/paths";
 import { parseAllowanceGigabytes } from "@/entities/storage/model";
-import {
-  ADMIN_USERS_PATH,
-  buildAdminLoginHref,
-  buildAdminUsersHref,
-  sanitizeAdminPath,
-  withAdminQuery,
-} from "@/lib/navigation/paths";
-import {
-  clearAdminSession,
-  requireAdminActionSession,
-} from "@/lib/auth/session";
 
-function readText(value: FormDataEntryValue | null): string {
-  return typeof value === "string" ? value.trim() : "";
-}
+// Every users endpoint refuses its target with 403 (an admin account, the
+// admin's own) or 409 (a deleted account): those are banners, and the admin
+// stays signed in (ADR 0011).
 
-function buildReturnEntries(extra: Record<string, string | null | undefined>) {
-  return {
-    mutation: null,
-    error: null,
-    message: null,
-    ...extra,
-  };
+/** An unknown account goes back to the directory. */
+function userGone(error: ApiRefusal): ActionOutcome | undefined {
+  return error.statusCode === 404
+    ? { path: buildAdminUsersHref(), query: { error: "user_not_found" } }
+    : undefined;
 }
 
 /** "Sign out": ends the account's current session. */
 export async function revokeAdminUserSessionsAction(formData: FormData): Promise<never> {
-  const cookieStore = await cookies();
-  const nextPath =
-    sanitizeAdminPath(readText(formData.get("returnTo"))) ?? ADMIN_USERS_PATH;
-  const userId = readText(formData.get("userId"));
-  const reason = readText(formData.get("reason")) || undefined;
+  return runAdminAction({
+    formData,
+    fallbackPath: ADMIN_USERS_PATH,
+    fields: z.object({ userId: requiredText("missing_user_id"), reason: optionalText }),
+    failure: "sessions_revoke_failed",
+    onAccessDenied: "banner",
+    onApiError: userGone,
+    run: async (input, session) => {
+      const result = await revokeAdminUserSessions({
+        accessToken: session.accessToken,
+        userId: input.userId,
+        reason: input.reason,
+      });
 
-  if (!userId) {
-    redirect(withAdminQuery(nextPath, buildReturnEntries({ error: "missing_user_id" })));
-  }
-
-  const session = await requireAdminActionSession(cookieStore, nextPath);
-  let revokedSessions: number;
-
-  try {
-    const result = await revokeAdminUserSessions({
-      accessToken: session.accessToken,
-      userId,
-      reason,
-    });
-    revokedSessions = result.revokedSessions;
-  } catch (error) {
-    if (isBackendApiError(error)) {
-      if (error.statusCode === 401) {
-        await clearAdminSession(cookieStore);
-        redirect(buildAdminLoginHref({ next: nextPath, error: "session_expired" }));
-      }
-
-      if (error.statusCode === 404) {
-        redirect(buildAdminUsersHref({ error: "user_not_found" }));
-      }
-
-      // 403 (own account or another admin) and 409 (deleted account) are
-      // refusals about the target, not about this admin session: show them
-      // and keep the admin signed in.
-      redirect(
-        withAdminQuery(
-          nextPath,
-          buildReturnEntries({
-            error: "sessions_revoke_failed",
-            message: error.message,
-          }),
-        ),
-      );
-    }
-
-    redirect(withAdminQuery(nextPath, buildReturnEntries({ error: "sessions_revoke_failed" })));
-  }
-
-  redirect(
-    withAdminQuery(
-      nextPath,
-      buildReturnEntries({
-        mutation: "sessions_revoked",
-        revokedSessions: String(revokedSessions),
-      }),
-    ),
-  );
+      return {
+        query: { mutation: "sessions_revoked", revokedSessions: String(result.revokedSessions) },
+      };
+    },
+  });
 }
 
 const ALLOWANCE_REASON_MAX_LENGTH = 500;
 
-/**
- * "Set allowance" and "Use the plan's allowance": gives the account its own
- * backup allowance or clears it. Which one is asked for comes from the
- * `intent` field of the confirmed form (`set` or `plan`); anything else sends
- * nothing. Every check runs before the request.
- */
-export async function updateAdminUserStorageAllowanceAction(
-  formData: FormData,
-): Promise<never> {
-  const cookieStore = await cookies();
-  const nextPath =
-    sanitizeAdminPath(readText(formData.get("returnTo"))) ?? ADMIN_USERS_PATH;
-  const userId = readText(formData.get("userId"));
-  const intent = readText(formData.get("intent"));
-  const reason = readText(formData.get("reason"));
+/** The allowance form: `intent` names the button (`set` an amount in GB, or
+ * go back to the `plan`'s allowance), and every change needs a reason. */
+const allowanceFields = z
+  .object({
+    userId: requiredText("missing_user_id"),
+    intent: formText,
+    amount: formText,
+    reason: formText,
+  })
+  .transform((input, context) => {
+    const refuse = (code: string) => {
+      context.addIssue({ code: "custom", message: code });
+      return z.NEVER;
+    };
+    let quotaOverrideBytes: number | null;
 
-  if (!userId) {
-    redirect(withAdminQuery(nextPath, buildReturnEntries({ error: "missing_user_id" })));
-  }
+    if (input.intent === "set") {
+      const amount = parseAllowanceGigabytes(input.amount);
 
-  const session = await requireAdminActionSession(cookieStore, nextPath);
-  const fail = (error: string): never =>
-    redirect(withAdminQuery(nextPath, buildReturnEntries({ error })));
-
-  let quotaOverrideBytes: number | null;
-
-  if (intent === "set") {
-    const amount = parseAllowanceGigabytes(readText(formData.get("amount")));
-
-    if (!amount.ok) return fail(`allowance_${amount.error}`);
-    quotaOverrideBytes = amount.bytes;
-  } else if (intent === "plan") {
-    quotaOverrideBytes = null;
-  } else {
-    return fail("allowance_choice_missing");
-  }
-
-  if (!reason) return fail("allowance_reason_required");
-  if (reason.length > ALLOWANCE_REASON_MAX_LENGTH) return fail("allowance_reason_too_long");
-
-  try {
-    await updateAdminUserStorageAllowance({
-      accessToken: session.accessToken,
-      userId,
-      quotaOverrideBytes,
-      reason,
-    });
-  } catch (error) {
-    if (isBackendApiError(error)) {
-      if (error.statusCode === 401) {
-        await clearAdminSession(cookieStore);
-        redirect(buildAdminLoginHref({ next: nextPath, error: "session_expired" }));
-      }
-
-      if (error.statusCode === 404) {
-        redirect(buildAdminUsersHref({ error: "user_not_found" }));
-      }
-
-      // 403 and 409 (deleted account) are refusals about the target or the
-      // operation, not about this admin session: show them, stay signed in.
-      redirect(
-        withAdminQuery(
-          nextPath,
-          buildReturnEntries({
-            error: "allowance_update_failed",
-            message: error.message,
-          }),
-        ),
-      );
+      if (!amount.ok) return refuse(`allowance_${amount.error}`);
+      quotaOverrideBytes = amount.bytes;
+    } else if (input.intent === "plan") {
+      quotaOverrideBytes = null;
+    } else {
+      return refuse("allowance_choice_missing");
     }
 
-    redirect(withAdminQuery(nextPath, buildReturnEntries({ error: "allowance_update_failed" })));
-  }
+    if (!input.reason) return refuse("allowance_reason_required");
+    if (input.reason.length > ALLOWANCE_REASON_MAX_LENGTH) {
+      return refuse("allowance_reason_too_long");
+    }
 
-  redirect(withAdminQuery(nextPath, buildReturnEntries({ mutation: "storage_allowance_updated" })));
+    return { userId: input.userId, quotaOverrideBytes, reason: input.reason };
+  });
+
+/**
+ * "Set allowance" and "Use the plan's allowance": gives the account its own
+ * backup allowance or clears it. Every check runs before the request.
+ */
+export async function updateAdminUserStorageAllowanceAction(formData: FormData): Promise<never> {
+  return runAdminAction({
+    formData,
+    fallbackPath: ADMIN_USERS_PATH,
+    fields: allowanceFields,
+    failure: "allowance_update_failed",
+    onAccessDenied: "banner",
+    onApiError: userGone,
+    run: async (input, session) => {
+      await updateAdminUserStorageAllowance({ accessToken: session.accessToken, ...input });
+
+      return { query: { mutation: "storage_allowance_updated" } };
+    },
+  });
+}
+
+// The API's ids are UUIDs. Anything else is refused here: a value such as
+// ".." would fold the request path onto another route.
+const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * "Check with the store": has the server read the account's subscriptions
+ * back from their stores and store what they say. It sets nothing a store did
+ * not say, so it needs no reason and writes no audit entry. A 503 (the store
+ * has no keys here or could not be asked) is a banner with the server's
+ * reason.
+ */
+export async function resyncAdminUserSubscriptionsAction(formData: FormData): Promise<never> {
+  return runAdminAction({
+    formData,
+    fallbackPath: ADMIN_USERS_PATH,
+    fields: z.object({ userId: formText.pipe(z.string().regex(USER_ID, "missing_user_id")) }),
+    failure: "subscriptions_check_failed",
+    onAccessDenied: "banner",
+    onApiError: userGone,
+    run: async (input, session) => {
+      await resyncAdminUserSubscriptions({ accessToken: session.accessToken, userId: input.userId });
+
+      return { query: { mutation: "subscriptions_checked" } };
+    },
+  });
 }

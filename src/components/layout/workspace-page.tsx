@@ -2,6 +2,7 @@ import "server-only";
 
 import type { ReactElement, ReactNode } from "react";
 import { isBackendApiError } from "@/lib/api/client";
+import type { AdminSession } from "@/lib/auth/session-schema";
 import type { AttentionCounts } from "@/lib/workspace/attention";
 import { loadWorkspacePage } from "@/lib/workspace/load-workspace-page";
 import type { AdminNavKey } from "./admin-nav";
@@ -21,7 +22,9 @@ export async function renderWorkspacePage<T>(options: {
   /** This page's own URL, where a new sign-in returns to. */
   returnTo: string;
   load: (accessToken: string, counts: Promise<AttentionCounts>) => Promise<T>;
-  render: (data: T, counts: AttentionCounts) => ReactNode;
+  /** `session` is the signed-in admin, for a page that treats its own
+   * account apart. */
+  render: (data: T, counts: AttentionCounts, session: AdminSession) => ReactNode;
 }): Promise<ReactElement> {
   let page: Awaited<ReturnType<typeof loadWorkspacePage<T>>>;
 
@@ -45,7 +48,7 @@ export async function renderWorkspacePage<T>(options: {
 
   return (
     <WorkspaceShell active={options.active} counts={page.counts} session={page.session}>
-      {options.render(page.data, page.counts)}
+      {options.render(page.data, page.counts, page.session)}
     </WorkspaceShell>
   );
 }

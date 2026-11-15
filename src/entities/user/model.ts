@@ -1,6 +1,5 @@
+import type { StatusTone } from "@/components/status-badge";
 import type { AdminUserRole, AdminUserStatus } from "@/lib/api/types";
-
-export const ADMIN_USERS_PAGE_SIZE = 20;
 
 // The API accepts q of 2..200 characters.
 const MIN_SEARCH_LENGTH = 2;
@@ -12,6 +11,15 @@ export const USER_STATUS_LABELS: Record<AdminUserStatus, string> = {
   BANNED: "Banned",
   DELETED: "Deleted",
   PENDING_DELETION: "Deletion scheduled",
+};
+
+/** How each account status reads at a glance. */
+export const USER_STATUS_TONES: Record<AdminUserStatus, StatusTone> = {
+  ACTIVE: "success",
+  INACTIVE: "warning",
+  BANNED: "danger",
+  DELETED: "neutral",
+  PENDING_DELETION: "neutral",
 };
 
 export function userStatusBadgeVariant(

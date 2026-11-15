@@ -1,23 +1,26 @@
 import "server-only";
 
+import { isBackendApiError } from "@/lib/api/client";
 import { listAdminAuditLog } from "@/lib/api/audit";
 import { listAdminComments } from "@/lib/api/comments";
 import { listPublishedJourneys } from "@/lib/api/journeys";
 import { getAdminUser, listAdminUserAuthEvents, listAdminUsers } from "@/lib/api/users";
 import { loadReportHistoryOrNull } from "@/entities/report/history";
+import type { ReportHistory } from "@/entities/report/model";
+import { ADMIN_PAGE_SIZE } from "@/lib/workspace/list-page";
 import { orNull } from "@/lib/workspace/section-load";
-import { ADMIN_USERS_PAGE_SIZE } from "@/entities/user/model";
 import type {
   AdminAuditLogDataDto,
   AdminCommentsDataDto,
   AdminPublishedJourneysDataDto,
-  AdminReportItemDto,
   AdminUserAuthEventsDataDto,
   AdminUserDetailDataDto,
   AdminUserListItemDto,
   AdminUserRole,
   AdminUserStatus,
+  AdminUserSubscriptionsDataDto,
 } from "@/lib/api/types";
+import { loadAdminUserSubscriptionsOrNull } from "./subscriptions-loader";
 
 export type AdminUsersFilters = {
   q?: string;
@@ -43,7 +46,7 @@ export async function loadAdminUsersWorkspaceData(
     status: filters.status,
     role: filters.role,
     page: filters.page,
-    limit: ADMIN_USERS_PAGE_SIZE,
+    limit: ADMIN_PAGE_SIZE,
   });
 
   return {
@@ -65,8 +68,8 @@ export type AdminUserDetailWorkspaceData = {
   moderation: AdminAuditLogDataDto | null;
   journeys: AdminPublishedJourneysDataDto | null;
   comments: AdminCommentsDataDto | null;
-  reportsReceived: { items: AdminReportItemDto[]; total: number } | null;
-  reportsFiled: { items: AdminReportItemDto[]; total: number } | null;
+  reportsReceived: ReportHistory;
+  reportsFiled: ReportHistory;
   authEvents: AdminUserAuthEventsDataDto | null;
 };
 
@@ -100,4 +103,33 @@ export async function loadAdminUserDetailWorkspaceData(
     ]);
 
   return { detail, moderation, journeys, comments, reportsReceived, reportsFiled, authEvents };
+}
+
+export type UserDetailPage = {
+  detail: AdminUserDetailWorkspaceData;
+  /** `null` when the subscriptions could not be loaded. */
+  subscriptions: AdminUserSubscriptionsDataDto | null;
+};
+
+/** The user page: the account with its sections, and its subscriptions, in
+ * one round trip. `null` when there is no such account (the API answers 404
+ * for an unknown id and for one that is not a UUID). */
+export async function loadUserDetailPage(
+  accessToken: string,
+  userId: string,
+): Promise<UserDetailPage | null> {
+  try {
+    const [detail, subscriptions] = await Promise.all([
+      loadAdminUserDetailWorkspaceData(accessToken, userId),
+      loadAdminUserSubscriptionsOrNull(accessToken, userId),
+    ]);
+
+    return { detail, subscriptions };
+  } catch (error) {
+    if (isBackendApiError(error) && error.statusCode === 404) {
+      return null;
+    }
+
+    throw error;
+  }
 }

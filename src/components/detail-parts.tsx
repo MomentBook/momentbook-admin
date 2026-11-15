@@ -9,6 +9,21 @@ export function DateValue({ value, withTime = false }: { value: string | null; w
   return <Time value={value} withTime={withTime} fallback="—" />;
 }
 
+/** A dash for a value the record does not have. */
+export function Placeholder() {
+  return <span className="text-muted-foreground">—</span>;
+}
+
+/** A text value that may be missing; long ones (emails, ids) wrap anywhere. */
+export function TextValue({ value }: { value: string | null | undefined }) {
+  return value ? <span className="break-all">{value}</span> : <Placeholder />;
+}
+
+/** A section's quiet line: nothing to list, or the list could not be loaded. */
+export function SectionNote({ children }: { children: ReactNode }) {
+  return <p className="text-xs text-muted-foreground">{children}</p>;
+}
+
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5">

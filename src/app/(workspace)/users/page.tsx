@@ -1,77 +1,50 @@
 import type { Metadata } from "next";
-import { isBackendApiError } from "@/lib/api/client";
-import { loadAdminUsersWorkspaceData } from "@/features/users/loader";
+import { renderWorkspacePage } from "@/components/layout/workspace-page";
+import { buildAdminUsersHref } from "@/lib/navigation/paths";
+import { loadUsersParams } from "@/lib/navigation/user-routes";
 import {
   parseUserRoleFilter,
   parseUserStatusFilter,
   resolveUserSearch,
 } from "@/entities/user/model";
-import { buildAdminUsersHref } from "@/lib/navigation/paths";
-import {
-  loadWorkspacePage,
-  parsePage,
-  readQueryParam,
-} from "@/lib/workspace/load-workspace-page";
-import { WorkspaceShell } from "@/components/layout/workspace-shell";
-import { WorkspaceError } from "@/components/layout/workspace-error";
-import { AdminUsersListPageView } from "@/features/users/components/users-list-view";
+import { UsersListView } from "@/features/users/components/users-list-view";
+import { resolveUserBanner } from "@/features/users/flash";
+import { loadAdminUsersWorkspaceData } from "@/features/users/loader";
 
 export const metadata: Metadata = {
   title: "Users",
 };
 
-export default async function AdminUsersPage({
+export default async function UsersPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolvedSearchParams = await searchParams;
-  const { q, ignored: searchIgnored } = resolveUserSearch(
-    readQueryParam(resolvedSearchParams.q),
-  );
-  const statusParam = readQueryParam(resolvedSearchParams.status);
-  const status = parseUserStatusFilter(statusParam);
-  const roleParam = readQueryParam(resolvedSearchParams.role);
-  const role = parseUserRoleFilter(roleParam);
-  const pageNumber = parsePage(readQueryParam(resolvedSearchParams.page));
-  const notFound = readQueryParam(resolvedSearchParams.error) === "user_not_found";
+  const query = loadUsersParams(await searchParams);
+  const { q, ignored: searchIgnored } = resolveUserSearch(query.q);
+  const status = parseUserStatusFilter(query.status);
+  const role = parseUserRoleFilter(query.role);
   const returnTo = buildAdminUsersHref({
     q,
-    status: status ? statusParam : null,
-    role: role ? roleParam : null,
-    page: pageNumber,
+    status: status ? query.status : null,
+    role: role ? query.role : null,
+    page: query.page,
   });
 
-  let page;
-
-  try {
-    page = await loadWorkspacePage({
-      returnTo,
-      load: (accessToken) =>
-        loadAdminUsersWorkspaceData(accessToken, { q, status, role, page: pageNumber }),
-    });
-  } catch (error) {
-    if (isBackendApiError(error)) {
-      return (
-        <WorkspaceError
-          heading="The user directory is temporarily unavailable."
-          message={error.message}
-          statusCode={error.statusCode}
-        />
-      );
-    }
-
-    throw error;
-  }
-
-  return (
-    <WorkspaceShell active="users" counts={page.counts} session={page.session}>
-      <AdminUsersListPageView
-        data={page.data}
+  return renderWorkspacePage({
+    active: "users",
+    errorHeading: "The user directory is temporarily unavailable.",
+    returnTo,
+    load: (accessToken) =>
+      loadAdminUsersWorkspaceData(accessToken, { q, status, role, page: query.page }),
+    render: (data) => (
+      <UsersListView
+        // The directory's only banner: an action's account was gone.
+        banner={resolveUserBanner({ error: query.error === "user_not_found" ? query.error : null })}
+        data={data}
         filters={{ q, status, role }}
         searchIgnored={searchIgnored}
-        notFound={notFound}
       />
-    </WorkspaceShell>
-  );
+    ),
+  });
 }

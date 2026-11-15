@@ -59,7 +59,7 @@ function form(fields: Record<string, string> = {}) {
 
 async function run(formData: FormData): Promise<string> {
   const { resyncAdminUserSubscriptionsAction } = await import(
-    "@/features/users/subscription-actions"
+    "@/features/users/actions"
   );
 
   try {

@@ -1,19 +1,14 @@
-import { ConfirmActionForm } from "@/components/confirm-action-form";
+import { Field, Section } from "@/components/detail-parts";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import type { AdminUserStorageDto } from "@/lib/api/types";
+import { formatCount } from "@/lib/format/number";
 import {
   allowanceTone,
   formatBytes,
   allowanceBadgeLabel,
   type AllowanceTone,
 } from "@/entities/storage/model";
-import type { AdminUserStorageDto } from "@/lib/api/types";
-import { updateAdminUserStorageAllowanceAction } from "@/features/users/actions";
-import { Field, Section } from "@/components/detail-parts";
-import { ReasonField } from "@/components/reason-field";
-
-const COUNT_FORMATTER = new Intl.NumberFormat("en-US");
+import { AllowanceForm } from "./allowance-form";
 
 // The same tones as the Storage page's "Used %" column.
 const TONE_BADGE_VARIANT: Record<AllowanceTone, "secondary" | "outline" | "destructive"> = {
@@ -23,8 +18,7 @@ const TONE_BADGE_VARIANT: Record<AllowanceTone, "secondary" | "outline" | "destr
 };
 
 /** The account's backup usage and allowance, and where an operator changes
- * the allowance. Both buttons sit behind the page's confirmation dialog and
- * need a reason; only the "Set" dialog asks for an amount. */
+ * the allowance (`AllowanceForm`). */
 export function UserStorageSection({
   storage,
   userId,
@@ -40,9 +34,7 @@ export function UserStorageSection({
   /** Why the allowance cannot be changed, or `null`. */
   disabledReason: string | null;
 }) {
-  const disabled = disabledReason !== null;
   const hasOverride = storage.quotaOverrideBytes !== null;
-  const fields = { userId, returnTo };
 
   return (
     <Section title="Backup storage" total={null}>
@@ -60,7 +52,7 @@ export function UserStorageSection({
             </span>
           </Field>
           <Field label="Photos">
-            <span className="tabular-nums">{COUNT_FORMATTER.format(storage.photoCount)}</span>
+            <span className="tabular-nums">{formatCount(storage.photoCount)}</span>
           </Field>
           <Field label="Allowance">
             <span>{formatBytes(storage.quotaBytes)}</span>{" "}
@@ -77,49 +69,14 @@ export function UserStorageSection({
         </dl>
 
         <div className="flex flex-col items-start gap-1.5">
-          <div className="flex flex-wrap gap-2">
-            <ConfirmActionForm
-              action={updateAdminUserStorageAllowanceAction}
-              fields={{ ...fields, intent: "set" }}
-              triggerLabel="Set allowance"
-              disabled={disabled}
-              title={`Set the backup allowance of ${label}?`}
-              description={`Gives ${label} (${userId}) their own allowance instead of the plan's. A smaller allowance than the account uses deletes nothing: its next backups are refused until it is back under.`}
-              confirmLabel="Set allowance"
-            >
-              <div className="grid gap-1.5">
-                <Label htmlFor="user-allowance-amount">Allowance (GB)</Label>
-                <Input
-                  id="user-allowance-amount"
-                  name="amount"
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  max={1024}
-                  step="any"
-                  required
-                  aria-describedby="user-allowance-amount-hint"
-                />
-                <p id="user-allowance-amount-hint" className="text-xs text-muted-foreground">
-                  From 0 to 1024 GB; decimals are fine. 0 stops new backups for this account.
-                </p>
-              </div>
-              <ReasonField id="user-allowance-reason" required maxLength={500} />
-            </ConfirmActionForm>
-            {hasOverride ? (
-              <ConfirmActionForm
-                action={updateAdminUserStorageAllowanceAction}
-                fields={{ ...fields, intent: "plan" }}
-                triggerLabel="Use the plan's allowance"
-                disabled={disabled}
-                title={`Use the plan's allowance for ${label}?`}
-                description={`Removes the allowance set for ${label} (${userId}); the plan (${storage.planKey}) decides again.`}
-                confirmLabel="Use the plan's allowance"
-              >
-                <ReasonField id="user-allowance-plan-reason" required maxLength={500} />
-              </ConfirmActionForm>
-            ) : null}
-          </div>
+          <AllowanceForm
+            userId={userId}
+            returnTo={returnTo}
+            label={label}
+            planKey={storage.planKey}
+            hasOverride={hasOverride}
+            disabled={disabledReason !== null}
+          />
           {disabledReason ? (
             <p className="text-xs text-muted-foreground">{disabledReason}</p>
           ) : null}
