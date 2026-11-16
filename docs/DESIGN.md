@@ -10,38 +10,47 @@ consumption UI.
 shadcn/ui (`new-york` style, v4 registry) on Tailwind CSS v4 powers every admin
 surface.
 
-- **Components** live in `components/ui` and are owned code. Add one only with
+- **Components** live in `src/components/ui` and are owned code. Add one only with
   `npx shadcn@4.22.1 add <name>` (pinned CLI, so output matches the existing
   files). The CLI emits `import { cn } from "cn"` and adds the `cn` package:
   rewrite the import to `@/lib/utils` and remove the package. Keep
   `radix-ui` at `~1.6.7` if the CLI bumps it.
-- **Tokens** are CSS variables in `app/globals.css` (`:root` and `.dark`),
+- **Tokens** are CSS variables in `src/app/globals.css` (`:root` and `.dark`),
   mapped to Tailwind with `@theme inline`; `tw-animate-css` provides the
   animation utilities. Tailwind v4 syntax for CSS-variable values is
   `w-(--x)`, not v3's `w-[--x]` (the v3 form builds invalid CSS — that was the
   clipped sidebar).
-- **Light/dark**: `next-themes` toggles the `.dark` class on `<html>`; the
-  bootstrap script in `AdminRootDocument` applies the stored theme before first
-  paint.
+- **Light/dark**: `next-themes` sets the `.dark` class on `<html>` before
+  first paint and follows the OS setting (`defaultTheme="system"`); there is
+  no theme switch in the admin.
 - **Icons**: `lucide-react`.
-- **Shell**: one `AdminSidebar` (`components/layout/admin-sidebar.tsx`, single
-  nav definition in `admin-nav.ts`) rendered by the per-page `WorkspaceShell`.
+- **Shell**: one `AdminSidebar` (`src/components/layout/admin-sidebar.tsx`,
+  single nav definition in `admin-nav.ts`) rendered by the per-page
+  `WorkspaceShell`, which every page reaches through `renderWorkspacePage`.
+  There is no loading skeleton: a workspace page must be able to answer with
+  a plain redirect (ADR 0014).
   Every item has an icon, so the collapsed rail shows icons with tooltips;
   counts use `SidebarMenuBadge`; ⌘B and the `sidebar_state` cookie are kept;
   desktop starts expanded; mobile uses the sheet.
 
 Component use:
 
-| Need | Component |
+| Need | Component (under `src/components/` unless named) |
 |---|---|
-| Status chips, filter chips | `Badge` (filter chips are links) |
-| Notices and mutation results | `Alert` with `AlertTitle className="line-clamp-none"` |
+| Status | `StatusBadge` (`status-badge.tsx`); each entity's `model.ts` maps a status to its tone |
+| Filters | `FilterTabs` (`filter-tabs.tsx`, links with `aria-current`); an id filter is a `FilterChips` chip with its own clear link |
+| Notices and mutation results | `FlashBanner` (`flash-banner.tsx`, `Alert`), resolved from the URL by `resolveFlash` |
 | Metrics, panels | `Card` |
-| One figure (Storage, Metrics) | `StatTile` (`components/stat-tile.tsx`) |
-| Queues | `Table` with link pagination (server-rendered; no client table engine) |
-| Irreversible, outward-facing or consequential actions (ban, sign out, allowance) | `ConfirmActionForm` (`components/confirm-action-form.tsx`, `AlertDialog`) |
-| Fullscreen photo inspection | `LightboxPhotoTile` (`Dialog`) |
-| Forms | native `<form action={serverAction}>` with `Input`, `Textarea`, `Select`, `Label` |
+| One figure (Storage, Metrics, Reports) | `StatTile` (`stat-tile.tsx`) |
+| Paged lists | `DataTable` (`data-table/`, TanStack Table; columns in the screen's `<f>-table.tsx`) with `UrlPagination` (server links); fixed summaries use plain `Table` |
+| Charts | shadcn `ChartContainer` with a recharts `BarChart accessibilityLayer`, loaded with `next/dynamic`; figures stay as text beside the chart |
+| Dates and times | `Time` (`time.tsx`) |
+| Back links | `BackLink` (`back-link.tsx`, breadcrumb) |
+| Empty states | `Empty`; a filter that matches nothing says so |
+| Irreversible, outward-facing or consequential actions (ban, sign out, allowance) | `ConfirmActionForm` (`confirm-action-form.tsx`, `AlertDialog`) |
+| Reasons stored in the audit log | `ReasonField` (`reason-field.tsx`) |
+| Fullscreen photo inspection | `ReviewPhotoGallery` (`src/features/reviews/components/`, yet-another-react-lightbox) |
+| Forms | `<form action={serverAction}>` with `Field`, `Input`, `Textarea`, `Select`, `RadioGroup`, `Checkbox`; the article editor and login validate in the browser with react-hook-form and the action's zod schema |
 
 ## Product Surfaces
 
@@ -118,7 +127,7 @@ Component use:
 
 ## Moderation Workflow
 
-- **Attention model.** One loader (`lib/admin/attention.ts`) feeds the sidebar
+- **Attention model.** One loader (`src/lib/workspace/attention.ts`) feeds the sidebar
   badges and the overview on every page: pending reviews, translation pending,
   translation failed, and open reports. Every number links to the
   filtered queue whose total it is. Translation pending is the API's
@@ -165,7 +174,9 @@ Component use:
 - Fullscreen image inspection must remain viewport-fit, closeable, and usable
   with mouse, touch, zoom, pan, pinch, and double-tap.
 - Empty, failed, and post-mutation states are explicit and low-noise. A filter
-  that matches nothing is distinct from "All clear".
+  that matches nothing is distinct from "All clear". A backend error renders
+  inside the shell under the page's heading; anything unexpected reaches
+  `(workspace)/error.tsx`, which offers Retry.
 
 ## Editorial Workflow
 
@@ -204,7 +215,10 @@ Component use:
 - **Overflow**: long IDs, emails, article titles, category labels, route
   previews, localized titles, banner copy, and table content.
 - **Overlays**: lightbox and alert dialogs — focus trap, focus restoration,
-  labels, viewport fit, and mobile safe areas.
+  labels, viewport fit, and mobile safe areas; the lightbox's previous/next,
+  zoom and caption.
+- **Charts**: keyboard focus and tooltips on `/metrics` and the overview, in
+  light and dark.
 - **Forms**: pending states, destructive actions behind confirmation,
   pagination, filter chips, return links, and mutation banners.
 

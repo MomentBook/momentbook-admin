@@ -11,7 +11,7 @@ afterEach(() => {
   vi.resetModules();
 });
 
-type Daily = import("@/src/apis/types").AdminMetricsDailyDto;
+type Daily = import("@/lib/api/types").AdminMetricsDailyDto;
 
 function day(date: string, overrides: Partial<Daily> = {}): Daily {
   return {
@@ -29,7 +29,7 @@ function day(date: string, overrides: Partial<Daily> = {}): Daily {
 
 describe("parseMetricsDays", () => {
   it("accepts only 7, 30 or 90 and defaults to 30", async () => {
-    const { parseMetricsDays } = await import("@/lib/admin/metrics-shared");
+    const { parseMetricsDays } = await import("@/features/metrics/model");
 
     expect(parseMetricsDays("7")).toBe(7);
     expect(parseMetricsDays("90")).toBe(90);
@@ -45,7 +45,7 @@ describe("parseMetricsDays", () => {
 
 describe("formatDurationSeconds", () => {
   it("formats the two largest units", async () => {
-    const { formatDurationSeconds } = await import("@/lib/admin/metrics-shared");
+    const { formatDurationSeconds } = await import("@/features/metrics/model");
 
     expect(formatDurationSeconds(null)).toBe("—");
     expect(formatDurationSeconds(2700)).toBe("45m");
@@ -54,7 +54,7 @@ describe("formatDurationSeconds", () => {
   });
 
   it("drops a zero second unit, floors fractions and clamps below zero", async () => {
-    const { formatDurationSeconds } = await import("@/lib/admin/metrics-shared");
+    const { formatDurationSeconds } = await import("@/features/metrics/model");
 
     expect(formatDurationSeconds(3600)).toBe("1h");
     expect(formatDurationSeconds(86400)).toBe("1d");
@@ -68,7 +68,7 @@ describe("formatDurationSeconds", () => {
 
 describe("daily series", () => {
   it("toDailySeries picks one metric per day, keeping null", async () => {
-    const { toDailySeries } = await import("@/lib/admin/metrics-shared");
+    const { toDailySeries } = await import("@/features/metrics/model");
     const daily = [
       day("2026-10-21", { signups: 2, activeAccounts: null }),
       day("2026-10-22", { signups: 5, activeAccounts: 9 }),
@@ -85,7 +85,7 @@ describe("daily series", () => {
   });
 
   it("summarizeDailySeries skips null days instead of counting them as zero", async () => {
-    const { summarizeDailySeries } = await import("@/lib/admin/metrics-shared");
+    const { summarizeDailySeries } = await import("@/features/metrics/model");
 
     expect(
       summarizeDailySeries([
@@ -105,7 +105,7 @@ describe("daily series", () => {
   });
 
   it("formatMetricsDay renders the UTC day, whatever the server time zone", async () => {
-    const { formatMetricsDay } = await import("@/lib/admin/metrics-shared");
+    const { formatMetricsDay } = await import("@/features/metrics/model");
 
     expect(formatMetricsDay("2026-10-22")).toBe("Oct 22");
     expect(formatMetricsDay("2026-01-01")).toBe("Jan 1");
@@ -116,14 +116,14 @@ describe("loadAdminMetricsData", () => {
   it("asks the API for the parsed window", async () => {
     const data = { days: 90 };
     getAdminMetrics.mockResolvedValue(data);
-    const { loadAdminMetricsData } = await import("@/lib/admin/metrics");
+    const { loadAdminMetricsData } = await import("@/features/metrics/loader");
 
     await expect(loadAdminMetricsData("token", 90)).resolves.toBe(data);
     expect(getAdminMetrics).toHaveBeenCalledWith({ accessToken: "token", days: 90 });
   });
 });
 
-type Retention = import("@/src/apis/types").AdminNotificationRetentionDto;
+type Retention = import("@/lib/api/types").AdminNotificationRetentionDto;
 
 function cohort(overrides: Partial<Retention> & Pick<Retention, "cohort">): Retention {
   return {
@@ -139,7 +139,7 @@ function cohort(overrides: Partial<Retention> & Pick<Retention, "cohort">): Rete
 
 describe("notification metrics", () => {
   it("formatRate shows a share as a percentage, and nothing to divide by as a dash", async () => {
-    const { formatRate } = await import("@/lib/admin/metrics-shared");
+    const { formatRate } = await import("@/lib/format/number");
 
     expect(formatRate(1, 3)).toBe("33.3%");
     expect(formatRate(2, 2)).toBe("100%");
@@ -149,7 +149,7 @@ describe("notification metrics", () => {
   });
 
   it("compareRetention sets the target against the holdout, in percentage points", async () => {
-    const { compareRetention } = await import("@/lib/admin/metrics-shared");
+    const { compareRetention } = await import("@/features/metrics/model");
     const retention = [
       cohort({ cohort: "HOLDOUT", accounts: 10, d7Eligible: 10, d7Returned: 2, d30Eligible: 8, d30Returned: 4 }),
       cohort({ cohort: "TARGET", accounts: 90, d7Eligible: 80, d7Returned: 24, d30Eligible: 50, d30Returned: 30 }),
@@ -164,7 +164,7 @@ describe("notification metrics", () => {
   });
 
   it("compareRetention has no lift until both cohorts have someone to judge", async () => {
-    const { compareRetention } = await import("@/lib/admin/metrics-shared");
+    const { compareRetention } = await import("@/features/metrics/model");
 
     const onlyTarget = compareRetention(
       [cohort({ cohort: "TARGET", accounts: 3, d7Eligible: 3, d7Returned: 1 })],
@@ -180,7 +180,7 @@ describe("notification metrics", () => {
   });
 
   it("formatLift signs the difference and leaves a missing one blank", async () => {
-    const { formatLift } = await import("@/lib/admin/metrics-shared");
+    const { formatLift } = await import("@/features/metrics/model");
 
     expect(formatLift(4.25)).toBe("+4.3 pp");
     expect(formatLift(-1)).toBe("−1.0 pp");
@@ -189,7 +189,7 @@ describe("notification metrics", () => {
   });
 
   it("permissionMatrix lays out each platform's devices by permission, in a fixed order", async () => {
-    const { permissionMatrix } = await import("@/lib/admin/metrics-shared");
+    const { permissionMatrix } = await import("@/features/metrics/model");
 
     expect(
       permissionMatrix([
@@ -206,7 +206,7 @@ describe("notification metrics", () => {
   });
 
   it("totalSkipped adds up every reason", async () => {
-    const { totalSkipped } = await import("@/lib/admin/metrics-shared");
+    const { totalSkipped } = await import("@/features/metrics/model");
 
     expect(
       totalSkipped([
@@ -222,7 +222,7 @@ describe("loadAdminNotificationMetricsData", () => {
   it("asks the API for the parsed window", async () => {
     const data = { days: 7 };
     getAdminNotificationMetrics.mockResolvedValue(data);
-    const { loadAdminNotificationMetricsData } = await import("@/lib/admin/metrics");
+    const { loadAdminNotificationMetricsData } = await import("@/features/metrics/loader");
 
     await expect(loadAdminNotificationMetricsData("token", 7)).resolves.toBe(data);
     expect(getAdminNotificationMetrics).toHaveBeenCalledWith({ accessToken: "token", days: 7 });
@@ -231,7 +231,7 @@ describe("loadAdminNotificationMetricsData", () => {
   it("gives null when the section fails, so the rest of the page still renders", async () => {
     const { BackendApiError } = await import("@/lib/api/client");
     getAdminNotificationMetrics.mockRejectedValue(new BackendApiError("Not Found", 404));
-    const { loadAdminNotificationMetricsData } = await import("@/lib/admin/metrics");
+    const { loadAdminNotificationMetricsData } = await import("@/features/metrics/loader");
 
     await expect(loadAdminNotificationMetricsData("token", 30)).resolves.toBeNull();
   });
@@ -239,7 +239,7 @@ describe("loadAdminNotificationMetricsData", () => {
   it("still rejects a 401, for the page's session handling", async () => {
     const { BackendApiError } = await import("@/lib/api/client");
     getAdminNotificationMetrics.mockRejectedValue(new BackendApiError("Unauthorized", 401));
-    const { loadAdminNotificationMetricsData } = await import("@/lib/admin/metrics");
+    const { loadAdminNotificationMetricsData } = await import("@/features/metrics/loader");
 
     await expect(loadAdminNotificationMetricsData("token", 30)).rejects.toMatchObject({
       statusCode: 401,
@@ -249,7 +249,7 @@ describe("loadAdminNotificationMetricsData", () => {
 
 describe("deletionReasonShare", () => {
   it("is the reason's part of the requests as a percentage", async () => {
-    const { deletionReasonShare } = await import("@/lib/admin/metrics-shared");
+    const { deletionReasonShare } = await import("@/features/metrics/model");
 
     expect(deletionReasonShare(1, 4)).toBe("25%");
     expect(deletionReasonShare(1, 3)).toBe("33.3%");
@@ -257,7 +257,7 @@ describe("deletionReasonShare", () => {
   });
 
   it("is a dash when nothing was requested", async () => {
-    const { deletionReasonShare } = await import("@/lib/admin/metrics-shared");
+    const { deletionReasonShare } = await import("@/features/metrics/model");
 
     expect(deletionReasonShare(0, 0)).toBe("—");
   });
@@ -267,20 +267,20 @@ describe("deletionScheduledAccounts", () => {
   const users = { total: 100, active: 80, inactive: 5, banned: 3, deleted: 7 };
 
   it("is what the four statuses leave of the total", async () => {
-    const { deletionScheduledAccounts } = await import("@/lib/admin/metrics-shared");
+    const { deletionScheduledAccounts } = await import("@/features/metrics/model");
 
     expect(deletionScheduledAccounts({ ...users, total: 100 })).toBe(5);
     expect(deletionScheduledAccounts({ ...users, total: 95 })).toBe(0);
   });
 
   it("never goes below 0", async () => {
-    const { deletionScheduledAccounts } = await import("@/lib/admin/metrics-shared");
+    const { deletionScheduledAccounts } = await import("@/features/metrics/model");
 
     expect(deletionScheduledAccounts({ ...users, total: 90 })).toBe(0);
   });
 
   it("is 0 when everything is 0", async () => {
-    const { deletionScheduledAccounts } = await import("@/lib/admin/metrics-shared");
+    const { deletionScheduledAccounts } = await import("@/features/metrics/model");
 
     expect(
       deletionScheduledAccounts({ total: 0, active: 0, inactive: 0, banned: 0, deleted: 0 }),

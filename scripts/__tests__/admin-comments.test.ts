@@ -13,7 +13,7 @@ const listAdminComments = vi.fn();
 
 vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("next/headers", () => ({ cookies }));
-vi.mock("@/lib/admin/session", () => ({ clearAdminSession, requireAdminActionSession }));
+vi.mock("@/lib/auth/session", () => ({ clearAdminSession, requireAdminActionSession }));
 vi.mock("@/lib/api/client", () => ({
   isBackendApiError: (error: unknown) =>
     typeof error === "object" &&
@@ -41,7 +41,7 @@ afterEach(() => {
 describe("comment filters", () => {
   it("parseCommentStatusTab defaults to active and maps to the API status", async () => {
     const { parseCommentStatusTab, commentTabToApiStatus } = await import(
-      "@/lib/admin/comments-shared"
+      "@/entities/comment/model"
     );
 
     expect(parseCommentStatusTab(undefined)).toBe("active");
@@ -54,7 +54,7 @@ describe("comment filters", () => {
   });
 
   it("parseUuidFilter (shared with reports) keeps only a UUID", async () => {
-    const { parseUuidFilter } = await import("@/lib/admin/reports-shared");
+    const { parseUuidFilter } = await import("@/lib/navigation/params");
 
     expect(parseUuidFilter(` ${UUID} `)).toBe(UUID);
     expect(parseUuidFilter("nope")).toBeUndefined();
@@ -62,7 +62,7 @@ describe("comment filters", () => {
   });
 
   it("parsePublicId trims and drops empty or over-long values", async () => {
-    const { parsePublicIdFilter } = await import("@/lib/admin/comments-shared");
+    const { parsePublicIdFilter } = await import("@/entities/comment/model");
 
     expect(parsePublicIdFilter(" abc ")).toBe("abc");
     expect(parsePublicIdFilter("  ")).toBeUndefined();
@@ -80,7 +80,7 @@ describe("loadAdminCommentsWorkspaceData", () => {
       pages: 0,
       hasMore: false,
     });
-    const { loadAdminCommentsWorkspaceData } = await import("@/lib/admin/comments");
+    const { loadAdminCommentsWorkspaceData } = await import("@/features/comments/loader");
 
     const data = await loadAdminCommentsWorkspaceData("token", {
       tab: "deleted",
@@ -110,7 +110,7 @@ function deleteForm(fields: Record<string, string> = {}) {
 }
 
 async function runDelete(formData: FormData): Promise<string> {
-  const { deleteAdminCommentAction } = await import("@/app/comments/actions");
+  const { deleteAdminCommentAction } = await import("@/features/comments/actions");
 
   try {
     await deleteAdminCommentAction(formData);
@@ -227,7 +227,7 @@ describe("deleteAdminCommentAction", () => {
 
 describe("resolveCommentBanner", () => {
   it("covers each code", async () => {
-    const { resolveCommentBanner } = await import("@/app/comments/comment-banner");
+    const { resolveCommentBanner } = await import("@/features/comments/flash");
     const base = { mutation: null, error: null, message: null };
 
     expect(resolveCommentBanner(base)).toBeNull();

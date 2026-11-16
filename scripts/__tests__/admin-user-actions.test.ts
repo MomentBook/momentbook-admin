@@ -20,7 +20,7 @@ vi.mock("next/headers", () => ({
   cookies,
 }));
 
-vi.mock("@/lib/admin/session", () => ({
+vi.mock("@/lib/auth/session", () => ({
   clearAdminSession,
   requireAdminActionSession,
 }));
@@ -60,7 +60,7 @@ function revokeForm(fields: Record<string, string> = {}) {
 }
 
 async function runRevokeAction(formData: FormData): Promise<string> {
-  const { revokeAdminUserSessionsAction } = await import("@/app/users/actions");
+  const { revokeAdminUserSessionsAction } = await import("@/features/users/actions");
 
   try {
     await revokeAdminUserSessionsAction(formData);
@@ -181,7 +181,7 @@ describe("updateAdminUserStorageAllowanceAction", () => {
   }
 
   async function run(formData: FormData): Promise<string> {
-    const { updateAdminUserStorageAllowanceAction } = await import("@/app/users/actions");
+    const { updateAdminUserStorageAllowanceAction } = await import("@/features/users/actions");
 
     try {
       await updateAdminUserStorageAllowanceAction(formData);

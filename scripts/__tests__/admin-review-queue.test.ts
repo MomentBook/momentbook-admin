@@ -4,7 +4,7 @@ import {
   createAdminJourneysPage,
   isTestBackendApiError,
   TestBackendApiError,
-} from "@/scripts/__fixtures__/admin-journeys";
+} from "../__fixtures__/admin-journeys";
 
 vi.mock("server-only", () => ({}));
 
@@ -28,7 +28,25 @@ const counts = {
 };
 
 async function loadModule() {
-  return import("@/lib/admin/review-queue");
+  return import("@/features/reviews/queue-loader");
+}
+
+/** The queue and detail pages read `?status=` and `?page=` through these
+ * loaders; each helper reads one value the way the page does. */
+async function loadParsers() {
+  const { loadReviewDetailParams, loadReviewQueueParams } = await import(
+    "@/lib/navigation/review-routes"
+  );
+  const query = (key: string, value: string | null) => (value === null ? {} : { [key]: value });
+
+  return {
+    parseReviewQueueContext: (value: string | null) =>
+      loadReviewDetailParams(query("status", value)).status,
+    parseReviewQueueTab: (value: string | null) =>
+      loadReviewQueueParams(query("status", value)).status,
+    parseReviewQueuePage: (value: string | null) =>
+      loadReviewQueueParams(query("page", value)).page,
+  };
 }
 
 afterEach(() => {
@@ -38,7 +56,7 @@ afterEach(() => {
 
 describe("review queue tabs", () => {
   it("queue context needs an explicit valid status", async () => {
-    const { parseReviewQueueContext } = await loadModule();
+    const { parseReviewQueueContext } = await loadParsers();
 
     // A detail link from outside the queue (e.g. report detail) has no status,
     // so a decision there must not auto-advance.
@@ -50,7 +68,8 @@ describe("review queue tabs", () => {
   });
 
   it("maps every tab to its API filter", async () => {
-    const { REVIEW_QUEUE_TABS, reviewQueueTabFilter } = await loadModule();
+    const { reviewQueueTabFilter } = await loadModule();
+    const { REVIEW_QUEUE_TABS } = await import("@/lib/navigation/review-routes");
     const expected = {
       pending: { reviewStatus: "PENDING" },
       translation: { localizationPending: true },
@@ -66,7 +85,7 @@ describe("review queue tabs", () => {
   });
 
   it("parseReviewQueueTab defaults to pending", async () => {
-    const { parseReviewQueueTab } = await loadModule();
+    const { parseReviewQueueTab } = await loadParsers();
 
     expect(parseReviewQueueTab(null)).toBe("pending");
     expect(parseReviewQueueTab("garbage")).toBe("pending");
@@ -75,7 +94,7 @@ describe("review queue tabs", () => {
   });
 
   it("parseReviewQueuePage clamps", async () => {
-    const { parseReviewQueuePage } = await loadModule();
+    const { parseReviewQueuePage } = await loadParsers();
 
     expect(parseReviewQueuePage(null)).toBe(1);
     expect(parseReviewQueuePage("0")).toBe(1);

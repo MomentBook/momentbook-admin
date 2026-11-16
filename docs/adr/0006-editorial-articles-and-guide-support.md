@@ -6,6 +6,12 @@ Active.
 
 ## Decision
 
+> **Amended by [0014](0014-source-layout-and-layer-boundaries.md) and [0015](0015-library-adoption.md):** 2026-11-16, the code moved under
+> `src/` (paths below updated); the editor validates with react-hook-form and
+> the action's zod schema, and the preview renders with `react-markdown`.
+> Articles with an empty summary or no update time are no longer dropped from
+> the list.
+
 Admin articles are published-only editorial guide records managed from
 `/articles`. This repository owns the admin CRUD workflow, not public
 guide consumption or public SEO rendering.
@@ -16,13 +22,16 @@ from that body and article metadata.
 
 ## Implementation Shape
 
-- `lib/editorial/admin.ts` loads admin article list/detail data through
-  `lib/api/articles.ts` and normalizes it into local editorial types.
-- `app/articles/page.tsx` loads the article dashboard in the workspace shell.
-- `app/articles/new/page.tsx` and `app/articles/[articleId]/page.tsx` render
-  the editor page.
-- `EditorialArticleEditorForm` keeps a live markdown preview using
-  `parseEditorialBody` and `EditorialMarkdownContent`.
+- `src/features/articles/loader.ts` loads admin article list/detail data
+  through `src/lib/api/articles.ts` and normalizes it into the editorial types
+  in `src/entities/article/`.
+- `src/app/(workspace)/articles/page.tsx` loads the article dashboard in the
+  workspace shell.
+- `src/app/(workspace)/articles/new/page.tsx` and
+  `src/app/(workspace)/articles/[articleId]/page.tsx` render the editor page.
+- `ArticleEditorForm` validates with `react-hook-form` and the zod schema the
+  action uses (`src/features/articles/schema.ts`) and keeps a live preview with
+  `MarkdownPreview` (`react-markdown`).
 - Create accepts language, category, title, body, optional slug, and optional
   translation group ID.
 - Update sends only mutable fields: category, title, and body. Language, slug,
@@ -37,13 +46,17 @@ from that body and article metadata.
 - Image alt text must be non-empty.
 - The first valid markdown image is treated by the backend as the derived cover
   source.
-- The local parser intentionally supports a small markdown subset for preview:
-  headings, paragraphs, lists, images, links, strong text, and inline code.
+- The preview renders the subset the public site renders (ADR 0015):
+  headings, paragraphs, bullet lists, images, links, strong text, and inline
+  code; raw HTML is skipped and only http(s) URLs are kept. It shows `#` and
+  `##` as h2, `###` as h3 and deeper as h4, and `*em*` and numbered lists as
+  plain text. The image rules above are checked in the form and in the action
+  (`findMarkdownImageProblem`).
 
 ## Public Guide Support Code
 
-- `lib/editorial/records.ts` and related helpers provide admin-compatible
-  guide metadata where required. The public guide and sitemap helpers
+- `src/entities/article/records.ts` and related helpers provide
+  admin-compatible guide metadata where required. The public guide and sitemap helpers
   (`lib/editorial/public.ts`, `lib/sitemap/*`) were removed on 2026-10-22 as
   unreachable from any admin route.
 - They do not make this repository responsible for public guide pages.
@@ -56,6 +69,6 @@ from that body and article metadata.
   language sibling visibility are part of the admin workflow.
 - Do not add public guide pages, marketing pages, or public SEO rendering here.
 - Article changes should run:
-  `yarn vitest run scripts/__tests__/admin-article-actions.test.ts`
+  `yarn vitest run scripts/__tests__/admin-article-actions.test.ts scripts/__tests__/admin-article-schema.test.ts scripts/__tests__/admin-article-actions-session.test.ts`
 - Run `yarn tsc --noEmit` when changing shared editorial types, normalizers, or
   generated contract consumers.

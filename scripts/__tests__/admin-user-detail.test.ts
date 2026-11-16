@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   isTestBackendApiError,
   TestBackendApiError,
-} from "@/scripts/__fixtures__/admin-journeys";
+} from "../__fixtures__/admin-journeys";
 
 vi.mock("server-only", () => ({}));
 
@@ -50,7 +50,7 @@ function mockAllOk() {
 }
 
 async function loadModule() {
-  return import("@/lib/admin/users");
+  return import("@/features/users/loader");
 }
 
 afterEach(() => {
@@ -160,7 +160,7 @@ describe("loadAdminUserDetailWorkspaceData", () => {
 
 describe("resolveUserBanner", () => {
   async function resolve(params: Record<string, string | null>) {
-    const { resolveUserBanner } = await import("@/app/users/user-banner");
+    const { resolveUserBanner } = await import("@/features/users/flash");
 
     return resolveUserBanner({
       mutation: null,
