@@ -3,7 +3,7 @@ import {
   createAdminJourneysPage,
   isTestBackendApiError,
   TestBackendApiError,
-} from "@/scripts/__fixtures__/admin-journeys";
+} from "../__fixtures__/admin-journeys";
 
 vi.mock("server-only", () => ({}));
 
@@ -39,7 +39,7 @@ const reportStats = {
 };
 
 async function loadModule() {
-  return import("@/lib/admin/attention");
+  return import("@/lib/workspace/attention");
 }
 
 afterEach(() => {

@@ -11,7 +11,7 @@ const group = (
 describe("subscriptionStateLabel and subscriptionStateTone", () => {
   it("names each state the server stores, with a tone", async () => {
     const { subscriptionStateLabel, subscriptionStateTone } = await import(
-      "@/lib/admin/subscriptions-shared"
+      "@/entities/subscription/model"
     );
 
     expect(subscriptionStateLabel("ACTIVE")).toBe("Active");
@@ -31,7 +31,7 @@ describe("subscriptionStateLabel and subscriptionStateTone", () => {
 
   it("shows a state it does not know as it came, and asks for attention", async () => {
     const { subscriptionStateLabel, subscriptionStateTone } = await import(
-      "@/lib/admin/subscriptions-shared"
+      "@/entities/subscription/model"
     );
 
     expect(subscriptionStateLabel("SOMETHING_NEW")).toBe("SOMETHING_NEW");
@@ -41,7 +41,7 @@ describe("subscriptionStateLabel and subscriptionStateTone", () => {
 
 describe("storeLabel and periodLabel", () => {
   it("names the stores and the periods", async () => {
-    const { storeLabel, periodLabel } = await import("@/lib/admin/subscriptions-shared");
+    const { storeLabel, periodLabel } = await import("@/entities/subscription/model");
 
     expect(storeLabel("APPLE")).toBe("App Store");
     expect(storeLabel("GOOGLE")).toBe("Google Play");
@@ -54,7 +54,7 @@ describe("storeLabel and periodLabel", () => {
 
 describe("periodEndLabel", () => {
   it("says what the date of a subscription means for its state", async () => {
-    const { periodEndLabel } = await import("@/lib/admin/subscriptions-shared");
+    const { periodEndLabel } = await import("@/entities/subscription/model");
 
     expect(periodEndLabel({ state: "ACTIVE", autoRenew: true })).toBe("Renews");
     expect(periodEndLabel({ state: "ACTIVE", autoRenew: false })).toBe("Cancelled, paid until");
@@ -70,7 +70,7 @@ describe("periodEndLabel", () => {
 
 describe("canAskStoreAgain", () => {
   it("is true while a subscription can still change in its store", async () => {
-    const { canAskStoreAgain } = await import("@/lib/admin/subscriptions-shared");
+    const { canAskStoreAgain } = await import("@/entities/subscription/model");
 
     for (const state of ["ACTIVE", "GRACE", "ON_HOLD", "PAUSED"]) {
       expect(canAskStoreAgain([{ state: "EXPIRED" }, { state }])).toBe(true);
@@ -78,7 +78,7 @@ describe("canAskStoreAgain", () => {
   });
 
   it("is false when every subscription has ended, or there is none: the server asks about neither", async () => {
-    const { canAskStoreAgain } = await import("@/lib/admin/subscriptions-shared");
+    const { canAskStoreAgain } = await import("@/entities/subscription/model");
 
     expect(canAskStoreAgain([{ state: "EXPIRED" }, { state: "REVOKED" }])).toBe(false);
     expect(canAskStoreAgain([])).toBe(false);
@@ -88,7 +88,7 @@ describe("canAskStoreAgain", () => {
 
 describe("summarizeSubscriptionGroups", () => {
   it("counts production subscriptions by what they do, and test purchases apart", async () => {
-    const { summarizeSubscriptionGroups } = await import("@/lib/admin/subscriptions-shared");
+    const { summarizeSubscriptionGroups } = await import("@/entities/subscription/model");
 
     const summary = summarizeSubscriptionGroups([
       group("APPLE", "PRODUCTION", "ACTIVE", 12),
@@ -109,7 +109,7 @@ describe("summarizeSubscriptionGroups", () => {
   });
 
   it("orders the rows: production first, then store, then state from live to over, then plan", async () => {
-    const { summarizeSubscriptionGroups } = await import("@/lib/admin/subscriptions-shared");
+    const { summarizeSubscriptionGroups } = await import("@/entities/subscription/model");
 
     const { rows } = summarizeSubscriptionGroups([
       group("GOOGLE", "SANDBOX", "ACTIVE", 1),
@@ -131,7 +131,7 @@ describe("summarizeSubscriptionGroups", () => {
   });
 
   it("is all zeros with no subscriptions, and ignores a count that is not a whole number above 0", async () => {
-    const { summarizeSubscriptionGroups } = await import("@/lib/admin/subscriptions-shared");
+    const { summarizeSubscriptionGroups } = await import("@/entities/subscription/model");
 
     expect(summarizeSubscriptionGroups([])).toEqual({
       granting: 0,
@@ -150,7 +150,7 @@ describe("summarizeSubscriptionGroups", () => {
   });
 
   it("counts a state it does not know as held, not as granting", async () => {
-    const { summarizeSubscriptionGroups } = await import("@/lib/admin/subscriptions-shared");
+    const { summarizeSubscriptionGroups } = await import("@/entities/subscription/model");
 
     const summary = summarizeSubscriptionGroups([group("APPLE", "PRODUCTION", "SOMETHING_NEW", 2)]);
     expect(summary.granting).toBe(0);
@@ -162,7 +162,7 @@ describe("resolveUserBanner for the subscription check", () => {
   const none = { mutation: null, error: null, message: null, revokedSessions: null, userStatus: null };
 
   it("confirms a check that went through", async () => {
-    const { resolveUserBanner } = await import("@/app/users/user-banner");
+    const { resolveUserBanner } = await import("@/features/users/flash");
 
     expect(resolveUserBanner({ ...none, mutation: "subscriptions_checked" })).toEqual({
       tone: "success",
@@ -172,7 +172,7 @@ describe("resolveUserBanner for the subscription check", () => {
   });
 
   it("says a check failed, with the server's reason when there is one", async () => {
-    const { resolveUserBanner } = await import("@/app/users/user-banner");
+    const { resolveUserBanner } = await import("@/features/users/flash");
 
     expect(resolveUserBanner({ ...none, error: "subscriptions_check_failed" })).toEqual({
       tone: "error",

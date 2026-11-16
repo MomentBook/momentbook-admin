@@ -13,13 +13,15 @@ import {
   buildAdminUsersHref,
   buildAdminArticleTableDetailHref,
   buildAdminArticleWorkspaceHref,
-  buildAdminReportsHref,
-  buildAdminReviewQueueHref,
   buildAdminSessionInvalidateHref,
-  buildReviewDetailQueueLinks,
   buildAdminSessionRefreshHref,
   sanitizeAdminPath,
-} from "@/lib/admin/paths";
+} from "@/lib/navigation/paths";
+import {
+  buildAdminReviewQueueHref,
+  buildReviewDetailQueueLinks,
+} from "@/lib/navigation/review-routes";
+import { buildAdminReportsHref } from "@/lib/navigation/report-routes";
 import { ADMIN_NAV_ITEMS } from "@/components/layout/admin-nav";
 
 describe("admin session paths", () => {

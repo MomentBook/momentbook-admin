@@ -20,7 +20,7 @@ vi.mock("next/headers", () => ({
   cookies,
 }));
 
-vi.mock("@/lib/admin/session", () => ({
+vi.mock("@/lib/auth/session", () => ({
   clearAdminSession,
   requireAdminActionSession,
 }));
@@ -64,7 +64,7 @@ function userStatusForm(fields: Record<string, string>) {
 }
 
 async function runUserStatusAction(formData: FormData): Promise<string> {
-  const { updateAdminUserStatusAction } = await import("@/app/reports/actions");
+  const { updateAdminUserStatusAction } = await import("@/entities/user/status-action");
 
   try {
     await updateAdminUserStatusAction(formData);

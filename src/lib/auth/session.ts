@@ -1,0 +1,212 @@
+import "server-only";
+
+import { createHash } from "node:crypto";
+import { redirect } from "next/navigation";
+import { EncryptJWT, jwtDecrypt } from "jose";
+import { type AdminSession, adminSessionSchema, buildAdminSession } from "./session-schema";
+import { hasAdminRole, readTokenClaims } from "./token";
+import { refreshAdminTokens } from "@/lib/api/auth";
+import {
+  buildAdminLoginHref,
+  buildAdminSessionRefreshHref,
+} from "@/lib/navigation/paths";
+import { ENV } from "@/lib/env";
+
+const ADMIN_SESSION_COOKIE_NAME = "momentbook_admin_session";
+const ADMIN_SESSION_COOKIE_PATH = "/";
+const ACCESS_TOKEN_REFRESH_WINDOW_MS = 60_000;
+
+function isSessionCookieSecure(): boolean {
+  const siteUrl = ENV.ADMIN_SITE_URL;
+
+  if (siteUrl) {
+    try {
+      return new URL(siteUrl).protocol === "https:";
+    } catch {
+      // fall through
+    }
+  }
+
+  return process.env.NODE_ENV === "production";
+}
+
+export type AdminCookieStore = Awaited<
+  ReturnType<typeof import("next/headers").cookies>
+>;
+
+function getSessionSecret(): Uint8Array {
+  const raw = ENV.ADMIN_SESSION_SECRET?.trim();
+
+  if (!raw) {
+    throw new Error("Missing required server env: ADMIN_SESSION_SECRET");
+  }
+
+  return createHash("sha256").update(raw).digest();
+}
+
+async function encryptAdminSession(session: AdminSession): Promise<string> {
+  return new EncryptJWT(session)
+    .setProtectedHeader({ alg: "dir", enc: "A256GCM" })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(session.refreshTokenExpiresAt / 1000))
+    .encrypt(getSessionSecret());
+}
+
+export async function createAdminSession(
+  cookieStore: AdminCookieStore,
+  session: AdminSession,
+): Promise<void> {
+  const expires = new Date(session.refreshTokenExpiresAt);
+  const encrypted = await encryptAdminSession(session);
+
+  cookieStore.set(ADMIN_SESSION_COOKIE_NAME, encrypted, {
+    httpOnly: true,
+    secure: isSessionCookieSecure(),
+    sameSite: "strict",
+    expires,
+    path: ADMIN_SESSION_COOKIE_PATH,
+  });
+}
+
+async function readStoredAdminSessionCookie(
+  cookieStore: AdminCookieStore,
+): Promise<AdminSession | null> {
+  const encrypted = cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value;
+
+  if (!encrypted) {
+    return null;
+  }
+
+  try {
+    const { payload } = await jwtDecrypt(encrypted, getSessionSecret());
+    const parsed = adminSessionSchema.safeParse(payload);
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getStoredAdminSession(
+  cookieStore: AdminCookieStore,
+): Promise<AdminSession | null> {
+  const session = await readStoredAdminSessionCookie(cookieStore);
+
+  if (!session) {
+    return null;
+  }
+
+  if (session.refreshTokenExpiresAt <= Date.now()) {
+    return null;
+  }
+
+  return session;
+}
+
+function requiresAdminSessionRefresh(session: AdminSession): boolean {
+  return (
+    session.accessTokenExpiresAt - Date.now() <= ACCESS_TOKEN_REFRESH_WINDOW_MS
+  );
+}
+
+async function buildRefreshedAdminSession(
+  session: AdminSession,
+): Promise<AdminSession | null> {
+  try {
+    const refreshed = await refreshAdminTokens(session.refreshToken);
+    const claims = readTokenClaims(refreshed.accessToken);
+
+    if (!claims || !hasAdminRole(claims)) {
+      return null;
+    }
+
+    return buildAdminSession(refreshed, session);
+  } catch {
+    return null;
+  }
+}
+
+export async function refreshAdminSession(
+  cookieStore: AdminCookieStore,
+  session: AdminSession,
+): Promise<AdminSession | null> {
+  if (!requiresAdminSessionRefresh(session)) {
+    return session;
+  }
+
+  const nextSession = await buildRefreshedAdminSession(session);
+
+  if (!nextSession) {
+    await clearAdminSession(cookieStore);
+    return null;
+  }
+
+  await createAdminSession(cookieStore, nextSession);
+  return nextSession;
+}
+
+export async function clearAdminSession(
+  cookieStore: AdminCookieStore,
+): Promise<void> {
+  cookieStore.set(ADMIN_SESSION_COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: isSessionCookieSecure(),
+    sameSite: "strict",
+    expires: new Date(0),
+    path: ADMIN_SESSION_COOKIE_PATH,
+  });
+}
+
+export async function requireAdminApiSession(
+  cookieStore: AdminCookieStore,
+  nextPath: string,
+): Promise<AdminSession> {
+  const session = await getStoredAdminSession(cookieStore);
+
+  if (!session) {
+    redirect(
+      buildAdminLoginHref({
+        next: nextPath,
+        error: "session_expired",
+      }),
+    );
+  }
+
+  if (requiresAdminSessionRefresh(session)) {
+    redirect(
+      buildAdminSessionRefreshHref({
+        next: nextPath,
+      }),
+    );
+  }
+
+  return session;
+}
+
+export async function requireAdminActionSession(
+  cookieStore: AdminCookieStore,
+  nextPath: string,
+): Promise<AdminSession> {
+  const session = await getStoredAdminSession(cookieStore);
+
+  if (!session) {
+    redirect(
+      buildAdminLoginHref({
+        next: nextPath,
+        error: "session_expired",
+      }),
+    );
+  }
+
+  const refreshedSession = await refreshAdminSession(cookieStore, session);
+
+  if (!refreshedSession) {
+    redirect(
+      buildAdminLoginHref({
+        next: nextPath,
+        error: "session_expired",
+      }),
+    );
+  }
+
+  return refreshedSession;
+}

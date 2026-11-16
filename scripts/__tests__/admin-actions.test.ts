@@ -23,7 +23,7 @@ vi.mock("next/headers", () => ({
   cookies,
 }));
 
-vi.mock("@/lib/admin/session", () => ({
+vi.mock("@/lib/auth/session", () => ({
   clearAdminSession,
   requireAdminActionSession,
   getStoredAdminSession,
@@ -56,12 +56,12 @@ vi.mock("@/lib/api/journeys", () => ({
   updateReviewStatus,
 }));
 
-vi.mock("@/lib/admin/review-queue", () => ({
+vi.mock("@/features/reviews/queue-loader", () => ({
   findNextPendingPublicId,
 }));
 
 async function loadActionsModule() {
-  return import("@/app/reviews/actions");
+  return import("@/features/reviews/actions");
 }
 
 class ApiError extends Error {

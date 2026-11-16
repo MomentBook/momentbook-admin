@@ -2,23 +2,27 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-// Writes the API's data contracts as types only (`--no-client`, ADR 0012) to
-// src/apis/generated/<service>.ts. The files are committed, so a Vercel build
-// never reaches the dev server; never edit them by hand.
+// Writes each service's paths and schemas as TypeScript types with
+// openapi-typescript to src/lib/api/generated/<service>.ts. openapi-fetch
+// reads the paths; `--root-types` also exports every schema by its own name,
+// and a field with a default stays as optional as the document declares it.
+// The files are committed, so a Vercel build never reaches the dev server;
+// never edit them by hand.
 //
-// The source is the dev server's swagger by default. API_SPEC_DIR reads
-// `<service>.json` from a directory instead, such as the API repository's
-// committed `docs/openapi/` while the dev server still serves an older
-// contract:
+// Name the source with one of:
 //   API_SPEC_DIR=../momentbook-api/docs/openapi yarn generate:api
+//     reads <service>.json from a directory, such as the API repository's
+//     committed documents
+//   API_SPEC_URL=http://<dev API gateway> yarn generate:api
+//     reads <url>/<service>/swagger/json from a running API
 
-const SWAGGER_BASE_URL = "http://10.133.199.134:8090";
 const SERVICES = ["core", "auth"];
-const OUT_DIR = "./src/apis/generated";
-// The exact version is pinned in package.json (ADR 0012 item 1).
-const GENERATOR_BIN = "./node_modules/.bin/swagger-typescript-api";
+const OUT_DIR = "./src/lib/api/generated";
+// The exact version is pinned in package.json.
+const GENERATOR_BIN = "./node_modules/.bin/openapi-typescript";
 
 const specDir = process.env.API_SPEC_DIR;
+const specUrl = process.env.API_SPEC_URL;
 
 function assertSpec(body, source) {
   if (!body || (!body.openapi && !body.swagger)) {
@@ -39,23 +43,39 @@ function resolveSpecFile(service) {
 // The generator does not check the HTTP status, so a 404 from a server with
 // swagger turned off would surface as an unrelated parse error.
 async function resolveSwaggerUrl(service) {
-  const specUrl = `${SWAGGER_BASE_URL}/${service}/swagger/json`;
-  const response = await fetch(specUrl);
+  const url = `${specUrl.replace(/\/+$/, "")}/${service}/swagger/json`;
+  const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`[generate:api] ${specUrl} answered HTTP ${response.status}`);
+    throw new Error(`[generate:api] ${url} answered HTTP ${response.status}`);
   }
 
-  assertSpec(await response.json(), specUrl);
-  return specUrl;
+  assertSpec(await response.json(), url);
+  return url;
 }
 
 async function main() {
+  if (!specDir && !specUrl) {
+    throw new Error(
+      "[generate:api] set API_SPEC_DIR (a directory of <service>.json) or API_SPEC_URL (a running API)",
+    );
+  }
+
   for (const service of SERVICES) {
     const source = specDir ? resolveSpecFile(service) : await resolveSwaggerUrl(service);
-    console.log(`[generate:api] ${service}: ${source} -> ${OUT_DIR}/${service}.ts`);
+    const output = `${OUT_DIR}/${service}.ts`;
+    console.log(`[generate:api] ${service}: ${source} -> ${output}`);
     execFileSync(
       GENERATOR_BIN,
-      ["generate", "--no-client", "-p", source, "-o", OUT_DIR, "-n", `${service}.ts`],
+      [
+        source,
+        "--root-types",
+        "--root-types-no-schema-prefix",
+        // A request field with a default (acceptUntranslated) may be left out.
+        "--default-non-nullable",
+        "false",
+        "-o",
+        output,
+      ],
       { stdio: "inherit" },
     );
   }

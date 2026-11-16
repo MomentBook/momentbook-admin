@@ -1,0 +1,574 @@
+import type {
+  PublishedJourneyDetailDto,
+  PublishedJourneyImageDto,
+  PublishedJourneyLocalizedContentDto,
+  PublishedJourneyLocalizationEntryDto,
+  PublishedJourneyMomentImpressionDto,
+  PublishedJourneyMomentTranslationDto,
+  PublishedMomentDto,
+} from "@/lib/api/types";
+import {
+  normalizeCaptureTimeContext,
+  normalizeLocalDateTimeContext,
+  type CaptureTimeContext,
+  type LocalDateTimeContext,
+} from "@/lib/format/local-time-context";
+import { parseApiTime, readText } from "@/lib/format/view-helpers";
+import { type Language, toLocaleTag } from "@/lib/i18n";
+import {
+  normalizeReviewState,
+  type AdminReviewContentStatus,
+  type AdminReviewState,
+  type AdminReviewVisibility,
+} from "@/entities/journey/model";
+
+// One journey as the review page shows it, built from the admin detail
+// endpoint: its text and translations, and every photo once, grouped by the
+// moment it belongs to.
+
+export type AdminReviewLocalizedEntry = {
+  locale: string;
+  languageCode: string;
+  countryCode: string;
+  languageName: string;
+  title: string | null;
+  description: string | null;
+  hashtags: string[];
+};
+
+export type AdminReviewLocalizedMomentTranslation = {
+  locale: string;
+  languageCode: string;
+  countryCode: string;
+  languageName: string;
+  impression: string | null;
+};
+
+export type AdminReviewLocalizedMomentImpressions = {
+  momentId: string;
+  translations: AdminReviewLocalizedMomentTranslation[];
+};
+
+export type AdminReviewLocalizedContent = {
+  sourceLanguage: string;
+  generatedAt: string;
+  entries: AdminReviewLocalizedEntry[];
+  momentImpressions: AdminReviewLocalizedMomentImpressions[];
+};
+
+export type AdminReviewJourney = {
+  publicId: string;
+  journeyId: string | null;
+  userId: string;
+  authorName: string | null;
+  title: string | null;
+  description: string | null;
+  shareUrl: string | null;
+  createdAt: string;
+  publishedAt: string | null;
+  /** Last change to the published record; while a translation is pending
+   * this is when it started waiting. */
+  updatedAt: string;
+  startedAt: number | null;
+  endedAt: number | null;
+  startedAtLocal: LocalDateTimeContext | null;
+  endedAtLocal: LocalDateTimeContext | null;
+  visibility: AdminReviewVisibility;
+  review: AdminReviewState;
+  /** The snapshot shown; sent back with the decision so a republish
+   * meanwhile is rejected instead of decided unseen. */
+  publishOperationId: string | null;
+  contentStatus: AdminReviewContentStatus;
+  notice: string | null;
+  localizedContent: AdminReviewLocalizedContent | null;
+  localizationModel: string | null;
+  publishedWithoutTranslation: boolean;
+  requestedLocale: string | null;
+};
+
+export type AdminReviewDetail = {
+  journey: AdminReviewJourney;
+  evidence: AdminReviewEvidence;
+};
+
+export type AdminReviewPhoto = {
+  key: string;
+  photoId: string | null;
+  url: string;
+  fullUrl: string;
+  displayUrl: string;
+  thumbnailUrl: string;
+  width: number | null;
+  height: number | null;
+  takenAt: number | null;
+  captureTime: CaptureTimeContext | null;
+  locationName: string | null;
+};
+
+export type AdminReviewEvidenceSection = {
+  key: string;
+  kind: "cluster" | "remaining";
+  /** The moment the section shows (`null` for the remaining photos). */
+  momentId: string | null;
+  type: "STOP" | "MOVE" | "ORPHAN" | null;
+  title: string | null;
+  impression: string | null;
+  photoCount: number;
+  photos: AdminReviewPhoto[];
+  time: {
+    startAt: number | null;
+    endAt: number | null;
+    startLocal: LocalDateTimeContext | null;
+    endLocal: LocalDateTimeContext | null;
+  } | null;
+};
+
+export type AdminReviewEvidence = {
+  photos: AdminReviewPhoto[];
+  sections: AdminReviewEvidenceSection[];
+  expectedCount: number;
+  loadedCount: number;
+  unavailableReason: string | null;
+};
+
+function readFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  return null;
+}
+
+function normalizeLocalizedHashtags(value: string[]): string[] {
+  return value
+    .map((item) => readText(item))
+    .filter((item): item is string => Boolean(item));
+}
+
+function normalizeLocalizedJourneyEntry(
+  entry: PublishedJourneyLocalizationEntryDto,
+): AdminReviewLocalizedEntry {
+  return {
+    locale: entry.locale,
+    languageCode: entry.languageCode,
+    countryCode: entry.countryCode,
+    languageName: entry.languageName,
+    title: readText(entry.title),
+    description: readText(entry.description),
+    hashtags: normalizeLocalizedHashtags(entry.hashtags),
+  };
+}
+
+function normalizeLocalizedMomentTranslation(
+  translation: PublishedJourneyMomentTranslationDto,
+): AdminReviewLocalizedMomentTranslation {
+  return {
+    locale: translation.locale,
+    languageCode: translation.languageCode,
+    countryCode: translation.countryCode,
+    languageName: translation.languageName,
+    impression: readText(translation.impression),
+  };
+}
+
+function normalizeLocalizedMomentImpressions(
+  entry: PublishedJourneyMomentImpressionDto,
+): AdminReviewLocalizedMomentImpressions {
+  return {
+    momentId: entry.momentId,
+    translations: entry.translations.map(normalizeLocalizedMomentTranslation),
+  };
+}
+
+function normalizeLocalizedContent(
+  localizedContent: PublishedJourneyLocalizedContentDto | null,
+): AdminReviewLocalizedContent | null {
+  if (!localizedContent) {
+    return null;
+  }
+
+  return {
+    sourceLanguage: localizedContent.sourceLanguage,
+    generatedAt: localizedContent.generatedAt,
+    entries: localizedContent.entries.map(normalizeLocalizedJourneyEntry),
+    momentImpressions: localizedContent.momentImpressions.map(
+      normalizeLocalizedMomentImpressions,
+    ),
+  };
+}
+
+function normalizeAdminReviewPhoto(
+  image: PublishedJourneyImageDto,
+  fallbackPhotoId?: string | null,
+): AdminReviewPhoto | null {
+  const fullUrl = readText(image.fullUrl) ?? readText(image.url);
+  if (!fullUrl) {
+    return null;
+  }
+
+  const displayUrl = readText(image.displayUrl) ?? fullUrl;
+  const thumbnailUrl = readText(image.thumbnailUrl) ?? displayUrl;
+  const photoId = readText(image.photoId) ?? fallbackPhotoId ?? null;
+  const key = photoId ? `photo:${photoId}` : `url:${fullUrl}`;
+
+  return {
+    key,
+    photoId,
+    url: fullUrl,
+    fullUrl,
+    displayUrl,
+    thumbnailUrl,
+    width: readFiniteNumber(image.width),
+    height: readFiniteNumber(image.height),
+    takenAt: parseApiTime(image.takenAt),
+    captureTime: normalizeCaptureTimeContext(image.captureTime),
+    locationName: readText(image.locationName),
+  };
+}
+
+type AdminReviewPhotoRegistry = {
+  orderedKeys: string[];
+  photoByKey: Map<string, AdminReviewPhoto>;
+  keyByPhotoId: Map<string, string>;
+};
+
+type MutableEvidenceSection = {
+  key: string;
+  momentId: string | null;
+  type: "STOP" | "MOVE" | "ORPHAN" | null;
+  title: string | null;
+  impression: string | null;
+  photoKeys: string[];
+  photoKeySet: Set<string>;
+  time: {
+    startAt: number | null;
+    endAt: number | null;
+    startLocal: LocalDateTimeContext | null;
+    endLocal: LocalDateTimeContext | null;
+  } | null;
+  order: number;
+};
+
+function mergeAdminReviewPhoto(
+  current: AdminReviewPhoto,
+  incoming: AdminReviewPhoto,
+): AdminReviewPhoto {
+  const displayUrl =
+    current.displayUrl !== current.fullUrl ? current.displayUrl : incoming.displayUrl;
+  const thumbnailUrl =
+    current.thumbnailUrl !== current.displayUrl ? current.thumbnailUrl : incoming.thumbnailUrl;
+
+  return {
+    ...current,
+    photoId: current.photoId ?? incoming.photoId,
+    fullUrl: current.fullUrl || incoming.fullUrl,
+    url: current.url || incoming.url,
+    displayUrl,
+    thumbnailUrl,
+    width: current.width ?? incoming.width,
+    height: current.height ?? incoming.height,
+    takenAt: current.takenAt ?? incoming.takenAt,
+    captureTime: current.captureTime ?? incoming.captureTime,
+    locationName: current.locationName ?? incoming.locationName,
+  };
+}
+
+function createPhotoRegistry(): AdminReviewPhotoRegistry {
+  return {
+    orderedKeys: [],
+    photoByKey: new Map<string, AdminReviewPhoto>(),
+    keyByPhotoId: new Map<string, string>(),
+  };
+}
+
+function registerAdminReviewPhoto(
+  registry: AdminReviewPhotoRegistry,
+  image: PublishedJourneyImageDto,
+  fallbackPhotoId?: string | null,
+): string | null {
+  const normalized = normalizeAdminReviewPhoto(image, fallbackPhotoId);
+  if (!normalized) {
+    return null;
+  }
+
+  const existing = registry.photoByKey.get(normalized.key);
+  if (existing) {
+    registry.photoByKey.set(
+      normalized.key,
+      mergeAdminReviewPhoto(existing, normalized),
+    );
+  } else {
+    registry.photoByKey.set(normalized.key, normalized);
+    registry.orderedKeys.push(normalized.key);
+  }
+
+  if (normalized.photoId) {
+    registry.keyByPhotoId.set(normalized.photoId, normalized.key);
+  }
+
+  return normalized.key;
+}
+
+function pushPhotoKey(
+  value: string | null,
+  target: string[],
+  seen: Set<string>,
+): void {
+  if (!value || seen.has(value)) {
+    return;
+  }
+
+  seen.add(value);
+  target.push(value);
+}
+
+function createMutableEvidenceSection(options: {
+  key: string;
+  momentId: string | null;
+  order: number;
+}): MutableEvidenceSection {
+  return {
+    key: options.key,
+    momentId: options.momentId,
+    type: null,
+    title: null,
+    impression: null,
+    photoKeys: [],
+    photoKeySet: new Set<string>(),
+    time: null,
+    order: options.order,
+  };
+}
+
+function mergeSectionTime(
+  current: MutableEvidenceSection["time"],
+  incoming: MutableEvidenceSection["time"],
+): MutableEvidenceSection["time"] {
+  if (!incoming) {
+    return current;
+  }
+
+  if (!current) {
+    return incoming;
+  }
+
+  return {
+    startAt: current.startAt ?? incoming.startAt,
+    endAt: current.endAt ?? incoming.endAt,
+    startLocal: current.startLocal ?? incoming.startLocal,
+    endLocal: current.endLocal ?? incoming.endLocal,
+  };
+}
+
+function readSectionTime(moment: PublishedMomentDto): MutableEvidenceSection["time"] {
+  return {
+    startAt: parseApiTime(moment.startAt),
+    endAt: parseApiTime(moment.endAt),
+    startLocal: normalizeLocalDateTimeContext(moment.startLocal),
+    endLocal: normalizeLocalDateTimeContext(moment.endLocal),
+  };
+}
+
+/** One section per moment, keyed by `moment.id` (the old `clusterId` value,
+ * so a section of an existing post keeps its key; ADR 0012 item 6). */
+function collectEvidenceSections(options: {
+  registry: AdminReviewPhotoRegistry;
+  moments: PublishedMomentDto[];
+  sections: Map<string, MutableEvidenceSection>;
+  nextOrderRef: { current: number };
+}): void {
+  for (const [index, moment] of options.moments.entries()) {
+    const momentId = readText(moment.id);
+    const sectionKey = momentId ?? `moment-${index}`;
+    const existing =
+      options.sections.get(sectionKey) ??
+      createMutableEvidenceSection({
+        key: sectionKey,
+        momentId,
+        order: options.nextOrderRef.current++,
+      });
+
+    existing.type = existing.type ?? moment.type;
+    existing.title = existing.title ?? readText(moment.locationName);
+    existing.impression = existing.impression ?? readText(moment.impression);
+    existing.time = mergeSectionTime(existing.time, readSectionTime(moment));
+
+    const momentPhotoIds = moment.photoIds.map((value) => readText(value));
+    const momentPhotoKeys = moment.photos.map((photo, photoIndex) =>
+      registerAdminReviewPhoto(
+        options.registry,
+        photo,
+        momentPhotoIds[photoIndex] ?? null,
+      ),
+    );
+
+    for (const photoId of momentPhotoIds) {
+      const key = photoId
+        ? options.registry.keyByPhotoId.get(photoId) ?? null
+        : null;
+      pushPhotoKey(key, existing.photoKeys, existing.photoKeySet);
+    }
+
+    for (const photoKey of momentPhotoKeys) {
+      pushPhotoKey(photoKey, existing.photoKeys, existing.photoKeySet);
+    }
+
+    options.sections.set(sectionKey, existing);
+  }
+}
+
+function resolveEvidenceSections(
+  registry: AdminReviewPhotoRegistry,
+  sections: Map<string, MutableEvidenceSection>,
+): AdminReviewEvidenceSection[] {
+  return Array.from(sections.values())
+    .sort((left, right) => left.order - right.order)
+    .map<AdminReviewEvidenceSection>((section) => {
+      const photos = section.photoKeys
+        .map((key) => registry.photoByKey.get(key) ?? null)
+        .filter((photo): photo is AdminReviewPhoto => Boolean(photo));
+
+      return {
+        key: section.key,
+        kind: "cluster",
+        momentId: section.momentId,
+        type: section.type,
+        title: section.title,
+        impression: section.impression,
+        photoCount: photos.length,
+        photos,
+        time: section.time,
+      };
+    });
+}
+
+function buildEvidenceFromDetail(options: {
+  detail: PublishedJourneyDetailDto;
+  expectedCount: number;
+}): AdminReviewEvidence {
+  const registry = createPhotoRegistry();
+
+  for (const image of options.detail.images) {
+    registerAdminReviewPhoto(registry, image);
+  }
+
+  const sections = new Map<string, MutableEvidenceSection>();
+  const nextOrderRef = { current: 0 };
+
+  collectEvidenceSections({
+    registry,
+    moments: options.detail.moments,
+    sections,
+    nextOrderRef,
+  });
+
+  const resolvedSections = resolveEvidenceSections(registry, sections);
+  const consumedKeys = new Set<string>();
+
+  for (const section of resolvedSections) {
+    for (const photo of section.photos) {
+      consumedKeys.add(photo.key);
+    }
+  }
+
+  const photos = registry.orderedKeys
+    .map((key) => registry.photoByKey.get(key) ?? null)
+    .filter((photo): photo is AdminReviewPhoto => Boolean(photo));
+
+  const remainingPhotos = photos.filter((photo) => !consumedKeys.has(photo.key));
+  const evidenceSections =
+    resolvedSections.length > 0
+      ? [
+          ...resolvedSections,
+          ...(remainingPhotos.length > 0
+            ? [
+                {
+                  key: "remaining-photos",
+                  kind: "remaining" as const,
+                  momentId: null,
+                  type: null,
+                  title: null,
+                  impression: null,
+                  photoCount: remainingPhotos.length,
+                  photos: remainingPhotos,
+                  time: null,
+                },
+              ]
+            : []),
+        ]
+      : photos.length > 0
+        ? [
+            {
+              key: "all-photos",
+              kind: "remaining" as const,
+              momentId: null,
+              type: null,
+              title: null,
+              impression: null,
+              photoCount: photos.length,
+              photos,
+              time: null,
+            },
+          ]
+        : [];
+
+  const expectedCount = Math.max(
+    options.expectedCount,
+    options.detail.photoCount,
+    photos.length,
+  );
+
+  return {
+    photos,
+    sections: evidenceSections,
+    expectedCount,
+    loadedCount: photos.length,
+    unavailableReason:
+      photos.length === 0 && expectedCount > 0
+        ? "The admin detail contract returned no photo assets for this journey."
+        : null,
+  };
+}
+
+/** The review page's view of an admin journey detail. `lang` is the
+ * language the detail was asked in. */
+export function buildAdminReviewDetail(options: {
+  detail: PublishedJourneyDetailDto;
+  lang?: Language | null;
+}): AdminReviewDetail {
+  const title = readText(options.detail.title);
+  const description = readText(options.detail.description);
+  const photoCount = options.detail.photoCount;
+
+  return {
+    journey: {
+      publicId: options.detail.publicId,
+      journeyId: readText(options.detail.journeyId),
+      userId: options.detail.userId,
+      authorName: readText(options.detail.author.name),
+      title,
+      description,
+      shareUrl: readText(options.detail.shareUrl),
+      createdAt: readText(options.detail.createdAt) ?? "",
+      publishedAt: readText(options.detail.publishedAt),
+      updatedAt: readText(options.detail.updatedAt) ?? "",
+      startedAt: parseApiTime(options.detail.startedAt),
+      endedAt: parseApiTime(options.detail.endedAt),
+      startedAtLocal: normalizeLocalDateTimeContext(options.detail.startedAtLocal),
+      endedAtLocal: normalizeLocalDateTimeContext(options.detail.endedAtLocal),
+      visibility: options.detail.visibility,
+      review: normalizeReviewState(options.detail.review),
+      publishOperationId: readText(options.detail.publishOperationId),
+      contentStatus: options.detail.contentStatus,
+      notice: readText(options.detail.notice),
+      localizedContent: normalizeLocalizedContent(options.detail.localizedContent),
+      localizationModel: readText(options.detail.localizationModel),
+      publishedWithoutTranslation: options.detail.publishedWithoutTranslation,
+      requestedLocale: options.lang ? toLocaleTag(options.lang) : null,
+    },
+    evidence: buildEvidenceFromDetail({
+      detail: options.detail,
+      expectedCount: photoCount,
+    }),
+  };
+}

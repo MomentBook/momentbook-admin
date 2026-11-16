@@ -6,6 +6,10 @@
 > 2026-10-23, the call budget table below gains the operator pages and the
 > author-filtered review queue.
 
+> **Amended by [0014](0014-source-layout-and-layer-boundaries.md) and [0015](0015-library-adoption.md):** 2026-11-16, the code moved under
+> `src/` (paths below updated) and the paged lists render through TanStack
+> Table; the call budget is unchanged.
+
 Active. Date: 2026-10-22. Amends [0005](0005-moderation-workspace-and-review-evidence.md)
 (review data loading) and [0009](0009-reports-moderation-and-user-sanction.md)
 (sidebar and overview placement).
@@ -33,24 +37,25 @@ Active. Date: 2026-10-22. Amends [0005](0005-moderation-workspace-and-review-evi
 ## Decision
 
 1. **Counts come from server-side filters with `limit=1` totals.**
-   `loadAttentionCounts` (`lib/admin/attention.ts`) makes four calls per page
+   `loadAttentionCounts` (`src/lib/workspace/attention.ts`) makes four calls per page
    render: `journeys/publish?reviewStatus=PENDING&limit=1`,
    `?localizationPending=true&limit=1`, `?enqueueFailed=true&limit=1`, and
    `reports/stats`. A failing `reports/stats` (other than 401/403) hides the
    report badge instead of failing the page.
 2. **Each screen loads only what it shows.** The review queue
-   (`lib/admin/review-queue.ts`) maps each tab (`pending`, `translation`,
+   (`src/features/reviews/queue-loader.ts`) maps each tab (`pending`, `translation`,
    `approved`, `rejected`, `all`) 1:1 to API filters, 20 rows per page; the
    active tab's total comes from its own list, the other tabs from `limit=1`
    totals. The review detail calls only the detail endpoint plus two report
-   history lists. The overview (`lib/admin/overview.ts`) adds approved and
+   history lists. The overview (`src/features/overview/loader.ts`) adds approved and
    rejected totals and a newest-first intake scan bounded to
    `INTAKE_PAGE_CAP` pages over six UTC weeks. The decision action's next-item
    lookup is `reviewStatus=PENDING&limit=2`.
 3. **A per-page `WorkspaceShell`, not a layout, renders the shell.**
-   `components/layout/workspace-shell.tsx` (server component) renders the one
+   `src/components/layout/workspace-shell.tsx` (server component) renders the one
    `AdminSidebar` with badges from the counts the page itself loaded, through
-   `loadWorkspacePage` (`app/_workspace/workspace-data.ts`), so every mutation
+   `renderWorkspacePage` (`src/components/layout/workspace-page.tsx`, ADR
+   0014), so every mutation
    redirect shows fresh counts. The sidebar receives only the account label —
    never the session — because it is a client component and its props are
    serialized into the page payload.
@@ -83,7 +88,10 @@ No call count depends on the number of journeys.
 - **TanStack Table, Refine, or React-admin** — rejected: the queue has no client
   sorting, selection, or bulk actions to justify a table engine, and an admin
   framework's data-provider layer would sit on top of a 14-operation API that
-  `lib/api` already wraps (ADR 0007).
+  `lib/api` already wraps (ADR 0007). *Revisited 2026-11-16 by [0015](0015-library-adoption.md):*
+  TanStack Table now only renders the paged lists from typed column
+  definitions; paging and filters stay server-side links, so the case against
+  a client table engine and an admin framework stands.
 - **Oldest-first queue by fetching the list tail** — rejected: the API's sort
   key is the first publish time, so reversing it does not mean "waited longest"
   for republished journeys, and it costs extra calls.

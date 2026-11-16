@@ -12,7 +12,7 @@ afterEach(() => {
 
 describe("user directory parsers", () => {
   it("parseUserSearchQuery trims and bounds the query", async () => {
-    const { parseUserSearchQuery } = await import("@/lib/admin/users-shared");
+    const { parseUserSearchQuery } = await import("@/entities/user/model");
 
     expect(parseUserSearchQuery(" a ")).toBeUndefined();
     expect(parseUserSearchQuery(undefined)).toBeUndefined();
@@ -23,7 +23,7 @@ describe("user directory parsers", () => {
   });
 
   it("parseUserStatusFilter maps URL values to API enums", async () => {
-    const { parseUserStatusFilter } = await import("@/lib/admin/users-shared");
+    const { parseUserStatusFilter } = await import("@/entities/user/model");
 
     expect(parseUserStatusFilter("banned")).toBe("BANNED");
     expect(parseUserStatusFilter("active")).toBe("ACTIVE");
@@ -36,14 +36,14 @@ describe("user directory parsers", () => {
   });
 
   it("shows a scheduled deletion with its own label and the outline badge", async () => {
-    const { USER_STATUS_LABELS, userStatusBadgeVariant } = await import("@/lib/admin/users-shared");
+    const { USER_STATUS_LABELS, userStatusBadgeVariant } = await import("@/entities/user/model");
 
     expect(USER_STATUS_LABELS.PENDING_DELETION).toBe("Deletion scheduled");
     expect(userStatusBadgeVariant("PENDING_DELETION")).toBe("outline");
   });
 
   it("parseUserRoleFilter only accepts admin", async () => {
-    const { parseUserRoleFilter } = await import("@/lib/admin/users-shared");
+    const { parseUserRoleFilter } = await import("@/entities/user/model");
 
     expect(parseUserRoleFilter("admin")).toBe("ADMIN");
     expect(parseUserRoleFilter("user")).toBeUndefined();
@@ -51,7 +51,7 @@ describe("user directory parsers", () => {
   });
 
   it("resolveUserSearch ignores, with a notice, any q the API would reject", async () => {
-    const { resolveUserSearch } = await import("@/lib/admin/users-shared");
+    const { resolveUserSearch } = await import("@/entities/user/model");
 
     expect(resolveUserSearch(" ")).toEqual({ ignored: true });
     expect(resolveUserSearch("a")).toEqual({ ignored: true });
@@ -75,7 +75,7 @@ describe("loadAdminUsersWorkspaceData", () => {
       pages: 0,
       hasMore: false,
     });
-    const { loadAdminUsersWorkspaceData } = await import("@/lib/admin/users");
+    const { loadAdminUsersWorkspaceData } = await import("@/features/users/loader");
 
     const result = await loadAdminUsersWorkspaceData("token", {
       q: "kim",
@@ -98,7 +98,7 @@ describe("loadAdminUsersWorkspaceData", () => {
 
 describe("deletion reason labels", () => {
   it("labels each code the API sends", async () => {
-    const { deletionReasonLabel } = await import("@/lib/admin/users-shared");
+    const { deletionReasonLabel } = await import("@/entities/user/model");
 
     expect(deletionReasonLabel("NOT_USING")).toBe("Doesn't use it");
     expect(deletionReasonLabel("HARD_TO_USE")).toBe("Hard to use");
@@ -109,13 +109,13 @@ describe("deletion reason labels", () => {
   });
 
   it("reads no code as not given", async () => {
-    const { deletionReasonLabel } = await import("@/lib/admin/users-shared");
+    const { deletionReasonLabel } = await import("@/entities/user/model");
 
     expect(deletionReasonLabel(null)).toBe("Not given");
   });
 
   it("humanizes a code it does not know", async () => {
-    const { deletionReasonLabel, humanizeEnum } = await import("@/lib/admin/users-shared");
+    const { deletionReasonLabel, humanizeEnum } = await import("@/entities/user/model");
 
     expect(deletionReasonLabel("TOO_EXPENSIVE")).toBe("Too expensive");
     expect(humanizeEnum("USER_SESSIONS_REVOKED")).toBe("User sessions revoked");

@@ -1,0 +1,86 @@
+import type { StatusTone } from "@/components/status-badge";
+import type { AdminUserRole, AdminUserStatus } from "@/lib/api/types";
+
+// The API accepts q of 2..200 characters.
+const MIN_SEARCH_LENGTH = 2;
+const MAX_SEARCH_LENGTH = 200;
+
+export const USER_STATUS_LABELS: Record<AdminUserStatus, string> = {
+  ACTIVE: "Active",
+  INACTIVE: "Inactive",
+  BANNED: "Banned",
+  DELETED: "Deleted",
+  PENDING_DELETION: "Deletion scheduled",
+};
+
+/** How each account status reads at a glance. */
+export const USER_STATUS_TONES: Record<AdminUserStatus, StatusTone> = {
+  ACTIVE: "success",
+  INACTIVE: "warning",
+  BANNED: "danger",
+  DELETED: "neutral",
+  PENDING_DELETION: "neutral",
+};
+
+export function userStatusBadgeVariant(
+  status: AdminUserStatus,
+): "default" | "destructive" | "secondary" | "outline" {
+  if (status === "ACTIVE") return "default";
+  if (status === "BANNED") return "destructive";
+  if (status === "INACTIVE") return "secondary";
+  return "outline";
+}
+
+/** A search the API accepts, or `undefined` (it answers 400 otherwise). */
+export function parseUserSearchQuery(raw?: string | null): string | undefined {
+  const trimmed = raw?.trim();
+
+  if (!trimmed || trimmed.length < MIN_SEARCH_LENGTH || trimmed.length > MAX_SEARCH_LENGTH) {
+    return undefined;
+  }
+
+  return trimmed;
+}
+
+/** The directory search: a usable `q`, or `ignored` when something was typed
+ * that the API would reject (one character, only spaces, over 200) so the
+ * page can say why the results are unfiltered. An empty `q` is no search. */
+export function resolveUserSearch(raw?: string | null): { q?: string; ignored: boolean } {
+  const q = parseUserSearchQuery(raw);
+
+  return q ? { q, ignored: false } : { ignored: Boolean(raw) };
+}
+
+export function parseUserStatusFilter(raw?: string | null): AdminUserStatus | undefined {
+  // Only the lowercase URL form is canonical.
+  return (Object.keys(USER_STATUS_LABELS) as AdminUserStatus[]).find(
+    (status) => status.toLowerCase() === raw,
+  );
+}
+
+export function parseUserRoleFilter(raw?: string | null): AdminUserRole | undefined {
+  return raw === "admin" ? "ADMIN" : undefined;
+}
+
+/** `USER_SESSIONS_REVOKED` → "User sessions revoked". */
+export function humanizeEnum(value: string): string {
+  const words = value.toLowerCase().replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** The reasons a person can give when scheduling their account for deletion. */
+const DELETION_REASON_LABELS: Record<string, string> = {
+  NOT_USING: "Doesn't use it",
+  HARD_TO_USE: "Hard to use",
+  MISSING_FEATURE: "Missing a feature",
+  PRIVACY: "Privacy concern",
+  NEW_ACCOUNT: "Switching account",
+  OTHER: "Other",
+};
+
+/** A deletion reason as the operator reads it. `null` is a person who skipped
+ * the question; a code this map does not know is humanized, not hidden. */
+export function deletionReasonLabel(code: string | null): string {
+  if (code === null) return "Not given";
+  return DELETION_REASON_LABELS[code] ?? humanizeEnum(code);
+}

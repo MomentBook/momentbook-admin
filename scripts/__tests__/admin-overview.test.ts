@@ -4,7 +4,7 @@ import {
   createAdminJourneysPage,
   isTestBackendApiError,
   TestBackendApiError,
-} from "@/scripts/__fixtures__/admin-journeys";
+} from "../__fixtures__/admin-journeys";
 
 vi.mock("server-only", () => ({}));
 
@@ -46,7 +46,7 @@ function intakeCalls() {
 }
 
 async function loadModule() {
-  return import("@/lib/admin/overview");
+  return import("@/features/overview/loader");
 }
 
 afterEach(() => {

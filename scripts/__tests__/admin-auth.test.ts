@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFetchCall } from "./helpers/fetch-call";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/src/configs/env.server", () => ({
+vi.mock("@/lib/env", () => ({
   ENV: { API_BASE_URL: "https://api.test", ADMIN_SESSION_SECRET: "test-session-secret" },
 }));
 
@@ -91,14 +92,14 @@ describe("loginAdminAction", () => {
     const cookieStore = createCookieStore();
     mocks.cookies.mockResolvedValue(cookieStore);
     fetchMock.mockResolvedValueOnce(json(authSession));
-    const { loginAdminAction } = await import("@/app/login/actions");
-    const { getStoredAdminSession } = await import("@/lib/admin/session");
+    const { loginAdminAction } = await import("@/features/auth/actions");
+    const { getStoredAdminSession } = await import("@/lib/auth/session");
 
     await expect(loginAdminAction({ error: null }, loginForm())).rejects.toThrow(
       "REDIRECT:/reports",
     );
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.test/auth/email/login");
+    expect((await readFetchCall(fetchMock, 0)).url).toBe("https://api.test/auth/email/login");
     expect([...cookieStore.values.keys()]).toEqual(["momentbook_admin_session"]);
     // The encrypted cookie's payload: the session fields plus the JWT's own
     // `iat`/`exp`, as before v3, so an older cookie still reads.
@@ -122,7 +123,7 @@ describe("loginAdminAction", () => {
     fetchMock.mockResolvedValueOnce(
       json({ status: "success", data: { ...authSession, user: { _id: "user-1" } } }),
     );
-    const { loginAdminAction } = await import("@/app/login/actions");
+    const { loginAdminAction } = await import("@/features/auth/actions");
 
     await expect(loginAdminAction({ error: null }, loginForm())).resolves.toEqual({
       error: "Incomplete login response.",
@@ -136,38 +137,12 @@ describe("loginAdminAction", () => {
     fetchMock.mockResolvedValueOnce(
       json({ ...authSession, accessToken: jwt({ sub: "user-1", role: "USER", exp: ACCESS_EXP }) }),
     );
-    const { loginAdminAction } = await import("@/app/login/actions");
+    const { loginAdminAction } = await import("@/features/auth/actions");
 
     await expect(loginAdminAction({ error: null }, loginForm())).resolves.toEqual({
       error: "This account does not have admin access.",
     });
     expect(cookieStore.values.size).toBe(0);
-  });
-});
-
-describe("session bootstrap route", () => {
-  it("creates the session from a v3 sign-in body's user.id", async () => {
-    const cookieStore = createCookieStore();
-    mocks.cookies.mockResolvedValue(cookieStore);
-    const { POST } = await import("@/app/session/route");
-    const { getStoredAdminSession } = await import("@/lib/admin/session");
-
-    const response = await POST(
-      new Request("https://admin.test/session", {
-        method: "POST",
-        body: JSON.stringify({
-          user: authSession.user,
-          accessToken,
-          refreshToken,
-        }),
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    await expect(getStoredAdminSession(cookieStore as never)).resolves.toMatchObject({
-      userId: "user-1",
-      email: "admin@example.com",
-    });
   });
 });
 
@@ -178,8 +153,8 @@ describe("auth services", () => {
     const { refreshAdminTokens } = await import("@/lib/api/auth");
 
     await expect(refreshAdminTokens("r1")).resolves.toEqual(pair);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.test/auth/refresh");
-    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe('{"refreshToken":"r1"}');
+    expect((await readFetchCall(fetchMock, 0)).url).toBe("https://api.test/auth/refresh");
+    expect((await readFetchCall(fetchMock, 0)).body).toBe('{"refreshToken":"r1"}');
   });
 
   it("logoutAdmin accepts the 204", async () => {
@@ -187,7 +162,7 @@ describe("auth services", () => {
     const { logoutAdmin } = await import("@/lib/api/auth");
 
     await expect(logoutAdmin("r1")).resolves.toBeUndefined();
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.test/auth/logout");
-    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe('{"refreshToken":"r1"}');
+    expect((await readFetchCall(fetchMock, 0)).url).toBe("https://api.test/auth/logout");
+    expect((await readFetchCall(fetchMock, 0)).body).toBe('{"refreshToken":"r1"}');
   });
 });

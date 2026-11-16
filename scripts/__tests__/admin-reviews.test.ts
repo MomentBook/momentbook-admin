@@ -195,7 +195,7 @@ function createAdminDetail(
 }
 
 async function loadAdminReviewsModule() {
-  return import("@/lib/admin/reviews");
+  return import("@/features/reviews/loader");
 }
 
 afterEach(() => {
@@ -214,7 +214,7 @@ const attentionCounts = {
 };
 
 async function loadReviewQueueModule() {
-  return import("@/lib/admin/review-queue");
+  return import("@/features/reviews/queue-loader");
 }
 
 describe("review queue and detail loaders", () => {

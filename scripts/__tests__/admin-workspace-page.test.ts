@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   isTestBackendApiError,
   TestBackendApiError,
-} from "@/scripts/__fixtures__/admin-journeys";
+} from "../__fixtures__/admin-journeys";
 
 vi.mock("server-only", () => ({}));
 
@@ -20,9 +20,9 @@ vi.mock("@/lib/api/client", () => ({
   BackendApiError: TestBackendApiError,
   isBackendApiError: isTestBackendApiError,
 }));
-vi.mock("@/lib/admin/session", () => ({ requireAdminApiSession }));
-vi.mock("@/lib/admin/attention", () => ({ loadAttentionCounts }));
-vi.mock("@/lib/admin/overview", () => ({ loadAdminOverview }));
+vi.mock("@/lib/auth/session", () => ({ requireAdminApiSession }));
+vi.mock("@/lib/workspace/attention", () => ({ loadAttentionCounts }));
+vi.mock("@/features/overview/loader", () => ({ loadAdminOverview }));
 
 const counts = {
   pendingReviews: 0,
@@ -41,7 +41,7 @@ afterEach(() => {
 
 describe("AdminIndexPage", () => {
   it("legacy tab redirect", async () => {
-    const { default: AdminIndexPage } = await import("@/app/page");
+    const { default: AdminIndexPage } = await import("@/app/(workspace)/page");
 
     await expect(
       AdminIndexPage({
@@ -63,7 +63,7 @@ describe("loadWorkspacePage", () => {
     cookies.mockResolvedValue(new Map());
     requireAdminApiSession.mockResolvedValue({ accessToken: "t" });
     loadAttentionCounts.mockResolvedValue(counts);
-    const { loadWorkspacePage } = await import("@/app/_workspace/workspace-data");
+    const { loadWorkspacePage } = await import("@/lib/workspace/load-workspace-page");
 
     await expect(
       loadWorkspacePage({
@@ -81,7 +81,7 @@ describe("loadWorkspacePage", () => {
     cookies.mockResolvedValue(new Map());
     requireAdminApiSession.mockResolvedValue({ accessToken: "t" });
     loadAttentionCounts.mockRejectedValue(new TestBackendApiError("denied", 403));
-    const { loadWorkspacePage } = await import("@/app/_workspace/workspace-data");
+    const { loadWorkspacePage } = await import("@/lib/workspace/load-workspace-page");
 
     await expect(
       loadWorkspacePage({ returnTo: "/", load: async () => "data" }),
@@ -93,7 +93,7 @@ describe("loadWorkspacePage", () => {
     const session = { accessToken: "t", email: "admin@example.com" };
     requireAdminApiSession.mockResolvedValue(session);
     loadAttentionCounts.mockResolvedValue(counts);
-    const { loadWorkspacePage } = await import("@/app/_workspace/workspace-data");
+    const { loadWorkspacePage } = await import("@/lib/workspace/load-workspace-page");
 
     const result = await loadWorkspacePage({
       returnTo: "/reviews",
